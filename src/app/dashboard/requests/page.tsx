@@ -5,6 +5,7 @@ import {
   CreditCard,
   Truck,
   Loader,
+  FileText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,8 +53,10 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { mockTestRequests } from "@/lib/mock-data";
-import type { TestRequestStatus } from "@/lib/types";
+import { mockTestRequests, mockTestResults } from "@/lib/mock-data";
+import type { TestRequestStatus, TestResult } from "@/lib/types";
+import React from "react";
+import { cn } from "@/lib/utils";
 
 const statusVariant: Record<TestRequestStatus, "default" | "secondary" | "destructive" | "outline"> = {
     Pending: "outline",
@@ -64,13 +67,14 @@ const statusVariant: Record<TestRequestStatus, "default" | "secondary" | "destru
     Cancelled: 'destructive'
 };
 
-const statusColor: Record<TestRequestStatus, string> = {
-    Pending: 'border-yellow-500 text-yellow-500',
-    Allocated: 'bg-blue-500 text-white',
-    'Sample Collected': 'bg-cyan-500 text-white',
-    'In Analysis': 'bg-purple-500 text-white',
-    Completed: 'bg-green-500 text-white',
-    Cancelled: 'bg-red-500 text-white'
+function ResultBadge({ flag }: { flag: "Normal" | "High" | "Low" }) {
+  const baseClasses = "text-xs font-semibold";
+  const variants = {
+    Normal: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+    High: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+    Low: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+  };
+  return <Badge className={cn(baseClasses, variants[flag])}>{flag}</Badge>;
 }
 
 
@@ -79,6 +83,10 @@ const progressSteps = [
 ];
 
 export default function RequestsPage() {
+  const findResult = (requestId: string): TestResult | undefined => {
+      return mockTestResults.find(r => r.requestId === requestId);
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -101,7 +109,9 @@ export default function RequestsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockTestRequests.map((request) => (
+            {mockTestRequests.map((request) => {
+              const result = request.status === 'Completed' ? findResult(request.id) : undefined;
+              return (
               <TableRow key={request.id}>
                 <TableCell className="font-medium">{request.testName}</TableCell>
                 <TableCell>
@@ -115,48 +125,95 @@ export default function RequestsPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Dialog>
+                    {request.status === 'Completed' && result ? (
+                       <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">Progress</Button>
+                            <Button variant="outline" size="sm">
+                                <FileText className="mr-2 h-4 w-4" />
+                                View Results
+                            </Button>
                         </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle className="font-headline">Request Progress</DialogTitle>
-                                <DialogDescription>{request.testName}</DialogDescription>
-                            </DialogHeader>
-                            <div className="my-4">
-                                <ol className="relative border-s border-border">
-                                    {progressSteps.map((step, index) => (
-                                        <li key={step} className="mb-10 ms-4">
-                                            <div className={`absolute w-3 h-3 rounded-full mt-1.5 -start-1.5 border border-white ${index <= request.progress.step ? 'bg-primary' : 'bg-muted'}`}></div>
-                                            <time className="mb-1 text-sm font-normal leading-none text-muted-foreground">{index <= request.progress.step ? request.requestDate : ''}</time>
-                                            <h3 className="text-lg font-semibold text-foreground">{step}</h3>
-                                            {index === request.progress.step && <p className="text-base font-normal text-muted-foreground">{request.progress.details}</p>}
-                                        </li>
-                                    ))}
-                                </ol>
+                        <DialogContent className="sm:max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle className="font-headline">Test Results</DialogTitle>
+                            <DialogDescription>
+                              {result.testName} - {result.date}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="py-4">
+                            <h4 className="font-semibold mb-2 text-foreground">Analysis Details</h4>
+                            <div className="grid grid-cols-4 gap-x-4 gap-y-2 text-sm">
+                                <div className="font-medium text-muted-foreground col-span-2">Analyte</div>
+                                <div className="font-medium text-muted-foreground text-right">Value</div>
+                                <div className="font-medium text-muted-foreground text-right">Reference Range</div>
+                                
+                                {Object.entries(result.results).map(([key, res]) => (
+                                    <React.Fragment key={key}>
+                                        <div className="col-span-2 flex items-center gap-2">
+                                            <span>{key}</span>
+                                            <ResultBadge flag={res.flag} />
+                                        </div>
+                                        <div className="text-right font-mono text-foreground">{res.value}</div>
+                                        <div className="text-right font-mono text-muted-foreground">{res.range}</div>
+                                    </React.Fragment>
+                                ))}
                             </div>
-                            {request.status === 'Allocated' && (
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="secondary">Verify Sample Collection</Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Confirm Sample Collection</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                Please confirm that the lab personnel has collected your sample. This action cannot be undone.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction>Confirm</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            )}
+                            <div className="mt-6 pt-4 border-t">
+                                <p className="text-sm text-muted-foreground">
+                                    Analysis performed by: <span className="font-medium text-foreground">{result.personnelName}</span>
+                                </p>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline">Download PDF</Button>
+                            <Button>Close</Button>
+                          </DialogFooter>
                         </DialogContent>
-                    </Dialog>
+                      </Dialog>
+                    ) : (
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">Progress</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle className="font-headline">Request Progress</DialogTitle>
+                                    <DialogDescription>{request.testName}</DialogDescription>
+                                </DialogHeader>
+                                <div className="my-4">
+                                    <ol className="relative border-s border-border">
+                                        {progressSteps.map((step, index) => (
+                                            <li key={step} className="mb-10 ms-4">
+                                                <div className={`absolute w-3 h-3 rounded-full mt-1.5 -start-1.5 border border-white ${index <= request.progress.step ? 'bg-primary' : 'bg-muted'}`}></div>
+                                                <time className="mb-1 text-sm font-normal leading-none text-muted-foreground">{index <= request.progress.step ? request.requestDate : ''}</time>
+                                                <h3 className="text-lg font-semibold text-foreground">{step}</h3>
+                                                {index === request.progress.step && <p className="text-base font-normal text-muted-foreground">{request.progress.details}</p>}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </div>
+                                {request.status === 'Allocated' && (
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="secondary">Verify Sample Collection</Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Confirm Sample Collection</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Please confirm that the lab personnel has collected your sample. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction>Confirm</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                )}
+                            </DialogContent>
+                        </Dialog>
+                    )}
 
                     <Dialog>
                         <DialogTrigger asChild>
@@ -208,7 +265,7 @@ export default function RequestsPage() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            )})}
           </TableBody>
         </Table>
       </CardContent>
