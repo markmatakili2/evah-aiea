@@ -125,10 +125,11 @@ const RatePersonnelDialog = ({ open, onOpenChange, personnelName }: { open: bool
             title: "Thank you for your feedback!",
             description: `You rated ${personnelName} ${rating} out of 5 stars.`,
         });
+        setRating(0);
     }
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={(isOpen) => { onOpenChange(isOpen); if (!isOpen) setRating(0); }}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Rate {personnelName}</DialogTitle>
@@ -176,6 +177,46 @@ const ReportAbuseDialog = ({ open, onOpenChange, personnelName }: { open: boolea
             </DialogContent>
         </Dialog>
     )
+};
+
+const PersonnelActions = ({ personnelName, onOpenDialog }: { personnelName: string, onOpenDialog: (type: 'profile' | 'rate' | 'report', name: string) => void }) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="link"
+          className="p-0 h-auto font-medium text-foreground"
+        >
+          {personnelName}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>
+          Actions
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/chat">
+            <MessageSquare className="mr-2 h-4 w-4" />
+            Message
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onOpenDialog('profile', personnelName)}>
+          <User className="mr-2 h-4 w-4" />
+          View Profile
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => onOpenDialog('rate', personnelName)}>
+          <Star className="mr-2 h-4 w-4" />
+          Rate Personnel
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onOpenDialog('report', personnelName)} className="text-destructive focus:text-destructive">
+          <MessageSquareWarning className="mr-2 h-4 w-4" />
+          Report Abuse
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 };
 
 export default function RequestsPage() {
@@ -234,7 +275,11 @@ export default function RequestsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {request.personnelName || "N/A"}
+                    {request.personnelName ? (
+                      <PersonnelActions personnelName={request.personnelName} onOpenDialog={openDialog} />
+                    ) : (
+                      "N/A"
+                    )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {request.requestDate}
@@ -293,41 +338,7 @@ export default function RequestsPage() {
                               <div className="mt-6 pt-4 border-t">
                                 <p className="text-sm text-muted-foreground flex items-center gap-2">
                                   Analysis performed by:
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        variant="link"
-                                        className="p-0 h-auto font-medium text-foreground"
-                                      >
-                                        {result.personnelName}
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                      <DropdownMenuLabel>
-                                        Actions
-                                      </DropdownMenuLabel>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem asChild>
-                                        <Link href="/dashboard/chat">
-                                          <MessageSquare className="mr-2 h-4 w-4" />
-                                          Message
-                                        </Link>
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem onSelect={() => openDialog('profile', result.personnelName)}>
-                                        <User className="mr-2 h-4 w-4" />
-                                        View Profile
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem onSelect={() => openDialog('rate', result.personnelName)}>
-                                        <Star className="mr-2 h-4 w-4" />
-                                        Rate Personnel
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem onSelect={() => openDialog('report', result.personnelName)} className="text-destructive focus:text-destructive">
-                                        <MessageSquareWarning className="mr-2 h-4 w-4" />
-                                        Report Abuse
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                  <PersonnelActions personnelName={result.personnelName} onOpenDialog={openDialog} />
                                 </p>
                               </div>
                             </div>

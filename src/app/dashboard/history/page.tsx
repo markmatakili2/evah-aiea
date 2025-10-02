@@ -23,15 +23,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Star, FileText, Download, MessageSquareWarning, Bot, Printer } from "lucide-react";
+import { Star, FileText, Download, MessageSquareWarning, Bot, Printer, MessageSquare, User } from "lucide-react";
 import { mockTestResults } from "@/lib/mock-data";
 import { AiInsightDialog } from "@/components/dashboard/ai-insight-dialog";
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
+import Image from "next/image";
+
 
 function ResultBadge({ flag }: { flag: "Normal" | "High" | "Low" }) {
   const baseClasses = "text-xs font-semibold";
@@ -107,17 +110,70 @@ const ReportAbuseDialog = ({ open, onOpenChange, personnelName }: { open: boolea
     )
 };
 
+const PersonnelProfileDialog = ({ open, onOpenChange, personnelName }: { open: boolean, onOpenChange: (open: boolean) => void, personnelName: string }) => (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Personnel Profile</DialogTitle>
+            </DialogHeader>
+            <div className="py-4 text-center">
+                <Image src="https://picsum.photos/seed/personnel/100/100" alt={personnelName} width={100} height={100} className="rounded-full mx-auto mb-4" data-ai-hint="profile person" />
+                <h3 className="text-lg font-semibold">{personnelName}</h3>
+                <p className="text-sm text-muted-foreground">Certified Phlebotomist</p>
+                <p className="text-sm mt-2">5 years of experience in sample collection and patient care. Member of the National Phlebotomy Association.</p>
+            </div>
+        </DialogContent>
+    </Dialog>
+)
+
+const PersonnelActions = ({ personnelName, onOpenDialog, hasRating }: { personnelName: string; onOpenDialog: (type: 'rate' | 'report' | 'profile', name: string) => void; hasRating?: boolean }) => {
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="link" className="p-0 h-auto font-medium text-foreground">
+                    {personnelName}
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href="/dashboard/chat">
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Message
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => onOpenDialog('profile', personnelName)}>
+                    <User className="mr-2 h-4 w-4" />
+                    View Profile
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {!hasRating && (
+                    <DropdownMenuItem onSelect={() => onOpenDialog('rate', personnelName)}>
+                        <Star className="mr-2 h-4 w-4" />
+                        Rate Personnel
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onSelect={() => onOpenDialog('report', personnelName)} className="text-destructive focus:text-destructive">
+                    <MessageSquareWarning className="mr-2 h-4 w-4" />
+                    Report Abuse
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+};
+
 
 export default function HistoryPage() {
-    const [dialogs, setDialogs] = useState<{ rate: boolean, report: boolean }>({ rate: false, report: false });
+    const [dialogs, setDialogs] = useState<{ rate: boolean, report: boolean, profile: boolean }>({ rate: false, report: false, profile: false });
     const [activePersonnel, setActivePersonnel] = useState("");
 
-    const openDialog = (type: 'rate' | 'report', personnelName: string) => {
+    const openDialog = (type: 'rate' | 'report' | 'profile', personnelName: string) => {
         setActivePersonnel(personnelName);
         setDialogs(prev => ({ ...prev, [type]: true }));
     }
 
-    const closeDialog = (type: 'rate' | 'report') => {
+    const closeDialog = (type: 'rate' | 'report' | 'profile') => {
         setDialogs(prev => ({ ...prev, [type]: false }));
     }
 
@@ -183,16 +239,20 @@ export default function HistoryPage() {
                     </div>
                 </div>
                 <CardFooter className="px-0 pt-4 mt-4 border-t justify-between items-center">
-                   <p className="text-sm text-muted-foreground">
-                        Personnel: <span className="font-medium text-foreground">{result.personnelName}</span>
+                   <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        Personnel: 
+                        <PersonnelActions 
+                            personnelName={result.personnelName}
+                            onOpenDialog={openDialog}
+                            hasRating={!!result.rating}
+                        />
                     </p>
                   <div className="flex gap-2">
                     {!result.rating && (
-                         <Button size="sm" variant="outline" onClick={() => openDialog('rate', result.personnelName)}>Rate Personnel</Button>
+                         <Button size="sm" variant="outline" onClick={() => openDialog('rate', result.personnelName)}>Rate</Button>
                     )}
                     <Button size="sm" variant="destructive" className="bg-destructive/10 text-destructive hover:bg-destructive/20" onClick={() => openDialog('report', result.personnelName)}>
-                        <MessageSquareWarning className="mr-2 h-4 w-4" />
-                        Report Abuse
+                        Report
                     </Button>
                   </div>
                 </CardFooter>
@@ -215,6 +275,7 @@ export default function HistoryPage() {
     
     <RatePersonnelDialog open={dialogs.rate} onOpenChange={() => closeDialog('rate')} personnelName={activePersonnel} />
     <ReportAbuseDialog open={dialogs.report} onOpenChange={() => closeDialog('report')} personnelName={activePersonnel} />
+    <PersonnelProfileDialog open={dialogs.profile} onOpenChange={() => closeDialog('profile')} personnelName={activePersonnel} />
     </>
   );
 }
