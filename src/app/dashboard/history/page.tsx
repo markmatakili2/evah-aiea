@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Accordion,
   AccordionContent,
@@ -26,7 +28,10 @@ import {
 import { Star, FileText, Download, MessageSquareWarning, Bot, Printer } from "lucide-react";
 import { mockTestResults } from "@/lib/mock-data";
 import { AiInsightDialog } from "@/components/dashboard/ai-insight-dialog";
-import React from "react";
+import React, { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 function ResultBadge({ flag }: { flag: "Normal" | "High" | "Low" }) {
   const baseClasses = "text-xs font-semibold";
@@ -38,11 +43,86 @@ function ResultBadge({ flag }: { flag: "Normal" | "High" | "Low" }) {
   return <Badge className={cn(baseClasses, variants[flag])}>{flag}</Badge>;
 }
 
-import { cn } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
+const RatePersonnelDialog = ({ open, onOpenChange, personnelName }: { open: boolean, onOpenChange: (open: boolean) => void, personnelName: string }) => {
+    const { toast } = useToast();
+    const [rating, setRating] = useState(0);
+
+    const handleSubmit = () => {
+        onOpenChange(false);
+        toast({
+            title: "Thank you for your feedback!",
+            description: `You rated ${personnelName} ${rating} out of 5 stars.`,
+        });
+        setRating(0);
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={(isOpen) => { onOpenChange(isOpen); if (!isOpen) setRating(0); }}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Rate {personnelName}</DialogTitle>
+                    <DialogDescription>Your feedback helps us maintain quality service.</DialogDescription>
+                </DialogHeader>
+                <div className="flex justify-center items-center gap-2 py-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                         <Star
+                            key={star}
+                            className={cn("w-8 h-8 cursor-pointer", rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300 hover:text-yellow-300")}
+                            onClick={() => setRating(star)}
+                        />
+                    ))}
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSubmit} disabled={rating === 0}>Submit Rating</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+};
+
+
+const ReportAbuseDialog = ({ open, onOpenChange, personnelName }: { open: boolean, onOpenChange: (open: boolean) => void, personnelName: string }) => {
+    const { toast } = useToast();
+    const handleSubmit = () => {
+        onOpenChange(false);
+        toast({
+            title: "Report Submitted",
+            description: `Your report concerning ${personnelName} has been received. Our team will investigate and take appropriate action.`,
+            variant: "destructive"
+        });
+    };
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Report Misconduct</DialogTitle>
+                    <DialogDescription>Please provide details about the issue with {personnelName}. Our team will review this immediately.</DialogDescription>
+                </DialogHeader>
+                <Textarea placeholder="Describe the incident..." className="my-4" rows={5} />
+                <DialogFooter>
+                    <Button variant="destructive" onClick={handleSubmit}>Submit Report</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+};
+
 
 export default function HistoryPage() {
+    const [dialogs, setDialogs] = useState<{ rate: boolean, report: boolean }>({ rate: false, report: false });
+    const [activePersonnel, setActivePersonnel] = useState("");
+
+    const openDialog = (type: 'rate' | 'report', personnelName: string) => {
+        setActivePersonnel(personnelName);
+        setDialogs(prev => ({ ...prev, [type]: true }));
+    }
+
+    const closeDialog = (type: 'rate' | 'report') => {
+        setDialogs(prev => ({ ...prev, [type]: false }));
+    }
+
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="font-headline">Test History</CardTitle>
@@ -108,46 +188,12 @@ export default function HistoryPage() {
                     </p>
                   <div className="flex gap-2">
                     {!result.rating && (
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="outline">Rate Personnel</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Rate {result.personnelName}</DialogTitle>
-                            <DialogDescription>
-                              Your feedback helps us maintain quality service.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="flex justify-center items-center gap-2 py-4">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star key={star} className="w-8 h-8 text-gray-300 cursor-pointer hover:text-yellow-400" />
-                            ))}
-                          </div>
-                          <DialogFooter>
-                            <Button>Submit Rating</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                         <Button size="sm" variant="outline" onClick={() => openDialog('rate', result.personnelName)}>Rate Personnel</Button>
                     )}
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button size="sm" variant="destructive" className="bg-destructive/10 text-destructive hover:bg-destructive/20">
-                          <MessageSquareWarning className="mr-2 h-4 w-4" />
-                          Report Abuse
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Report Misconduct</DialogTitle>
-                            <DialogDescription>Please provide details about the issue with {result.personnelName}. Our team will review this immediately.</DialogDescription>
-                        </DialogHeader>
-                        <Textarea placeholder="Describe the incident..." className="my-4" rows={5} />
-                        <DialogFooter>
-                            <Button variant="destructive">Submit Report</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                    <Button size="sm" variant="destructive" className="bg-destructive/10 text-destructive hover:bg-destructive/20" onClick={() => openDialog('report', result.personnelName)}>
+                        <MessageSquareWarning className="mr-2 h-4 w-4" />
+                        Report Abuse
+                    </Button>
                   </div>
                 </CardFooter>
               </AccordionContent>
@@ -166,5 +212,9 @@ export default function HistoryPage() {
         )}
       </CardContent>
     </Card>
+    
+    <RatePersonnelDialog open={dialogs.rate} onOpenChange={() => closeDialog('rate')} personnelName={activePersonnel} />
+    <ReportAbuseDialog open={dialogs.report} onOpenChange={() => closeDialog('report')} personnelName={activePersonnel} />
+    </>
   );
 }
