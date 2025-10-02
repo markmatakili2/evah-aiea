@@ -5,6 +5,7 @@ import {
   History,
   User,
   Beaker,
+  MessageSquare,
 } from "lucide-react";
 import {
   Tooltip,
@@ -41,13 +42,25 @@ export function SidebarNav() {
             <TooltipTrigger asChild>
               <Link
                 href="/dashboard/requests"
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
               >
                 <Package className="h-5 w-5" />
                 <span className="sr-only">My Requests</span>
               </Link>
             </TooltipTrigger>
             <TooltipContent side="right">My Requests</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/dashboard/chat"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+              >
+                <MessageSquare className="h-5 w-5" />
+                <span className="sr-only">Chat</span>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">Chat</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>

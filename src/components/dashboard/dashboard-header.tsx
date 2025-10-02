@@ -13,6 +13,7 @@ import {
   History,
   LogOut,
   User,
+  MessageSquare,
 } from "lucide-react";
 
 import {
@@ -66,10 +67,17 @@ export function DashboardHeader() {
             </Link>
             <Link
               href="/dashboard/requests"
-              className="flex items-center gap-4 px-2.5 text-foreground"
+              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
             >
               <Package className="h-5 w-5" />
               My Requests
+            </Link>
+             <Link
+              href="/dashboard/chat"
+              className="flex items-center gap-4 px-2.5 text-foreground"
+            >
+              <MessageSquare className="h-5 w-5" />
+              Chat
             </Link>
             <Link
               href="/dashboard/history"
