@@ -10,44 +10,57 @@ export const mockTests: Test[] = [
   {
     id: 'test1',
     name: 'Complete Blood Count (CBC)',
-    price: 35,
     description: 'Measures different components of your blood, including red and white blood cells.',
-    labs: ['lab1', 'lab2', 'lab3'],
+    prices: [
+      { labId: 'lab1', price: 35 },
+      { labId: 'lab2', price: 40 },
+      { labId: 'lab3', price: 38 },
+    ],
   },
   {
     id: 'test2',
     name: 'Lipid Panel',
-    price: 50,
     description: 'Measures fats and fatty substances used as a source of energy by your body.',
-    labs: ['lab1', 'lab3'],
+    prices: [
+      { labId: 'lab1', price: 50 },
+      { labId: 'lab3', price: 55 },
+    ],
   },
   {
     id: 'test3',
     name: 'Thyroid Panel (TSH)',
-    price: 75,
     description: 'Evaluates thyroid gland function and helps diagnose thyroid disorders.',
-    labs: ['lab2', 'lab3'],
+    prices: [
+      { labId: 'lab2', price: 75 },
+      { labId: 'lab3', price: 70 },
+    ],
   },
   {
     id: 'test4',
     name: 'Basic Metabolic Panel (BMP)',
-    price: 45,
     description: 'Measures glucose, calcium, and electrolytes to check your kidney health.',
-    labs: ['lab1', 'lab2'],
+    prices: [
+      { labId: 'lab1', price: 45 },
+      { labId: 'lab2', price: 48 },
+    ],
   },
   {
     id: 'test5',
     name: 'Vitamin D Test',
-    price: 60,
     description: 'Measures the level of vitamin D in your blood to check for deficiencies.',
-    labs: ['lab3'],
+    prices: [
+      { labId: 'lab3', price: 60 },
+    ],
   },
     {
     id: 'test6',
     name: 'Hemoglobin A1c (HbA1c)',
-    price: 40,
     description: 'Used to diagnose and monitor diabetes by measuring average blood sugar over 2-3 months.',
-    labs: ['lab1', 'lab2', 'lab3'],
+    prices: [
+        { labId: 'lab1', price: 40 },
+        { labId: 'lab2', price: 42 },
+        { labId: 'lab3', price: 39 },
+    ],
   },
 ];
 

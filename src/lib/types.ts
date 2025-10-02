@@ -1,9 +1,11 @@
 export type Test = {
   id: string;
   name: string;
-  price: number;
   description: string;
-  labs: string[];
+  prices: {
+    labId: string;
+    price: number;
+  }[];
 };
 
 export type Lab = {

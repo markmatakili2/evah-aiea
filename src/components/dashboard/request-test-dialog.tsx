@@ -74,7 +74,7 @@ export function RequestTestDialog({ children }: { children: React.ReactNode }) {
                 <SelectContent>
                   {mockTests.map((test) => (
                     <SelectItem key={test.id} value={test.id}>
-                      {test.name} (${test.price})
+                      {test.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
