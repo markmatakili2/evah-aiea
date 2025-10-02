@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -29,25 +29,53 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { mockLabs, mockTests } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
+import type { Test } from "@/lib/types";
 
-export function RequestTestDialog({ children }: { children: React.ReactNode }) {
+interface RequestTestDialogProps {
+  children: React.ReactNode;
+  test?: Test;
+}
+
+export function RequestTestDialog({ children, test: initialTest }: RequestTestDialogProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [date, setDate] = useState<Date>();
+  const [selectedTest, setSelectedTest] = useState<Test | undefined>(initialTest);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (initialTest) {
+      setSelectedTest(initialTest);
+    }
+    // Reset state if dialog is closed
+    if(!open) {
+      setStep(1);
+      setDate(undefined);
+      setSelectedTest(initialTest);
+    }
+  }, [initialTest, open]);
 
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => prev - 1);
   
   const handleSubmit = () => {
       setOpen(false);
-      setStep(1);
-      setDate(undefined);
       toast({
         title: "Request Submitted",
         description: "Your test request has been successfully submitted. You can track its progress in 'My Requests'.",
         className: 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600'
       });
+  }
+
+  const handleTestSelection = (testId: string) => {
+    const test = mockTests.find(t => t.id === testId);
+    setSelectedTest(test);
+  }
+  
+  const getPriceForLab = (labId: string) => {
+    if (!selectedTest) return null;
+    const priceInfo = selectedTest.prices.find(p => p.labId === labId);
+    return priceInfo ? `$${priceInfo.price.toFixed(2)}` : 'N/A';
   }
 
   return (
@@ -66,19 +94,23 @@ export function RequestTestDialog({ children }: { children: React.ReactNode }) {
         {step === 1 && (
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="test-selection">Select Test</Label>
-              <Select>
-                <SelectTrigger id="test-selection">
-                  <SelectValue placeholder="Choose a test..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockTests.map((test) => (
-                    <SelectItem key={test.id} value={test.id}>
-                      {test.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="test-selection">Selected Test</Label>
+              {initialTest ? (
+                <Input id="test-selection" value={initialTest.name} readOnly disabled />
+              ) : (
+                <Select onValueChange={handleTestSelection}>
+                  <SelectTrigger id="test-selection">
+                    <SelectValue placeholder="Choose a test..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mockTests.map((test) => (
+                      <SelectItem key={test.id} value={test.id}>
+                        {test.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="symptoms">Symptoms (optional)</Label>
@@ -162,7 +194,10 @@ export function RequestTestDialog({ children }: { children: React.ReactNode }) {
                 <SelectContent>
                   {mockLabs.map((lab) => (
                     <SelectItem key={lab.id} value={lab.id}>
-                      {lab.name}
+                        <div className="flex justify-between w-full">
+                            <span>{lab.name}</span>
+                            <span className="text-muted-foreground">{getPriceForLab(lab.id)}</span>
+                        </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -180,7 +215,7 @@ export function RequestTestDialog({ children }: { children: React.ReactNode }) {
           )}
 
           {step === 1 && (
-            <Button onClick={handleNext} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button onClick={handleNext} disabled={!selectedTest} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 Next
                 <ChevronRight className="h-4 w-4 ml-1" />
             </Button>

@@ -68,7 +68,7 @@ export function TestCard({ test }: TestCardProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <RequestTestDialog>
+        <RequestTestDialog test={test}>
           <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
             Request This Test
           </Button>
