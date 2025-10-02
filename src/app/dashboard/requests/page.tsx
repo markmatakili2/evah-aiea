@@ -12,6 +12,7 @@ import {
   User,
   Star,
   MessageSquareWarning,
+  Printer,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,8 @@ import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
+import { usePrint } from "@/hooks/usePrint";
+import { TestResultPrintView } from "@/components/dashboard/TestResultPrintView";
 
 const statusVariant: Record<
   TestRequestStatus,
@@ -222,6 +225,11 @@ const PersonnelActions = ({ personnelName, onOpenDialog }: { personnelName: stri
 export default function RequestsPage() {
     const [dialogs, setDialogs] = useState({ profile: false, rate: false, report: false });
     const [activePersonnel, setActivePersonnel] = useState("");
+    const { print } = usePrint();
+
+    const handlePrint = (result: TestResult) => {
+        print(<TestResultPrintView result={result} />);
+    }
 
     const openDialog = (type: 'profile' | 'rate' | 'report', personnelName: string) => {
         setActivePersonnel(personnelName);
@@ -343,8 +351,13 @@ export default function RequestsPage() {
                               </div>
                             </div>
                             <DialogFooter>
-                              <Button variant="outline">Download PDF</Button>
-                              <Button>Close</Button>
+                              <Button variant="outline" onClick={() => handlePrint(result)}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                Download PDF
+                              </Button>
+                              <DialogClose asChild>
+                                <Button>Close</Button>
+                              </DialogClose>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>

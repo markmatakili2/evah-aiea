@@ -34,6 +34,9 @@ import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import Image from "next/image";
+import { usePrint } from "@/hooks/usePrint";
+import { TestResultPrintView } from "@/components/dashboard/TestResultPrintView";
+import type { TestResult } from "@/lib/types";
 
 
 function ResultBadge({ flag }: { flag: "Normal" | "High" | "Low" }) {
@@ -167,6 +170,11 @@ const PersonnelActions = ({ personnelName, onOpenDialog, hasRating }: { personne
 export default function HistoryPage() {
     const [dialogs, setDialogs] = useState<{ rate: boolean, report: boolean, profile: boolean }>({ rate: false, report: false, profile: false });
     const [activePersonnel, setActivePersonnel] = useState("");
+    const { print } = usePrint();
+
+    const handlePrint = (result: TestResult) => {
+        print(<TestResultPrintView result={result} />);
+    }
 
     const openDialog = (type: 'rate' | 'report' | 'profile', personnelName: string) => {
         setActivePersonnel(personnelName);
@@ -231,7 +239,7 @@ export default function HistoryPage() {
                         </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => window.print()}>
+                        <Button variant="outline" size="sm" onClick={() => handlePrint(result)}>
                             <Printer className="mr-2 h-4 w-4" />
                             Print
                         </Button>
