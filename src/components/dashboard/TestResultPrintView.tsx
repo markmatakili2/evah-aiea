@@ -58,10 +58,6 @@ export const TestResultPrintView = React.forwardRef<HTMLDivElement, TestResultPr
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               <strong>Patient Name:</strong>
               <span>{user.firstName} {user.surname}</span>
-              <strong>Date of Birth:</strong>
-              <span>{user.dob}</span>
-              <strong>Gender:</strong>
-              <span>{user.gender}</span>
               <strong>Request ID:</strong>
               <span>{result.requestId}</span>
             </div>
