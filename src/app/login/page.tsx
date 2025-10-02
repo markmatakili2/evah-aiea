@@ -1,4 +1,6 @@
-import { Button } from "@/components/ui/button";
+'use client';
+
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -6,13 +8,43 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Logo } from "@/components/logo";
-import Link from "next/link";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Logo } from '@/components/logo';
+import Link from 'next/link';
+import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
+import { useAuth } from '@/firebase';
+
+function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="4" />
+      <line x1="21.17" y1="8" x2="12" y2="8" />
+      <line x1="3.95" y1="6.06" x2="8.54" y2="14" />
+      <line x1="10.88" y1="21.94" x2="15.46" y2="14" />
+    </svg>
+  );
+}
 
 export default function LoginPage() {
+  const auth = useAuth();
+
+  const handleGoogleSignIn = () => {
+    initiateGoogleSignIn(auth);
+  };
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -38,13 +70,25 @@ export default function LoginPage() {
               </div>
               <Input id="password" type="password" required />
             </div>
+            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
+              <Link href="/dashboard">Log In</Link>
+            </Button>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
+              <GoogleIcon className="mr-2 h-4 w-4" />
+              Continue with Google
+            </Button>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
-                <Link href="/dashboard">Log In</Link>
-            </Button>
             <div className="text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
+              Don't have an account?{' '}
               <Link href="/register" className="font-semibold text-primary hover:underline">
                 Register
               </Link>
