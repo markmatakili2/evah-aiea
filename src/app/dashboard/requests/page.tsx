@@ -1,3 +1,5 @@
+'use client';
+
 import {
   MoreHorizontal,
   FilePenLine,
@@ -60,11 +62,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { mockTestRequests, mockTestResults } from "@/lib/mock-data";
 import type { TestRequestStatus, TestResult } from "@/lib/types";
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
 
 const statusVariant: Record<
   TestRequestStatus,
@@ -96,12 +99,104 @@ const progressSteps = [
   "Completed",
 ];
 
+const PersonnelProfileDialog = ({ open, onOpenChange, personnelName }: { open: boolean, onOpenChange: (open: boolean) => void, personnelName: string }) => (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Personnel Profile</DialogTitle>
+            </DialogHeader>
+            <div className="py-4 text-center">
+                <Image src="https://picsum.photos/seed/personnel/100/100" alt={personnelName} width={100} height={100} className="rounded-full mx-auto mb-4" data-ai-hint="profile person" />
+                <h3 className="text-lg font-semibold">{personnelName}</h3>
+                <p className="text-sm text-muted-foreground">Certified Phlebotomist</p>
+                <p className="text-sm mt-2">5 years of experience in sample collection and patient care. Member of the National Phlebotomy Association.</p>
+            </div>
+        </DialogContent>
+    </Dialog>
+)
+
+const RatePersonnelDialog = ({ open, onOpenChange, personnelName }: { open: boolean, onOpenChange: (open: boolean) => void, personnelName: string }) => {
+    const { toast } = useToast();
+    const [rating, setRating] = useState(0);
+
+    const handleSubmit = () => {
+        onOpenChange(false);
+        toast({
+            title: "Thank you for your feedback!",
+            description: `You rated ${personnelName} ${rating} out of 5 stars.`,
+        });
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Rate {personnelName}</DialogTitle>
+                    <DialogDescription>Your feedback helps us maintain quality service.</DialogDescription>
+                </DialogHeader>
+                <div className="flex justify-center items-center gap-2 py-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                            key={star}
+                            className={cn("w-8 h-8 cursor-pointer", rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300 hover:text-yellow-300")}
+                            onClick={() => setRating(star)}
+                        />
+                    ))}
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSubmit} disabled={rating === 0}>Submit Rating</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+};
+
+
+const ReportAbuseDialog = ({ open, onOpenChange, personnelName }: { open: boolean, onOpenChange: (open: boolean) => void, personnelName: string }) => {
+    const { toast } = useToast();
+    const handleSubmit = () => {
+        onOpenChange(false);
+        toast({
+            title: "Report Submitted",
+            description: `Your report concerning ${personnelName} has been received. Our team will investigate and take appropriate action.`,
+            variant: "destructive"
+        });
+    };
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Report Misconduct</DialogTitle>
+                    <DialogDescription>Please provide details about the issue with {personnelName}. Our team will review this immediately.</DialogDescription>
+                </DialogHeader>
+                <Textarea placeholder="Describe the incident..." className="my-4" rows={5} />
+                <DialogFooter>
+                    <Button variant="destructive" onClick={handleSubmit}>Submit Report</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+};
+
 export default function RequestsPage() {
+    const [dialogs, setDialogs] = useState({ profile: false, rate: false, report: false });
+    const [activePersonnel, setActivePersonnel] = useState("");
+
+    const openDialog = (type: 'profile' | 'rate' | 'report', personnelName: string) => {
+        setActivePersonnel(personnelName);
+        setDialogs(prev => ({ ...prev, [type]: true }));
+    }
+
+    const closeDialog = (type: 'profile' | 'rate' | 'report') => {
+        setDialogs(prev => ({ ...prev, [type]: false }));
+    }
+
   const findResult = (requestId: string): TestResult | undefined => {
     return mockTestResults.find((r) => r.requestId === requestId);
   };
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="font-headline">My Test Requests</CardTitle>
@@ -218,23 +313,19 @@ export default function RequestsPage() {
                                           Message
                                         </Link>
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => openDialog('profile', result.personnelName)}>
                                         <User className="mr-2 h-4 w-4" />
                                         View Profile
                                       </DropdownMenuItem>
                                       <DropdownMenuSeparator />
-                                      <DialogTrigger asChild>
-                                        <DropdownMenuItem>
-                                          <Star className="mr-2 h-4 w-4" />
-                                          Rate Personnel
-                                        </DropdownMenuItem>
-                                      </DialogTrigger>
-                                      <DialogTrigger asChild>
-                                        <DropdownMenuItem className="text-destructive focus:text-destructive">
-                                          <MessageSquareWarning className="mr-2 h-4 w-4" />
-                                          Report Abuse
-                                        </DropdownMenuItem>
-                                      </DialogTrigger>
+                                      <DropdownMenuItem onSelect={() => openDialog('rate', result.personnelName)}>
+                                        <Star className="mr-2 h-4 w-4" />
+                                        Rate Personnel
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => openDialog('report', result.personnelName)} className="text-destructive focus:text-destructive">
+                                        <MessageSquareWarning className="mr-2 h-4 w-4" />
+                                        Report Abuse
+                                      </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 </p>
@@ -421,5 +512,10 @@ export default function RequestsPage() {
         </Table>
       </CardContent>
     </Card>
+
+    <PersonnelProfileDialog open={dialogs.profile} onOpenChange={() => closeDialog('profile')} personnelName={activePersonnel} />
+    <RatePersonnelDialog open={dialogs.rate} onOpenChange={() => closeDialog('rate')} personnelName={activePersonnel} />
+    <ReportAbuseDialog open={dialogs.report} onOpenChange={() => closeDialog('report')} personnelName={activePersonnel} />
+    </>
   );
 }
