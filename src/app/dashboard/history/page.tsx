@@ -26,6 +26,7 @@ import {
 import { Star, FileText, Download, MessageSquareWarning, Bot, Printer } from "lucide-react";
 import { mockTestResults } from "@/lib/mock-data";
 import { AiInsightDialog } from "@/components/dashboard/ai-insight-dialog";
+import React from "react";
 
 function ResultBadge({ flag }: { flag: "Normal" | "High" | "Low" }) {
   const baseClasses = "text-xs font-semibold";
@@ -82,14 +83,14 @@ export default function HistoryPage() {
                             <div className="font-medium text-muted-foreground text-right">Range</div>
                             
                             {Object.entries(result.results).map(([key, res]) => (
-                                <>
+                                <React.Fragment key={key}>
                                     <div className="col-span-2 flex items-center gap-2">
                                         <span>{key}</span>
                                         <ResultBadge flag={res.flag} />
                                     </div>
                                     <div className="text-right font-mono">{res.value}</div>
                                     <div className="text-right font-mono text-muted-foreground">{res.range}</div>
-                                </>
+                                </React.Fragment>
                             ))}
                         </div>
                     </div>
