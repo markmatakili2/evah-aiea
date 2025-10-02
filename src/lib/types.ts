@@ -1,3 +1,4 @@
+
 export type Test = {
   id: string;
   name: string;
@@ -16,6 +17,12 @@ export type Lab = {
 
 export type TestRequestStatus = 'Pending' | 'Allocated' | 'Sample Collected' | 'In Analysis' | 'Completed' | 'Cancelled';
 
+export type ProgressStep = {
+    status: TestRequestStatus;
+    date: string;
+    details: string;
+}
+
 export type TestRequest = {
   id: string;
   testId: string;
@@ -25,10 +32,7 @@ export type TestRequest = {
   personnelName?: string;
   personnelId?: string;
   collectionDate?: string;
-  progress: {
-    step: number;
-    details: string;
-  };
+  progress: ProgressStep[];
 };
 
 export type TestResult = {

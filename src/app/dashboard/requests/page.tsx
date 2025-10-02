@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -63,7 +64,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { mockTestRequests, mockTestResults } from "@/lib/mock-data";
-import type { TestRequestStatus, TestResult } from "@/lib/types";
+import type { TestRequestStatus, TestResult, ProgressStep } from "@/lib/types";
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,6 +73,7 @@ import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { usePrint } from "@/hooks/usePrint";
 import { TestResultPrintView } from "@/components/dashboard/TestResultPrintView";
+import { format } from "date-fns";
 
 const statusVariant: Record<
   TestRequestStatus,
@@ -95,7 +97,7 @@ function ResultBadge({ flag }: { flag: "Normal" | "High" | "Low" }) {
   return <Badge className={cn(baseClasses, variants[flag])}>{flag}</Badge>;
 }
 
-const progressSteps = [
+const allProgressSteps: TestRequestStatus[] = [
   "Pending",
   "Allocated",
   "Sample Collected",
@@ -291,7 +293,7 @@ export default function RequestsPage() {
                     )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {request.requestDate}
+                    {format(new Date(request.requestDate), "PPP p")}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -309,7 +311,7 @@ export default function RequestsPage() {
                                 Test Results
                               </DialogTitle>
                               <DialogDescription>
-                                {result.testName} - {result.date}
+                                {result.testName} - {format(new Date(result.date), "PPP p")}
                               </DialogDescription>
                             </DialogHeader>
                             <div className="py-4">
@@ -380,30 +382,31 @@ export default function RequestsPage() {
                             </DialogHeader>
                             <div className="my-4">
                               <ol className="relative border-s border-border">
-                                {progressSteps.map((step, index) => (
-                                  <li key={step} className="mb-10 ms-4">
-                                    <div
-                                      className={`absolute w-3 h-3 rounded-full mt-1.5 -start-1.5 border border-white ${
-                                        index <= request.progress.step
-                                          ? "bg-primary"
-                                          : "bg-muted"
-                                      }`}
-                                    ></div>
-                                    <time className="mb-1 text-sm font-normal leading-none text-muted-foreground">
-                                      {index <= request.progress.step
-                                        ? request.requestDate
-                                        : ""}
-                                    </time>
-                                    <h3 className="text-lg font-semibold text-foreground">
-                                      {step}
-                                    </h3>
-                                    {index === request.progress.step && (
-                                      <p className="text-base font-normal text-muted-foreground">
-                                        {request.progress.details}
-                                      </p>
-                                    )}
-                                  </li>
-                                ))}
+                                {allProgressSteps.map((step) => {
+                                  const progressStep = request.progress.find(p => p.status === step);
+                                  const isCompleted = !!progressStep;
+
+                                  return (
+                                    <li key={step} className="mb-10 ms-4">
+                                      <div
+                                        className={`absolute w-3 h-3 rounded-full mt-1.5 -start-1.5 border border-white ${
+                                          isCompleted ? "bg-primary" : "bg-muted"
+                                        }`}
+                                      ></div>
+                                      <time className="mb-1 text-sm font-normal leading-none text-muted-foreground">
+                                        {progressStep ? format(new Date(progressStep.date), "PPP p") : ""}
+                                      </time>
+                                      <h3 className="text-lg font-semibold text-foreground">
+                                        {step}
+                                      </h3>
+                                      {progressStep && (
+                                        <p className="text-base font-normal text-muted-foreground">
+                                          {progressStep.details}
+                                        </p>
+                                      )}
+                                    </li>
+                                  )
+                                })}
                               </ol>
                             </div>
                             {request.status === "Allocated" && (

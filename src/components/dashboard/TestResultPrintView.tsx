@@ -1,9 +1,11 @@
+
 'use client';
 
 import React from 'react';
 import { Logo } from '@/components/logo';
-import type { TestResult, UserProfile } from '@/lib/types';
+import type { TestResult } from '@/lib/types';
 import { mockUserProfile } from '@/lib/mock-data';
+import { format } from 'date-fns';
 
 interface TestResultPrintViewProps {
   result: TestResult;
@@ -48,7 +50,7 @@ export const TestResultPrintView = React.forwardRef<HTMLDivElement, TestResultPr
           </div>
           <div className="text-right">
             <h1 className="text-3xl font-bold text-gray-800">Lab Report</h1>
-            <p className="text-sm">Report Date: {new Date().toLocaleDateString()}</p>
+            <p className="text-sm">Report Date: {format(new Date(), "PPP")}</p>
           </div>
         </header>
 
@@ -68,7 +70,7 @@ export const TestResultPrintView = React.forwardRef<HTMLDivElement, TestResultPr
                 <strong>Test Name:</strong>
                 <span>{result.testName}</span>
                 <strong>Collection Date:</strong>
-                <span>{result.date}</span>
+                <span>{format(new Date(result.date), "PPP p")}</span>
                 <strong>Analysis Performed By:</strong>
                 <span>{result.personnelName}</span>
             </div>

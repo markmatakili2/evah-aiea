@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -37,6 +38,7 @@ import Image from "next/image";
 import { usePrint } from "@/hooks/usePrint";
 import { TestResultPrintView } from "@/components/dashboard/TestResultPrintView";
 import type { TestResult } from "@/lib/types";
+import { format } from "date-fns";
 
 
 function ResultBadge({ flag }: { flag: "Normal" | "High" | "Low" }) {
@@ -203,7 +205,7 @@ export default function HistoryPage() {
                   <div className="text-left">
                     <p className="font-semibold">{result.testName}</p>
                     <p className="text-sm text-muted-foreground">
-                      Date: {result.date}
+                      Date: {format(new Date(result.date), "PPP p")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

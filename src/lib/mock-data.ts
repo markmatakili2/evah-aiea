@@ -1,3 +1,4 @@
+
 import type { Test, Lab, TestRequest, TestResult, UserProfile, FaqItem } from './types';
 
 export const mockLabs: Lab[] = [
@@ -69,52 +70,72 @@ export const mockTestRequests: TestRequest[] = [
     id: 'req1',
     testId: 'test1',
     testName: 'Complete Blood Count (CBC)',
-    requestDate: '2024-07-20',
+    requestDate: '2024-07-20T10:30:00Z',
     status: 'Completed',
     personnelName: 'John Doe',
     personnelId: 'tech1',
-    collectionDate: '2024-07-21',
-    progress: { step: 4, details: 'Results are available.' },
+    collectionDate: '2024-07-21T09:00:00Z',
+    progress: [
+      { status: 'Pending', date: '2024-07-20T10:30:00Z', details: 'Request submitted.' },
+      { status: 'Allocated', date: '2024-07-20T11:00:00Z', details: 'John Doe assigned.' },
+      { status: 'Sample Collected', date: '2024-07-21T09:05:00Z', details: 'Sample collected.' },
+      { status: 'In Analysis', date: '2024-07-21T14:20:00Z', details: 'Analysis started.' },
+      { status: 'Completed', date: '2024-07-22T16:45:00Z', details: 'Results are available.' },
+    ],
   },
   {
     id: 'req2',
     testId: 'test3',
     testName: 'Thyroid Panel (TSH)',
-    requestDate: '2024-07-22',
+    requestDate: '2024-07-22T11:00:00Z',
     status: 'In Analysis',
     personnelName: 'Jane Smith',
     personnelId: 'tech2',
-    collectionDate: '2024-07-22',
-    progress: { step: 3, details: 'Sample is being analyzed at the lab.' },
+    collectionDate: '2024-07-22T14:00:00Z',
+    progress: [
+      { status: 'Pending', date: '2024-07-22T11:00:00Z', details: 'Request submitted.' },
+      { status: 'Allocated', date: '2024-07-22T11:30:00Z', details: 'Jane Smith assigned.' },
+      { status: 'Sample Collected', date: '2024-07-22T14:00:00Z', details: 'Sample collected.' },
+      { status: 'In Analysis', date: '2024-07-23T09:00:00Z', details: 'Sample is being analyzed at the lab.' },
+    ],
   },
   {
     id: 'req3',
     testId: 'test2',
     testName: 'Lipid Panel',
-    requestDate: '2024-07-23',
+    requestDate: '2024-07-23T09:15:00Z',
     status: 'Sample Collected',
     personnelName: 'Jane Smith',
     personnelId: 'tech2',
-    collectionDate: '2024-07-24',
-    progress: { step: 2, details: 'Sample collected and en route to the lab.' },
+    collectionDate: '2024-07-24T11:00:00Z',
+    progress: [
+        { status: 'Pending', date: '2024-07-23T09:15:00Z', details: 'Request submitted.' },
+        { status: 'Allocated', date: '2024-07-23T10:00:00Z', details: 'Jane Smith assigned.' },
+        { status: 'Sample Collected', date: '2024-07-24T11:05:00Z', details: 'Sample collected and en route to the lab.' },
+    ]
   },
   {
     id: 'req4',
     testId: 'test4',
     testName: 'Basic Metabolic Panel (BMP)',
-    requestDate: '2024-07-24',
+    requestDate: '2024-07-24T18:00:00Z',
     status: 'Allocated',
     personnelName: 'Alex Ray',
     personnelId: 'tech3',
-    progress: { step: 1, details: 'Lab personnel has been assigned for collection.' },
+    progress: [
+        { status: 'Pending', date: '2024-07-24T18:00:00Z', details: 'Request submitted.' },
+        { status: 'Allocated', date: '2024-07-24T18:30:00Z', details: 'Lab personnel has been assigned for collection.' },
+    ]
   },
     {
     id: 'req5',
     testId: 'test5',
     testName: 'Vitamin D Test',
-    requestDate: '2024-07-25',
+    requestDate: '2024-07-25T12:00:00Z',
     status: 'Pending',
-    progress: { step: 0, details: 'Awaiting allocation of lab personnel.' },
+    progress: [
+        { status: 'Pending', date: '2024-07-25T12:00:00Z', details: 'Awaiting allocation of lab personnel.' },
+    ]
   },
 ];
 
@@ -123,7 +144,7 @@ export const mockTestResults: TestResult[] = [
     id: 'res1',
     requestId: 'req1',
     testName: 'Complete Blood Count (CBC)',
-    date: '2024-07-22',
+    date: '2024-07-22T16:45:00Z',
     pdfUrl: '#',
     personnelName: 'John Doe',
     personnelId: 'tech1',
@@ -139,7 +160,7 @@ export const mockTestResults: TestResult[] = [
     id: 'res2',
     requestId: 'hist1',
     testName: 'Lipid Panel',
-    date: '2024-01-15',
+    date: '2024-01-15T11:30:00Z',
     pdfUrl: '#',
     personnelName: 'Sarah Chen',
     personnelId: 'tech4',
@@ -155,7 +176,7 @@ export const mockTestResults: TestResult[] = [
     id: 'res3',
     requestId: 'hist2',
     testName: 'Complete Blood Count (CBC)',
-    date: '2023-11-05',
+    date: '2023-11-05T14:00:00Z',
     pdfUrl: '#',
     personnelName: 'John Doe',
     personnelId: 'tech1',
