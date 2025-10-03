@@ -60,14 +60,12 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
       setSelectedTest(initialTest);
     }
     // Reset state if dialog is closed
-    if(!open) {
+    if(!open && !isPaymentPromptOpen && !isPaymentDialogOpen) {
       setStep(1);
       setDate(undefined);
       setSelectedTest(initialTest);
-      setIsPaymentPromptOpen(false);
-      setIsPaymentDialogOpen(false);
     }
-  }, [initialTest, open]);
+  }, [initialTest, open, isPaymentPromptOpen, isPaymentDialogOpen]);
 
   useEffect(() => {
     if (cheapestLabId) {
