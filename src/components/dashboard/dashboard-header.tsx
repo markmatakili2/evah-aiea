@@ -15,6 +15,7 @@ import {
   User,
   MessageSquare,
   Bell,
+  Activity,
 } from "lucide-react";
 
 import {
@@ -43,6 +44,7 @@ import { formatDistanceToNow } from "date-fns";
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Dashboard" },
   { href: "/dashboard/requests", icon: Package, label: "My Requests" },
+  { href: "/dashboard/analytics", icon: Activity, label: "Analytics" },
   { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
   { href: "/dashboard/history", icon: History, label: "History" },
   { href: "/dashboard/notifications", icon: Bell, label: "Notifications" },

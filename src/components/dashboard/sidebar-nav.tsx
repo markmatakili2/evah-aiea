@@ -11,6 +11,7 @@ import {
   Beaker,
   MessageSquare,
   Bell,
+  Activity,
 } from "lucide-react";
 import {
   Tooltip,
@@ -23,6 +24,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Dashboard" },
   { href: "/dashboard/requests", icon: Package, label: "My Requests" },
+  { href: "/dashboard/analytics", icon: Activity, label: "Analytics" },
   { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
   { href: "/dashboard/history", icon: History, label: "History" },
   { href: "/dashboard/notifications", icon: Bell, label: "Notifications" },
