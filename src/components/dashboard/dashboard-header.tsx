@@ -1,14 +1,14 @@
+
+'use client';
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Home,
-  LineChart,
-  Package,
-  Package2,
   PanelLeft,
   Search,
   Settings,
-  ShoppingCart,
-  Users2,
+  Package,
   Beaker,
   History,
   LogOut,
@@ -21,8 +21,6 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,8 +36,19 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { ThemeToggle } from "../theme-toggle";
 import Image from "next/image";
 import { mockUserProfile } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+
+const navItems = [
+  { href: "/dashboard", icon: Home, label: "Dashboard" },
+  { href: "/dashboard/requests", icon: Package, label: "My Requests" },
+  { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
+  { href: "/dashboard/history", icon: History, label: "History" },
+  { href: "/dashboard/profile", icon: User, label: "Profile" },
+];
 
 export function DashboardHeader() {
+  const pathname = usePathname();
+
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
       <Sheet>
@@ -55,47 +64,25 @@ export function DashboardHeader() {
           </SheetHeader>
           <nav className="grid gap-6 text-lg font-medium">
             <Link
-              href="#"
+              href="/dashboard"
               className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
             >
               <Beaker className="h-5 w-5 transition-all group-hover:scale-110" />
               <span className="sr-only">DigiLab Connect</span>
             </Link>
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <Home className="h-5 w-5" />
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard/requests"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <Package className="h-5 w-5" />
-              My Requests
-            </Link>
-             <Link
-              href="/dashboard/chat"
-              className="flex items-center gap-4 px-2.5 text-foreground"
-            >
-              <MessageSquare className="h-5 w-5" />
-              Chat
-            </Link>
-            <Link
-              href="/dashboard/history"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <History className="h-5 w-5" />
-              History
-            </Link>
-            <Link
-              href="/dashboard/profile"
-              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <User className="h-5 w-5" />
-              Profile
-            </Link>
+            {navItems.map((item) => (
+               <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground",
+                  pathname === item.href && "text-foreground"
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.label}
+              </Link>
+            ))}
           </nav>
         </SheetContent>
       </Sheet>
