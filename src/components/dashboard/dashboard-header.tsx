@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "../theme-toggle";
 import Image from "next/image";
 import { mockUserProfile } from "@/lib/mock-data";
@@ -50,6 +50,9 @@ export function DashboardHeader() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs">
+          <SheetHeader>
+            <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+          </SheetHeader>
           <nav className="grid gap-6 text-lg font-medium">
             <Link
               href="#"
