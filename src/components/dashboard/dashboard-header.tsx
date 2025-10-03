@@ -14,6 +14,9 @@ import {
   LogOut,
   User,
   MessageSquare,
+  Bell,
+  CreditCard,
+  FileText,
 } from "lucide-react";
 
 import {
@@ -46,6 +49,12 @@ const navItems = [
   { href: "/dashboard/profile", icon: User, label: "Profile" },
 ];
 
+const mockNotifications = [
+    { text: "New message from Jane Smith", href: "/dashboard/chat", icon: MessageSquare },
+    { text: "Payment due for Lipid Panel", href: "/dashboard/requests", icon: CreditCard },
+    { text: "Results for CBC are ready", href: "/dashboard/history", icon: FileText },
+];
+
 export function DashboardHeader() {
   const pathname = usePathname();
 
@@ -59,7 +68,7 @@ export function DashboardHeader() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs">
-          <SheetHeader>
+           <SheetHeader>
             <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
           </SheetHeader>
           <nav className="grid gap-6 text-lg font-medium">
@@ -104,6 +113,38 @@ export function DashboardHeader() {
         />
       </div>
        <ThemeToggle />
+       <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+          >
+            <Bell className="h-5 w-5" />
+            <span className="absolute top-1 right-1 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+            </span>
+            <span className="sr-only">Notifications</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {mockNotifications.map((notification, index) => (
+            <DropdownMenuItem key={index} asChild>
+                <Link href={notification.href} className="flex items-center gap-3">
+                    <notification.icon className="h-4 w-4 text-muted-foreground" />
+                    <span>{notification.text}</span>
+                </Link>
+            </DropdownMenuItem>
+          ))}
+           <DropdownMenuSeparator />
+           <DropdownMenuItem className="justify-center text-sm text-muted-foreground hover:text-primary">
+                View all notifications
+           </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
