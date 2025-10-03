@@ -59,7 +59,6 @@ import {
   DialogTrigger,
   DialogDescription,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -74,6 +73,8 @@ import { useToast } from "@/hooks/use-toast";
 import { usePrint } from "@/hooks/usePrint";
 import { TestResultPrintView } from "@/components/dashboard/TestResultPrintView";
 import { format } from "date-fns";
+import { PaymentDialog } from "@/components/dashboard/payment-dialog";
+import { DialogClose } from "@radix-ui/react-dialog";
 
 const statusVariant: Record<
   TestRequestStatus,
@@ -226,8 +227,9 @@ const PersonnelActions = ({ personnelName, onOpenDialog }: { personnelName: stri
 };
 
 export default function RequestsPage() {
-    const [dialogs, setDialogs] = useState({ profile: false, rate: false, report: false });
+    const [dialogs, setDialogs] = useState({ profile: false, rate: false, report: false, payment: false });
     const [activePersonnel, setActivePersonnel] = useState("");
+    const [activeRequest, setActiveRequest] = useState<(typeof mockTestRequests)[0] | null>(null);
     const { print } = usePrint();
 
     const handlePrint = (result: TestResult) => {
@@ -239,8 +241,13 @@ export default function RequestsPage() {
         setDialogs(prev => ({ ...prev, [type]: true }));
     }
 
-    const closeDialog = (type: 'profile' | 'rate' | 'report') => {
+    const closeDialog = (type: 'profile' | 'rate' | 'report' | 'payment') => {
         setDialogs(prev => ({ ...prev, [type]: false }));
+    }
+    
+    const handlePayClick = (request: (typeof mockTestRequests)[0]) => {
+        setActiveRequest(request);
+        setDialogs(prev => ({ ...prev, payment: true }));
     }
 
   const findResult = (requestId: string): TestResult | undefined => {
@@ -296,7 +303,7 @@ export default function RequestsPage() {
                     {format(new Date(request.requestDate), "PPP p")}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       {request.status === "Completed" && result ? (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -364,7 +371,7 @@ export default function RequestsPage() {
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
-                      ) : (
+                      ) : request.status !== 'Pending' ? (
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button variant="outline" size="sm">
@@ -438,75 +445,17 @@ export default function RequestsPage() {
                             )}
                           </DialogContent>
                         </Dialog>
-                      )}
+                      ) : null }
 
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          {request.status === "Pending" && (
-                            <Button
-                              size="sm"
-                              className="bg-accent text-accent-foreground hover:bg-accent/90"
-                            >
-                              Pay
-                            </Button>
-                          )}
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                          <DialogHeader>
-                            <DialogTitle className="font-headline">
-                              Complete Payment
-                            </DialogTitle>
-                            <DialogDescription>
-                              Enter your M-Pesa phone number to complete the
-                              payment for your test request.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            <div className="text-center">
-                              <p className="text-muted-foreground">
-                                Amount to Pay
-                              </p>
-                              <p className="text-4xl font-bold font-headline text-primary">
-                                Ksh 45.00
-                              </p>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="phone">
-                                M-Pesa Phone Number
-                              </Label>
-                              <Input
-                                id="phone"
-                                placeholder="e.g., 254712345678"
-                              />
-                            </div>
-                            <div className="text-center p-4 bg-muted rounded-md">
-                              <p className="text-sm text-muted-foreground">
-                                Or use Paybill:
-                              </p>
-                              <p className="font-semibold">
-                                Business No:{" "}
-                                <span className="font-bold text-primary">
-                                  123456
-                                </span>
-                              </p>
-                              <p className="font-semibold">
-                                Account No:{" "}
-                                <span className="font-bold text-primary">{`REQ-${request.id
-                                  .slice(0, 4)
-                                  .toUpperCase()}`}</span>
-                              </p>
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button
-                              type="submit"
-                              className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
-                            >
-                              Initiate Payment
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                      {request.status === "Pending" && (
+                        <Button
+                          size="sm"
+                          className="bg-accent text-accent-foreground hover:bg-accent/90"
+                          onClick={() => handlePayClick(request)}
+                        >
+                          Pay
+                        </Button>
+                      )}
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -544,6 +493,16 @@ export default function RequestsPage() {
     <PersonnelProfileDialog open={dialogs.profile} onOpenChange={() => closeDialog('profile')} personnelName={activePersonnel} />
     <RatePersonnelDialog open={dialogs.rate} onOpenChange={() => closeDialog('rate')} personnelName={activePersonnel} />
     <ReportAbuseDialog open={dialogs.report} onOpenChange={() => closeDialog('report')} personnelName={activePersonnel} />
+    {activeRequest && (
+        <PaymentDialog 
+            open={dialogs.payment}
+            onOpenChange={() => closeDialog('payment')}
+            testName={activeRequest.testName}
+            labName="City Central Labs"
+            amount={45.00}
+            requestId={activeRequest.id}
+        />
+    )}
     </>
   );
 }

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,8 @@ import { format } from "date-fns";
 import { mockLabs, mockTests } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import type { Test } from "@/lib/types";
+import { PaymentDialog } from "./payment-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 
 interface RequestTestDialogProps {
   children: React.ReactNode;
@@ -42,7 +44,16 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
   const [step, setStep] = useState(1);
   const [date, setDate] = useState<Date>();
   const [selectedTest, setSelectedTest] = useState<Test | undefined>(initialTest);
+  const [selectedLabId, setSelectedLabId] = useState<string | undefined>();
+  const [isPaymentPromptOpen, setIsPaymentPromptOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  const cheapestLabId = useMemo(() => {
+    if (!selectedTest) return undefined;
+    return selectedTest.prices.reduce((min, p) => p.price < min.price ? p : min, selectedTest.prices[0]).labId;
+  }, [selectedTest]);
+
 
   useEffect(() => {
     if (initialTest) {
@@ -53,18 +64,26 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
       setStep(1);
       setDate(undefined);
       setSelectedTest(initialTest);
+      setIsPaymentPromptOpen(false);
+      setIsPaymentDialogOpen(false);
     }
   }, [initialTest, open]);
+
+  useEffect(() => {
+    if (cheapestLabId) {
+        setSelectedLabId(cheapestLabId);
+    }
+  }, [cheapestLabId]);
 
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => prev - 1);
   
   const handleSubmit = () => {
       setOpen(false);
+      setIsPaymentPromptOpen(true);
       toast({
         title: "Request Submitted",
-        description: "Your test request has been successfully submitted. You can track its progress in 'My Requests'.",
-        className: 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600'
+        description: "Your test request has been submitted. Please complete the payment.",
       });
   }
 
@@ -79,7 +98,21 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
     return priceInfo ? `Ksh ${priceInfo.price.toFixed(2)}` : 'N/A';
   }
 
+  const handlePayLater = () => {
+      setIsPaymentPromptOpen(false);
+      toast({
+          title: "Payment Deferred",
+          description: "You can complete your payment later from the 'My Requests' page.",
+      });
+  }
+
+  const handlePayNow = () => {
+      setIsPaymentPromptOpen(false);
+      setIsPaymentDialogOpen(true);
+  }
+
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
@@ -187,8 +220,8 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lab-selection">Select Lab (optional)</Label>
-              <Select>
+              <Label htmlFor="lab-selection">Select Lab</Label>
+              <Select value={selectedLabId} onValueChange={setSelectedLabId}>
                 <SelectTrigger id="lab-selection">
                   <SelectValue placeholder="Any available lab" />
                 </SelectTrigger>
@@ -229,5 +262,33 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={isPaymentPromptOpen} onOpenChange={setIsPaymentPromptOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Payment Required</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Your test request has been submitted. Please complete the payment to proceed.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={handlePayLater}>Pay Later</AlertDialogCancel>
+                <AlertDialogAction onClick={handlePayNow} className="bg-accent text-accent-foreground hover:bg-accent/90">Pay Now</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    
+    {selectedTest && selectedLabId && (
+        <PaymentDialog 
+            open={isPaymentDialogOpen}
+            onOpenChange={setIsPaymentDialogOpen}
+            testName={selectedTest.name}
+            labName={mockLabs.find(l => l.id === selectedLabId)?.name || ''}
+            amount={selectedTest.prices.find(p => p.labId === selectedLabId)?.price || 0}
+            requestId="req-new"
+        />
+    )}
+
+    </>
   );
 }
