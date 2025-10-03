@@ -28,7 +28,7 @@ import {
 import { Star, FileText, Download, MessageSquareWarning, Bot, Printer, MessageSquare, User } from "lucide-react";
 import { mockTestResults } from "@/lib/mock-data";
 import { AiInsightDialog } from "@/components/dashboard/ai-insight-dialog";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -173,6 +173,18 @@ export default function HistoryPage() {
     const [dialogs, setDialogs] = useState<{ rate: boolean, report: boolean, profile: boolean }>({ rate: false, report: false, profile: false });
     const [activePersonnel, setActivePersonnel] = useState("");
     const { print } = usePrint();
+    const [promptedForRating, setPromptedForRating] = useState<string[]>([]);
+
+
+    const handleAccordionChange = (value: string) => {
+        const result = mockTestResults.find(r => r.id === value);
+        if (result && !result.rating && !promptedForRating.includes(result.id)) {
+            setTimeout(() => {
+                openDialog('rate', result.personnelName);
+                setPromptedForRating(prev => [...prev, result.id]);
+            }, 1000); // 1 second delay
+        }
+    }
 
     const handlePrint = (result: TestResult) => {
         print(<TestResultPrintView result={result} />);
@@ -197,7 +209,7 @@ export default function HistoryPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full" onValueChange={handleAccordionChange}>
           {mockTestResults.map((result) => (
             <AccordionItem key={result.id} value={result.id}>
               <AccordionTrigger className="hover:no-underline">
