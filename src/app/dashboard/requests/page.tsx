@@ -343,7 +343,7 @@ export default function RequestsPage() {
                     )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {format(new Date(request.requestDate), "PPP p")}
+                    {format(new Date(request.requestDate), "PPP")}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2">
@@ -361,7 +361,7 @@ export default function RequestsPage() {
                                 Test Results
                               </DialogTitle>
                               <DialogDescription>
-                                {result.testName} - {format(new Date(result.date), "PPP p")}
+                                {result.testName} - {format(new Date(result.date), "PPP")}
                               </DialogDescription>
                             </DialogHeader>
                             <div className="py-4">

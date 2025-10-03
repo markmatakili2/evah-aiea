@@ -260,7 +260,7 @@ export default function HistoryPage() {
                   <div className="text-left">
                     <p className="font-semibold">{result.testName}</p>
                     <p className="text-sm text-muted-foreground">
-                      Date: {format(new Date(result.date), "PPP p")}
+                      Date: {format(new Date(result.date), "PPP")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
