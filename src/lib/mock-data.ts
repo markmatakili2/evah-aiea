@@ -12,6 +12,7 @@ export const mockTests: Test[] = [
     id: 'test1',
     name: 'Complete Blood Count (CBC)',
     description: 'Measures different components of your blood, including red and white blood cells.',
+    category: 'Hematology',
     prices: [
       { labId: 'lab1', price: 35 },
       { labId: 'lab2', price: 40 },
@@ -22,6 +23,7 @@ export const mockTests: Test[] = [
     id: 'test2',
     name: 'Lipid Panel',
     description: 'Measures fats and fatty substances used as a source of energy by your body.',
+    category: 'Biochemistry',
     prices: [
       { labId: 'lab1', price: 50 },
       { labId: 'lab3', price: 55 },
@@ -31,6 +33,7 @@ export const mockTests: Test[] = [
     id: 'test3',
     name: 'Thyroid Panel (TSH)',
     description: 'Evaluates thyroid gland function and helps diagnose thyroid disorders.',
+    category: 'Endocrinology',
     prices: [
       { labId: 'lab2', price: 75 },
       { labId: 'lab3', price: 70 },
@@ -40,6 +43,7 @@ export const mockTests: Test[] = [
     id: 'test4',
     name: 'Basic Metabolic Panel (BMP)',
     description: 'Measures glucose, calcium, and electrolytes to check your kidney health.',
+    category: 'Biochemistry',
     prices: [
       { labId: 'lab1', price: 45 },
       { labId: 'lab2', price: 48 },
@@ -49,6 +53,7 @@ export const mockTests: Test[] = [
     id: 'test5',
     name: 'Vitamin D Test',
     description: 'Measures the level of vitamin D in your blood to check for deficiencies.',
+    category: 'Biochemistry',
     prices: [
       { labId: 'lab3', price: 60 },
     ],
@@ -57,10 +62,31 @@ export const mockTests: Test[] = [
     id: 'test6',
     name: 'Hemoglobin A1c (HbA1c)',
     description: 'Used to diagnose and monitor diabetes by measuring average blood sugar over 2-3 months.',
+    category: 'Endocrinology',
     prices: [
         { labId: 'lab1', price: 40 },
         { labId: 'lab2', price: 42 },
         { labId: 'lab3', price: 39 },
+    ],
+  },
+  {
+    id: 'test7',
+    name: 'Urine Culture',
+    description: 'Checks for bacteria in your urine, which can cause a urinary tract infection (UTI).',
+    category: 'Microbiology',
+    prices: [
+      { labId: 'lab1', price: 65 },
+      { labId: 'lab2', price: 70 },
+    ],
+  },
+  {
+    id: 'test8',
+    name: 'Hepatitis B Surface Antigen',
+    description: 'Detects the presence of the hepatitis B virus.',
+    category: 'Serology',
+    prices: [
+      { labId: 'lab1', price: 80 },
+      { labId: 'lab3', price: 85 },
     ],
   },
 ];

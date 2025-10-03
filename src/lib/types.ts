@@ -1,8 +1,10 @@
 
+
 export type Test = {
   id: string;
   name: string;
   description: string;
+  category: 'Hematology' | 'Biochemistry' | 'Microbiology' | 'Serology' | 'Endocrinology';
   prices: {
     labId: string;
     price: number;
