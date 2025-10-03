@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -26,6 +27,8 @@ import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { useAuth } from '@/firebase';
 import { ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -53,6 +56,7 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -75,6 +79,14 @@ export default function RegisterPage() {
 
   const handleVerify = () => {
     // In a real app, you'd verify the code here.
+    toast({
+      title: "Verification Successful!",
+      description: "Please review our terms of service.",
+    });
+    setStep(3); // Proceed to terms
+  };
+
+  const handleFinishRegistration = () => {
     toast({
       title: "Success!",
       description: "Your account has been created.",
@@ -187,23 +199,64 @@ export default function RegisterPage() {
                     <ShieldCheck className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle className="text-2xl font-headline mt-4">Verify Your Phone Number</CardTitle>
-                <CardDescription>A verification code will be sent to {phoneNumber}.</CardDescription>
+                <CardDescription>A verification code has been sent to {phoneNumber}.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="otp">Verification Code</Label>
                     <Input id="otp" type="text" placeholder="Enter 6-digit code" maxLength={6} />
                 </div>
-                <Button type="button" variant="secondary" className="w-full" onClick={handleSendCode}>
-                  Send Code
+                <Button type="button" variant="link" className="text-sm p-0 h-auto" onClick={handleSendCode}>
+                  Resend Code
                 </Button>
               </CardContent>
               <CardFooter className="flex flex-col gap-4">
                 <Button type="button" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleVerify}>
-                  Verify & Create Account
+                  Verify Phone Number
                 </Button>
                  <Button variant="link" onClick={() => setStep(1)}>
                     Back to registration
+                </Button>
+              </CardFooter>
+            </>
+          )}
+          
+           {step === 3 && (
+             <>
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-headline">Terms of Service</CardTitle>
+                <CardDescription>Please read and accept our terms before proceeding.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ScrollArea className="h-64 w-full rounded-md border p-4">
+                    <h3 className="font-bold mb-2">1. Payments, Cancellations, and Refunds</h3>
+                    <ul className="list-disc pl-5 space-y-2 text-sm">
+                        <li>There shall be no refund of any monies after sample collection.</li>
+                        <li>A 45% of the test cost price shall be charged for cancelling the test after DIGI-LAB SOLUTIONS LTD has allocated a Medical Lab Office.</li>
+                        <li>Plans to change the location of sample collection must be communicated 15 minutes prior; failure will attract a 20% penalty on the test cost price.</li>
+                        <li>A complete cashback will be performed by DIGI-LAB SOLUTIONS LTD in the event of a system failure.</li>
+                        <li>A cashback on the patient's demise shall be promptly pursued.</li>
+                    </ul>
+                    <h3 className="font-bold mt-4 mb-2">2. Penalties for Service Providers</h3>
+                    <ul className="list-disc pl-5 space-y-2 text-sm">
+                        <li>A 10% penalty fee will be charged on the Medical Lab Officer for any delay in locating the client within a window of 15 minutes.</li>
+                        <li>10% of the cost of the test will be charged on any clinical lab registered with DIGI-LAB SOLUTIONS LTD for any inconvenience in conducting the requested lab investigation. This rule is exclusive of circumstances limited to natural calamities.</li>
+                    </ul>
+                     <p className="text-sm mt-4">For the full terms, please visit our <Link href="/terms-of-service" target="_blank" className="text-primary underline">Terms of Service page</Link>.</p>
+                </ScrollArea>
+                <div className="flex items-center space-x-2">
+                    <Checkbox id="terms" onCheckedChange={(checked) => setAgreed(!!checked)} />
+                    <label
+                        htmlFor="terms"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                        I have read and agree to the terms of service.
+                    </label>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button type="button" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleFinishRegistration} disabled={!agreed}>
+                  Continue to Dashboard
                 </Button>
               </CardFooter>
             </>
