@@ -1,5 +1,6 @@
 
-import type { Test, Lab, TestRequest, TestResult, UserProfile, FaqItem } from './types';
+import type { Test, Lab, TestRequest, TestResult, UserProfile, FaqItem, Notification } from './types';
+import { CreditCard, MessageSquare, FileText, CheckCircle } from 'lucide-react';
 
 export const mockLabs: Lab[] = [
   { id: 'lab1', name: 'City Central Labs', location: '123 Main St, Downtown' },
@@ -14,9 +15,9 @@ export const mockTests: Test[] = [
     description: 'Measures different components of your blood, including red and white blood cells.',
     category: 'Hematology',
     prices: [
-      { labId: 'lab1', price: 35 },
-      { labId: 'lab2', price: 40 },
-      { labId: 'lab3', price: 38 },
+      { labId: 'lab1', price: 3500 },
+      { labId: 'lab2', price: 4000 },
+      { labId: 'lab3', price: 3800 },
     ],
   },
   {
@@ -25,8 +26,8 @@ export const mockTests: Test[] = [
     description: 'Measures fats and fatty substances used as a source of energy by your body.',
     category: 'Biochemistry',
     prices: [
-      { labId: 'lab1', price: 50 },
-      { labId: 'lab3', price: 55 },
+      { labId: 'lab1', price: 5000 },
+      { labId: 'lab3', price: 5500 },
     ],
   },
   {
@@ -35,8 +36,8 @@ export const mockTests: Test[] = [
     description: 'Evaluates thyroid gland function and helps diagnose thyroid disorders.',
     category: 'Endocrinology',
     prices: [
-      { labId: 'lab2', price: 75 },
-      { labId: 'lab3', price: 70 },
+      { labId: 'lab2', price: 7500 },
+      { labId: 'lab3', price: 7000 },
     ],
   },
   {
@@ -45,8 +46,8 @@ export const mockTests: Test[] = [
     description: 'Measures glucose, calcium, and electrolytes to check your kidney health.',
     category: 'Biochemistry',
     prices: [
-      { labId: 'lab1', price: 45 },
-      { labId: 'lab2', price: 48 },
+      { labId: 'lab1', price: 4500 },
+      { labId: 'lab2', price: 4800 },
     ],
   },
   {
@@ -55,7 +56,7 @@ export const mockTests: Test[] = [
     description: 'Measures the level of vitamin D in your blood to check for deficiencies.',
     category: 'Biochemistry',
     prices: [
-      { labId: 'lab3', price: 60 },
+      { labId: 'lab3', price: 6000 },
     ],
   },
     {
@@ -64,9 +65,9 @@ export const mockTests: Test[] = [
     description: 'Used to diagnose and monitor diabetes by measuring average blood sugar over 2-3 months.',
     category: 'Endocrinology',
     prices: [
-        { labId: 'lab1', price: 40 },
-        { labId: 'lab2', price: 42 },
-        { labId: 'lab3', price: 39 },
+        { labId: 'lab1', price: 4000 },
+        { labId: 'lab2', price: 4200 },
+        { labId: 'lab3', price: 3900 },
     ],
   },
   {
@@ -75,8 +76,8 @@ export const mockTests: Test[] = [
     description: 'Checks for bacteria in your urine, which can cause a urinary tract infection (UTI).',
     category: 'Microbiology',
     prices: [
-      { labId: 'lab1', price: 65 },
-      { labId: 'lab2', price: 70 },
+      { labId: 'lab1', price: 6500 },
+      { labId: 'lab2', price: 7000 },
     ],
   },
   {
@@ -85,8 +86,8 @@ export const mockTests: Test[] = [
     description: 'Detects the presence of the hepatitis B virus.',
     category: 'Serology',
     prices: [
-      { labId: 'lab1', price: 80 },
-      { labId: 'lab3', price: 85 },
+      { labId: 'lab1', price: 8000 },
+      { labId: 'lab3', price: 8500 },
     ],
   },
 ];
@@ -231,3 +232,10 @@ export const mockUserProfile: UserProfile = {
     },
     allowLocation: true,
 };
+
+export const mockNotifications: Notification[] = [
+    { id: '1', icon: MessageSquare, text: "New message from Jane Smith", href: "/dashboard/chat", timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), read: false },
+    { id: '2', icon: CreditCard, text: "Payment due for Lipid Panel", href: "/dashboard/requests", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), read: false },
+    { id: '3', icon: FileText, text: "Results for CBC are ready", href: "/dashboard/history", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), read: true },
+    { id: '4', icon: CheckCircle, text: "Your insurance details have been verified.", href: "/dashboard/profile", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), read: true },
+];

@@ -15,8 +15,6 @@ import {
   User,
   MessageSquare,
   Bell,
-  CreditCard,
-  FileText,
 } from "lucide-react";
 
 import {
@@ -38,21 +36,17 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "../theme-toggle";
 import Image from "next/image";
-import { mockUserProfile } from "@/lib/mock-data";
+import { mockNotifications, mockUserProfile } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Dashboard" },
   { href: "/dashboard/requests", icon: Package, label: "My Requests" },
   { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
   { href: "/dashboard/history", icon: History, label: "History" },
+  { href: "/dashboard/notifications", icon: Bell, label: "Notifications" },
   { href: "/dashboard/profile", icon: User, label: "Profile" },
-];
-
-const mockNotifications = [
-    { text: "New message from Jane Smith", href: "/dashboard/chat", icon: MessageSquare },
-    { text: "Payment due for Lipid Panel", href: "/dashboard/requests", icon: CreditCard },
-    { text: "Results for CBC are ready", href: "/dashboard/history", icon: FileText },
 ];
 
 export function DashboardHeader() {
@@ -131,17 +125,24 @@ export function DashboardHeader() {
         <DropdownMenuContent align="end" className="w-80">
           <DropdownMenuLabel>Notifications</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {mockNotifications.map((notification, index) => (
-            <DropdownMenuItem key={index} asChild>
-                <Link href={notification.href} className="flex items-center gap-3">
-                    <notification.icon className="h-4 w-4 text-muted-foreground" />
-                    <span>{notification.text}</span>
+          {mockNotifications.slice(0, 3).map((notification) => (
+            <DropdownMenuItem key={notification.id} asChild>
+                <Link href={notification.href} className="flex items-start gap-3">
+                    <notification.icon className="h-4 w-4 text-muted-foreground mt-1" />
+                    <div className="flex flex-col">
+                        <span>{notification.text}</span>
+                        <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
+                        </span>
+                    </div>
                 </Link>
             </DropdownMenuItem>
           ))}
            <DropdownMenuSeparator />
-           <DropdownMenuItem className="justify-center text-sm text-muted-foreground hover:text-primary">
-                View all notifications
+           <DropdownMenuItem asChild className="justify-center text-sm text-muted-foreground hover:text-primary">
+                <Link href="/dashboard/notifications">
+                    View all notifications
+                </Link>
            </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

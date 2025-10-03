@@ -1,5 +1,7 @@
 
 
+import type { LucideIcon } from "lucide-react";
+
 export type Test = {
   id: string;
   name: string;
@@ -69,4 +71,13 @@ export type UserProfile = {
 export type FaqItem = {
     question: string;
     answer: string;
+};
+
+export type Notification = {
+    id: string;
+    icon: LucideIcon;
+    text: string;
+    href: string;
+    timestamp: string;
+    read: boolean;
 };
