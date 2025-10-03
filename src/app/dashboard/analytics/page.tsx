@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -5,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { mockTestRequests, mockTests } from '@/lib/mock-data';
 import { useMemo } from 'react';
-import { Activity } from 'lucide-react';
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
           <CardDescription>Distribution of your test requests by status.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={{}} className="min-h-[200px] w-full">
+          <ChartContainer config={{}} className="min-h-[250px] w-full">
             <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                     <RechartsTooltip content={<ChartTooltipContent hideLabel />} />
@@ -76,7 +76,7 @@ export default function AnalyticsPage() {
           <CardDescription>Breakdown of tests by medical category.</CardDescription>
         </CardHeader>
         <CardContent>
-            <ChartContainer config={{}} className="min-h-[200px] w-full">
+            <ChartContainer config={{}} className="min-h-[250px] w-full">
                 <ResponsiveContainer width="100%" height={250}>
                     <PieChart>
                        <RechartsTooltip content={<ChartTooltipContent hideLabel />} />
@@ -103,7 +103,7 @@ export default function AnalyticsPage() {
                     label: 'Tests',
                     color: 'hsl(var(--chart-1))',
                 },
-            }}>
+            }} className="min-h-[300px] w-full">
                 <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={monthlyTestData}>
                         <CartesianGrid vertical={false} />
