@@ -81,10 +81,6 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
   const handleSubmit = () => {
       setOpen(false);
       setIsPaymentPromptOpen(true);
-      toast({
-        title: "Request Submitted",
-        description: "Your test request has been submitted. Please complete the payment.",
-      });
   }
 
   const handleTestSelection = (testId: string) => {
@@ -101,7 +97,7 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
   const handlePayLater = () => {
       setIsPaymentPromptOpen(false);
       toast({
-          title: "Payment Deferred",
+          title: "Request Submitted",
           description: "You can complete your payment later from the 'My Requests' page.",
       });
   }
@@ -132,7 +128,7 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
               {initialTest ? (
                 <Input id="test-selection" value={initialTest.name} readOnly disabled />
               ) : (
-                <Select onValueChange={handleTestSelection}>
+                <Select onValueChange={handleTestSelection} value={selectedTest?.id}>
                   <SelectTrigger id="test-selection">
                     <SelectValue placeholder="Choose a test..." />
                   </SelectTrigger>
