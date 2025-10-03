@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -75,7 +76,7 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
   const getPriceForLab = (labId: string) => {
     if (!selectedTest) return null;
     const priceInfo = selectedTest.prices.find(p => p.labId === labId);
-    return priceInfo ? `$${priceInfo.price.toFixed(2)}` : 'N/A';
+    return priceInfo ? `Ksh ${priceInfo.price.toFixed(2)}` : 'N/A';
   }
 
   return (

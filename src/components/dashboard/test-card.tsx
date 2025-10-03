@@ -1,3 +1,4 @@
+
 import type { Test } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,7 +46,7 @@ export function TestCard({ test }: TestCardProps) {
       <CardContent className="flex-grow">
          <p className="text-sm text-muted-foreground">Starting from</p>
          <p className="text-2xl font-bold font-headline text-primary">
-            ${startingPrice.toFixed(2)}
+            Ksh {startingPrice.toFixed(2)}
          </p>
       </CardContent>
       <CardFooter className="flex-col items-stretch gap-2">
@@ -62,7 +63,7 @@ export function TestCard({ test }: TestCardProps) {
             {test.prices.map(({ labId, price }) => (
               <DropdownMenuItem key={labId} className="flex justify-between">
                 <span>{getLabName(labId)}</span>
-                <span className="font-semibold">${price.toFixed(2)}</span>
+                <span className="font-semibold">Ksh {price.toFixed(2)}</span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

@@ -467,7 +467,7 @@ export default function RequestsPage() {
                                 Amount to Pay
                               </p>
                               <p className="text-4xl font-bold font-headline text-primary">
-                                $45.00
+                                Ksh 45.00
                               </p>
                             </div>
                             <div className="space-y-2">
