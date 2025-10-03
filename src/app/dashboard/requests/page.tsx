@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -122,9 +123,25 @@ const PersonnelProfileDialog = ({ open, onOpenChange, personnelName }: { open: b
     </Dialog>
 )
 
+const feedbackTags = ["Fast Response", "Timely Delivery", "Professional", "Friendly"];
+
 const RatePersonnelDialog = ({ open, onOpenChange, personnelName }: { open: boolean, onOpenChange: (open: boolean) => void, personnelName: string }) => {
     const { toast } = useToast();
     const [rating, setRating] = useState(0);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [comment, setComment] = useState("");
+
+    const handleTagClick = (tag: string) => {
+        setSelectedTags(prev => 
+            prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+        );
+    }
+
+    const resetState = () => {
+        setRating(0);
+        setSelectedTags([]);
+        setComment("");
+    }
 
     const handleSubmit = () => {
         onOpenChange(false);
@@ -132,24 +149,50 @@ const RatePersonnelDialog = ({ open, onOpenChange, personnelName }: { open: bool
             title: "Thank you for your feedback!",
             description: `You rated ${personnelName} ${rating} out of 5 stars.`,
         });
-        setRating(0);
+        resetState();
     }
 
     return (
-        <Dialog open={open} onOpenChange={(isOpen) => { onOpenChange(isOpen); if (!isOpen) setRating(0); }}>
+        <Dialog open={open} onOpenChange={(isOpen) => { onOpenChange(isOpen); if (!isOpen) resetState(); }}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Rate {personnelName}</DialogTitle>
                     <DialogDescription>Your feedback helps us maintain quality service.</DialogDescription>
                 </DialogHeader>
-                <div className="flex justify-center items-center gap-2 py-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                            key={star}
-                            className={cn("w-8 h-8 cursor-pointer", rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300 hover:text-yellow-300")}
-                            onClick={() => setRating(star)}
+                 <div className="space-y-6 py-4">
+                    <div className="flex justify-center items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                             <Star
+                                key={star}
+                                className={cn("w-8 h-8 cursor-pointer", rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300 hover:text-yellow-300")}
+                                onClick={() => setRating(star)}
+                            />
+                        ))}
+                    </div>
+                    <div className="space-y-2">
+                        <p className="text-sm font-medium">What did you like?</p>
+                        <div className="flex flex-wrap gap-2">
+                            {feedbackTags.map(tag => (
+                                <Button
+                                    key={tag}
+                                    variant={selectedTags.includes(tag) ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => handleTagClick(tag)}
+                                    className={cn("rounded-full", selectedTags.includes(tag) && "bg-primary text-primary-foreground")}
+                                >
+                                    {tag}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                         <p className="text-sm font-medium">Additional comments</p>
+                        <Textarea 
+                            placeholder="Tell us more about your experience..." 
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
                         />
-                    ))}
+                    </div>
                 </div>
                 <DialogFooter>
                     <Button onClick={handleSubmit} disabled={rating === 0}>Submit Rating</Button>
