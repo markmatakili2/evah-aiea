@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,7 +75,19 @@ export default function ProfilePage() {
                         </SelectContent>
                     </Select>
                 </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="address">Address</Label>
+                    <Input id="address" defaultValue={mockUserProfile.address.line1} />
+                </div>
                 <div className="space-y-2">
+                    <Label htmlFor="city">City/Town</Label>
+                    <Input id="city" defaultValue={mockUserProfile.address.city} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Input id="country" defaultValue={mockUserProfile.address.country} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
                     <Label>Allow Location Access</Label>
                     <div className="flex items-center space-x-2 h-10">
                         <Switch id="location-access" defaultChecked={mockUserProfile.allowLocation} />
