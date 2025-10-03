@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -295,9 +296,9 @@ export default function HistoryPage() {
       </CardContent>
     </Card>
     
-    <RatePersonnelDialog open={dialogs.rate} onOpenChange={() => closeDialog('rate')} personnelName={activePersonnel} />
-    <ReportAbuseDialog open={dialogs.report} onOpenChange={() => closeDialog('report')} personnelName={activePersonnel} />
-    <PersonnelProfileDialog open={dialogs.profile} onOpenChange={() => closeDialog('profile')} personnelName={activePersonnel} />
+    <RatePersonnelDialog open={dialogs.rate} onOpenChange={(isOpen) => closeDialog(isOpen ? 'rate' : 'rate')} personnelName={activePersonnel} />
+    <ReportAbuseDialog open={dialogs.report} onOpenChange={(isOpen) => closeDialog(isOpen ? 'report' : 'report')} personnelName={activePersonnel} />
+    <PersonnelProfileDialog open={dialogs.profile} onOpenChange={(isOpen) => closeDialog(isOpen ? 'profile' : 'profile')} personnelName={activePersonnel} />
     </>
   );
 }
