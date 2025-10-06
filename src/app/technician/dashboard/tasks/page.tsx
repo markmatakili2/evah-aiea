@@ -16,6 +16,14 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { mockTestRequests } from "@/lib/mock-data";
 import { Phone, MessageSquare, MapPin, Check, FileText, FilePen } from "lucide-react";
 import Image from "next/image";
