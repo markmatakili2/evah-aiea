@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
@@ -50,8 +51,12 @@ export default function SpecialistsPage() {
                   ))}
                 </ul>
                 <div className="flex space-x-4">
-                  <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">Register as a Technician</Button>
-                  <Button size="lg" variant="outline">Log In</Button>
+                  <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
+                    <Link href="/technician/register">Register as a Technician</Link>
+                  </Button>
+                  <Button size="lg" variant="outline" asChild>
+                    <Link href="/technician/login">Log In</Link>
+                  </Button>
                 </div>
               </div>
               <div className="relative w-full h-80 md:h-96 rounded-2xl overflow-hidden shadow-xl">
