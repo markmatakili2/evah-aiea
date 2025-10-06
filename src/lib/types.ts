@@ -81,3 +81,10 @@ export type Notification = {
     timestamp: string;
     read: boolean;
 };
+
+export type ReferredUser = {
+  id: string;
+  name: string;
+  dateJoined: string;
+  status: 'Completed' | 'Pending Test';
+}

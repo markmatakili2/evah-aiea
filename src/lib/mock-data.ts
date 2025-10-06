@@ -1,5 +1,5 @@
 
-import type { Test, Lab, TestRequest, TestResult, UserProfile, FaqItem, Notification } from './types';
+import type { Test, Lab, TestRequest, TestResult, UserProfile, FaqItem, Notification, ReferredUser } from './types';
 import { CreditCard, MessageSquare, FileText, CheckCircle } from 'lucide-react';
 
 export const mockLabs: Lab[] = [
@@ -238,4 +238,11 @@ export const mockNotifications: Notification[] = [
     { id: '2', icon: CreditCard, text: "Payment due for Lipid Panel", href: "/dashboard/requests", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), read: false },
     { id: '3', icon: FileText, text: "Results for CBC are ready", href: "/dashboard/history", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), read: true },
     { id: '4', icon: CheckCircle, text: "Your insurance details have been verified.", href: "/dashboard/profile", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), read: true },
+];
+
+export const mockReferredUsers: ReferredUser[] = [
+    { id: 'ref1', name: 'Brenda M.', dateJoined: '2024-07-15T00:00:00Z', status: 'Completed' },
+    { id: 'ref2', name: 'Samuel K.', dateJoined: '2024-07-10T00:00:00Z', status: 'Completed' },
+    { id: 'ref3', name: 'Faith A.', dateJoined: '2024-06-28T00:00:00Z', status: 'Pending Test' },
+    { id: 'ref4', name: 'David O.', dateJoined: '2024-06-12T00:00:00Z', status: 'Pending Test' },
 ];

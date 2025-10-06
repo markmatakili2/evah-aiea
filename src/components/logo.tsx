@@ -1,6 +1,14 @@
+
+'use client';
+
 import { cn } from "@/lib/utils";
+import { useSidebar } from "./ui/sidebar";
 
 export const Logo = ({ className }: { className?: string }) => {
+  // useSidebar can return null if not within a provider.
+  // We provide a fallback of an empty object to avoid a crash.
+  const { state } = useSidebar() ?? {};
+
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <svg
@@ -16,7 +24,12 @@ export const Logo = ({ className }: { className?: string }) => {
         <path d="M11.6364 21.2727C14.5455 21.2727 18 19.3377 18 15.5V10.2273C18 6.39091 14.5455 4.5 11.6364 4.5H4.5V27H11.6364C14.5455 27 18 25.1091 18 21.2727" stroke="#1B2D6B" strokeWidth="3" strokeLinejoin="round"/>
       </svg>
 
-      <span className="text-2xl font-headline font-bold text-primary">DigiLab</span>
+      <span className={cn(
+        "text-2xl font-headline font-bold text-primary",
+        // Only apply sidebar-related classes if the state is available.
+        state && "duration-200 group-data-[collapsible=icon]/sidebar-wrapper:opacity-0 group-data-[collapsible=icon]/sidebar-wrapper:w-0",
+        state && "group-data-[collapsible=offcanvas]/sidebar-wrapper:opacity-100 group-data-[collapsible=offcanvas]/sidebar-wrapper:w-auto"
+      )}>DigiLab</span>
     </div>
   );
 };

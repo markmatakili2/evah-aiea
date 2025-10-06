@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Patient": {
@@ -61,6 +62,14 @@
         "googleId": {
           "type": "string",
           "description": "Google ID associated with the patient's account (if applicable)."
+        },
+        "referralCode": {
+            "type": "string",
+            "description": "The unique code for referring other users."
+        },
+        "referredBy": {
+            "type": "string",
+            "description": "The referral code of the user who referred this patient."
         }
       },
       "required": [
@@ -447,6 +456,37 @@
         "reportDate",
         "description"
       ]
+    },
+    "Referral": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Referral",
+        "type": "object",
+        "description": "Represents a referral made by a patient.",
+        "properties": {
+            "id": {
+                "type": "string",
+                "description": "Unique identifier for the referral.",
+                "format": "uuid"
+            },
+            "referrerId": {
+                "type": "string",
+                "description": "The ID of the patient who made the referral."
+            },
+            "referredId": {
+                "type": "string",
+                "description": "The ID of the patient who was referred."
+            },
+            "date": {
+                "type": "string",
+                "description": "The date the referral was made.",
+                "format": "date-time"
+            },
+            "status": {
+                "type": "string",
+                "description": "Status of the referral (e.g., 'Pending Test', 'Completed')."
+            }
+        },
+        "required": ["id", "referrerId", "referredId", "date", "status"]
     }
   },
   "auth": {
@@ -644,8 +684,22 @@
             }
           ]
         }
+      },
+      {
+        "path": "/referrals/{referralId}",
+        "definition": {
+            "entityName": "Referral",
+            "schema": { "$ref": "#/backend/entities/Referral" },
+            "description": "Stores referral information. A root collection for easy querying of all referrals.",
+            "params": [
+                {
+                    "name": "referralId",
+                    "description": "The unique identifier of the referral."
+                }
+            ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability. It leverages denormalization to avoid hierarchical authorization dependencies and structural segregation to maintain a homogeneous security posture within collections.\n\n*   **Patients:** Patients are stored under `/patients/{patientId}`. This path-based ownership simplifies security rules. The `googleId` attribute facilitates login via Google.\n*   **Tests:** Tests are stored in a flat `/tests/{testId}` collection. This is appropriate as tests are global and not owned by individual users.\n*   **Labs:** Labs are stored under `/labs/{labId}`. The `ownerId` attribute establishes the relationship between labs and lab owners. The root-level collection simplifies retrieval.\n*   **Lab Owners:** Lab owners are stored under `/lab_owners/{labOwnerId}`.  The `googleId` attribute facilitates login via Google.\n*   **Lab Personnel:** Lab personnel are stored under `/lab_personnel/{labPersonnelId}`. The `labId` attribute links personnel to labs. This is stored in a root-level collection simplifying personnel retrieval.\n*   **Test Requests:** Test requests are stored under `/patients/{patientId}/test_requests/{testRequestId}`. This reflects the 1:N relationship between patients and test requests.  To support authorization independence, we denormalize a `patientId` field inside the test request. This allows security rules to validate that the authenticated user `request.auth.uid` matches the `patientId` in the test request without needing to read the parent patient document.\n*   **Test Results:** Test results are stored under `/patients/{patientId}/test_requests/{testRequestId}/test_results/{testResultId}`. This nested structure reflects the relationship between patients, test requests, and test results. Again, to enforce authorization independence, `patientId` and `testRequestId` are denormalized into each `test_results` document.\n*   **Payments:** Payments are stored under `/patients/{patientId}/test_requests/{testRequestId}/payments/{paymentId}`. This reflects the link between a patient, a test request and its payment. `patientId` and `testRequestId` are denormalized in each `payments` document for authorization independence.\n*   **Personnel Ratings:** Personnel ratings are stored under `/patients/{patientId}/personnel_ratings/{personnelRatingId}`.  We denormalize `patientId` into each `personnel_ratings` document.\n*   **Abuse Reports:** Abuse reports are stored under `/patients/{patientId}/abuse_reports/{abuseReportId}`. We denormalize `patientId` into each `abuse_reports` document.\n\nThis structure supports QAPs by:\n\n*   **Enabling secure list operations:**  Path-based ownership and denormalization allow listing of test requests, results, payments, ratings, and reports securely, as rules can efficiently filter based on the authenticated user's ID without needing complex `get()` calls.\n*   **Maintaining Invariants:** The structure supports the integrity of ownership, timestamps, and denormalized data. Security rules can enforce that `patientId` in subcollections always matches the parent patient ID and that timestamps are immutable after creation."
+    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability. It leverages denormalization to avoid hierarchical authorization dependencies and structural segregation to maintain a homogeneous security posture within collections.\n\n*   **Patients:** Patients are stored under `/patients/{patientId}`. This path-based ownership simplifies security rules. The `googleId` attribute facilitates login via Google. The `referralCode` and `referredBy` fields are added to manage the referral system.\n*   **Tests:** Tests are stored in a flat `/tests/{testId}` collection. This is appropriate as tests are global and not owned by individual users.\n*   **Labs:** Labs are stored under `/labs/{labId}`. The `ownerId` attribute establishes the relationship between labs and lab owners. The root-level collection simplifies retrieval.\n*   **Lab Owners:** Lab owners are stored under `/lab_owners/{labOwnerId}`.  The `googleId` attribute facilitates login via Google.\n*   **Lab Personnel:** Lab personnel are stored under `/lab_personnel/{labPersonnelId}`. The `labId` attribute links personnel to labs. This is stored in a root-level collection simplifying personnel retrieval.\n*   **Test Requests:** Test requests are stored under `/patients/{patientId}/test_requests/{testRequestId}`. This reflects the 1:N relationship between patients and test requests.  To support authorization independence, we denormalize a `patientId` field inside the test request. This allows security rules to validate that the authenticated user `request.auth.uid` matches the `patientId` in the test request without needing to read the parent patient document.\n*   **Test Results:** Test results are stored under `/patients/{patientId}/test_requests/{testRequestId}/test_results/{testResultId}`. This nested structure reflects the relationship between patients, test requests, and test results. Again, to enforce authorization independence, `patientId` and `testRequestId` are denormalized into each `test_results` document.\n*   **Payments:** Payments are stored under `/patients/{patientId}/test_requests/{testRequestId}/payments/{paymentId}`. This reflects the link between a patient, a test request and its payment. `patientId` and `testRequestId` are denormalized in each `payments` document for authorization independence.\n*   **Personnel Ratings:** Personnel ratings are stored under `/patients/{patientId}/personnel_ratings/{personnelRatingId}`.  We denormalize `patientId` into each `personnel_ratings` document.\n*   **Abuse Reports:** Abuse reports are stored under `/patients/{patientId}/abuse_reports/{abuseReportId}`. We denormalize `patientId` into each `abuse_reports` document.\n*   **Referrals:** Referrals are stored in a flat `/referrals/{referralId}` collection. This allows for easy querying and management of all referrals across the system, independent of individual patient records.\n\nThis structure supports QAPs by:\n\n*   **Enabling secure list operations:**  Path-based ownership and denormalization allow listing of test requests, results, payments, ratings, and reports securely, as rules can efficiently filter based on the authenticated user's ID without needing complex `get()` calls.\n*   **Maintaining Invariants:** The structure supports the integrity of ownership, timestamps, and denormalized data. Security rules can enforce that `patientId` in subcollections always matches the parent patient ID and that timestamps are immutable after creation."
   }
 }
