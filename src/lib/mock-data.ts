@@ -102,6 +102,8 @@ export const mockTestRequests: TestRequest[] = [
     personnelName: 'John Doe',
     personnelId: 'tech1',
     collectionDate: '2024-07-21T09:00:00Z',
+    patient: { name: 'Alex Miller', email: 'a**x@example.com', phone: '****3-4567', age: 34, gender: 'Male' },
+    lab: { id: 'lab1', name: 'City Central Labs' },
     progress: [
       { status: 'Pending', date: '2024-07-20T10:30:00Z', details: 'Request submitted.' },
       { status: 'Allocated', date: '2024-07-20T11:00:00Z', details: 'John Doe assigned.' },
@@ -119,6 +121,8 @@ export const mockTestRequests: TestRequest[] = [
     personnelName: 'Jane Smith',
     personnelId: 'tech2',
     collectionDate: '2024-07-22T14:00:00Z',
+    patient: { name: 'Maria Garcia', email: 'm***a@example.com', phone: '****5-1234', age: 45, gender: 'Female' },
+    lab: { id: 'lab2', name: 'Suburb Diagnostics' },
     progress: [
       { status: 'Pending', date: '2024-07-22T11:00:00Z', details: 'Request submitted.' },
       { status: 'Allocated', date: '2024-07-22T11:30:00Z', details: 'Jane Smith assigned.' },
@@ -132,12 +136,14 @@ export const mockTestRequests: TestRequest[] = [
     testName: 'Lipid Panel',
     requestDate: '2024-07-23T09:15:00Z',
     status: 'Sample Collected',
-    personnelName: 'Jane Smith',
-    personnelId: 'tech2',
+    personnelName: 'John Doe',
+    personnelId: 'tech1',
     collectionDate: '2024-07-24T11:00:00Z',
+    patient: { name: 'Chen Wang', email: 'c**n@example.com', phone: '****8-9012', age: 52, gender: 'Male' },
+    lab: { id: 'lab3', name: 'Wellness Labs Inc.' },
     progress: [
         { status: 'Pending', date: '2024-07-23T09:15:00Z', details: 'Request submitted.' },
-        { status: 'Allocated', date: '2024-07-23T10:00:00Z', details: 'Jane Smith assigned.' },
+        { status: 'Allocated', date: '2024-07-23T10:00:00Z', details: 'John Doe assigned.' },
         { status: 'Sample Collected', date: '2024-07-24T11:05:00Z', details: 'Sample collected and en route to the lab.' },
     ]
   },
@@ -149,21 +155,49 @@ export const mockTestRequests: TestRequest[] = [
     status: 'Allocated',
     personnelName: 'Alex Ray',
     personnelId: 'tech3',
+    patient: { name: 'Fatima Al-Sayed', email: 'f***a@example.com', phone: '****2-3456', age: 29, gender: 'Female' },
+    lab: { id: 'lab1', name: 'City Central Labs' },
     progress: [
         { status: 'Pending', date: '2024-07-24T18:00:00Z', details: 'Request submitted.' },
         { status: 'Allocated', date: '2024-07-24T18:30:00Z', details: 'Lab personnel has been assigned for collection.' },
     ]
   },
-    {
+  {
     id: 'req5',
     testId: 'test5',
     testName: 'Vitamin D Test',
     requestDate: '2024-07-25T12:00:00Z',
     status: 'Pending',
+    patient: { name: 'Liam Murphy', email: 'l**m@example.com', phone: '****1-8765', age: 60, gender: 'Male', proximity: '2.5km' },
+    lab: { id: 'lab3', name: 'Wellness Labs Inc.' },
     progress: [
         { status: 'Pending', date: '2024-07-25T12:00:00Z', details: 'Awaiting allocation of lab personnel.' },
     ]
   },
+  {
+    id: 'req6',
+    testId: 'test7',
+    testName: 'Urine Culture',
+    requestDate: '2024-07-25T14:00:00Z',
+    status: 'Pending',
+    patient: { name: 'Aisha Khan', email: 'a***a@example.com', phone: '****6-5432', age: 38, gender: 'Female', proximity: '5.1km' },
+    lab: { id: 'lab1', name: 'City Central Labs' },
+    progress: [
+        { status: 'Pending', date: '2024-07-25T14:00:00Z', details: 'Awaiting allocation of lab personnel.' },
+    ]
+  },
+  {
+    id: 'req7',
+    testId: 'test8',
+    testName: 'Hepatitis B Surface Antigen',
+    requestDate: '2024-07-25T15:30:00Z',
+    status: 'Pending',
+    patient: { name: 'Kenji Tanaka', email: 'k***i@example.com', phone: '****9-8765', age: 41, gender: 'Male', proximity: '1.2km' },
+    lab: { id: 'lab2', name: 'Suburb Diagnostics' },
+    progress: [
+        { status: 'Pending', date: '2024-07-25T15:30:00Z', details: 'Awaiting allocation of lab personnel.' },
+    ]
+  }
 ];
 
 export const mockTestResults: TestResult[] = [
