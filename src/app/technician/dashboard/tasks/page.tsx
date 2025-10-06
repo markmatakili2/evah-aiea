@@ -25,11 +25,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { mockTestRequests } from "@/lib/mock-data";
-import { Phone, MessageSquare, MapPin, Check, FileText, FilePen } from "lucide-react";
+import { Phone, MessageSquare, MapPin, Check, FileText, FilePen, Upload, Building, Clock } from "lucide-react";
 import Image from "next/image";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { TestRequestStatus } from "@/lib/types";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
 
 const statusVariant: Record<
   TestRequestStatus,
@@ -43,7 +48,78 @@ const statusVariant: Record<
   Cancelled: "destructive",
 };
 
+const LabAccessDialog = ({ open, onOpenChange, labName }: { open: boolean, onOpenChange: (open: boolean) => void, labName: string }) => {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="font-headline">Lab Access Granted</DialogTitle>
+                    <DialogDescription>Your request to access {labName} has been approved.</DialogDescription>
+                </DialogHeader>
+                <div className="py-4 text-center space-y-4">
+                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                        <Check className="h-10 w-10 text-green-600" />
+                    </div>
+                    <div>
+                        <p className="text-sm text-muted-foreground">Access ID</p>
+                        <p className="font-mono text-2xl font-bold">L-AC-78B3D</p>
+                    </div>
+                     <div>
+                        <p className="text-sm text-muted-foreground">Expected Arrival</p>
+                        <p className="text-lg font-semibold">Within 30 minutes</p>
+                    </div>
+                </div>
+                 <DialogFooter>
+                    <Button onClick={() => onOpenChange(false)}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+const UploadResultsDialog = ({ open, onOpenChange, patientName }: { open: boolean, onOpenChange: (open: boolean) => void, patientName: string }) => {
+    const { toast } = useToast();
+    const handleSubmit = () => {
+        onOpenChange(false);
+        toast({
+            title: "Results Uploaded",
+            description: `Results for ${patientName} have been successfully submitted.`,
+        });
+    }
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="font-headline">Upload Test Results</DialogTitle>
+                    <DialogDescription>Enter the results for {patientName}.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="analyte-1">Hemoglobin</Label>
+                        <Textarea id="analyte-1" placeholder="Enter value, range, and flag (e.g., 14.5 g/dL, 13.5-17.5, Normal)" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="analyte-2">White Blood Cell</Label>
+                        <Textarea id="analyte-2" placeholder="Enter value, range, and flag (e.g., 7.2 x10^9/L, 4.5-11.0, Normal)" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="general-notes">General Notes (optional)</Label>
+                        <Textarea id="general-notes" placeholder="Any additional notes about the results..." />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSubmit}>Submit Results</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+
 export default function MyTasksPage() {
+  const [activeDialog, setActiveDialog] = useState< 'labAccess' | 'uploadResults' | null >(null);
+  const [selectedTask, setSelectedTask] = useState<(typeof mockTestRequests)[0] | null>(null);
+
   const myTasks = mockTestRequests.filter(
     (req) => req.personnelId === 'tech1' && req.status !== 'Completed'
   );
@@ -51,6 +127,16 @@ export default function MyTasksPage() {
   const completedTasks = mockTestRequests.filter(
     (req) => req.personnelId === 'tech1' && req.status === 'Completed'
   );
+
+  const openDialog = (dialog: 'labAccess' | 'uploadResults', task: (typeof mockTestRequests)[0]) => {
+    setSelectedTask(task);
+    setActiveDialog(dialog);
+  }
+
+  const closeDialog = () => {
+    setSelectedTask(null);
+    setActiveDialog(null);
+  }
 
   return (
     <div className="space-y-6">
@@ -97,12 +183,14 @@ export default function MyTasksPage() {
                         <p><strong>Location:</strong> Home Visit</p>
                       </div>
                     </div>
-                     <div className="space-y-4 flex flex-col">
-                       <h4 className="font-semibold">Actions</h4>
+                     <div className="space-y-2 flex flex-col">
+                       <h4 className="font-semibold mb-2">Actions</h4>
                         <Button><MapPin className="mr-2"/> Track Location</Button>
                         <Button variant="outline"><Phone className="mr-2"/> Call Patient</Button>
                         <Button variant="outline"><MessageSquare className="mr-2"/> Message</Button>
-                        <Button variant="secondary"><Check className="mr-2"/> Confirm Sample Collection</Button>
+                        <Button variant="secondary" className="mt-4"><Check className="mr-2"/> Confirm Sample Collection</Button>
+                        <Button variant="secondary" onClick={() => openDialog('labAccess', task)}><Building className="mr-2"/> Request Lab Access</Button>
+                        <Button variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => openDialog('uploadResults', task)}><Upload className="mr-2"/> Upload Results</Button>
                         <Button variant="destructive" size="sm" className="mt-auto">Cancel Request</Button>
                     </div>
                   </div>
@@ -152,6 +240,22 @@ export default function MyTasksPage() {
              )}
         </CardContent>
       </Card>
+
+        {selectedTask && (
+            <>
+                <LabAccessDialog 
+                    open={activeDialog === 'labAccess'} 
+                    onOpenChange={closeDialog}
+                    labName={selectedTask.lab.name}
+                />
+                <UploadResultsDialog
+                    open={activeDialog === 'uploadResults'}
+                    onOpenChange={closeDialog}
+                    patientName={selectedTask.patient.name}
+                />
+            </>
+        )}
+
     </div>
   );
 }
