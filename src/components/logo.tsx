@@ -1,15 +1,7 @@
-'use client';
 
-import { cn } from "@/lib/utils";
-import { useSidebar, SidebarContext } from "./ui/sidebar";
-import { useContext } from "react";
-
-export const Logo = ({ className }: { className?: string }) => {
-  const sidebarContext = useContext(SidebarContext);
-  const state = sidebarContext?.state;
-
+export const Logo = () => {
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className="flex items-center gap-2">
       <svg
         width="32"
         height="32"
@@ -22,13 +14,7 @@ export const Logo = ({ className }: { className?: string }) => {
         <path d="M18 0L33.5885 9V27L18 36V0Z" fill="#41E0DC"/>
         <path d="M11.6364 21.2727C14.5455 21.2727 18 19.3377 18 15.5V10.2273C18 6.39091 14.5455 4.5 11.6364 4.5H4.5V27H11.6364C14.5455 27 18 25.1091 18 21.2727" stroke="#1B2D6B" strokeWidth="3" strokeLinejoin="round"/>
       </svg>
-
-      <span className={cn(
-        "text-2xl font-headline font-bold text-primary",
-        // Only apply sidebar-related classes if the state is available.
-        state && "duration-200 group-data-[collapsible=icon]/sidebar-wrapper:opacity-0 group-data-[collapsible=icon]/sidebar-wrapper:w-0",
-        state && "group-data-[collapsible=offcanvas]/sidebar-wrapper:opacity-100 group-data-[collapsible=offcanvas]/sidebar-wrapper:w-auto"
-      )}>DigiLab</span>
+      <span className="text-2xl font-headline font-bold text-primary">DigiLab</span>
     </div>
   );
 };
