@@ -1,13 +1,11 @@
-
 'use client';
 
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./ui/sidebar";
 
 export const Logo = ({ className }: { className?: string }) => {
-  // useSidebar can return null if not within a provider.
-  // We provide a fallback of an empty object to avoid a crash.
-  const { state } = useSidebar() ?? {};
+  const sidebar = useSidebar();
+  const state = sidebar?.state;
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
