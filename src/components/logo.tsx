@@ -1,11 +1,12 @@
 'use client';
 
 import { cn } from "@/lib/utils";
-import { useSidebar } from "./ui/sidebar";
+import { useSidebar, SidebarContext } from "./ui/sidebar";
+import { useContext } from "react";
 
 export const Logo = ({ className }: { className?: string }) => {
-  const sidebar = useSidebar();
-  const state = sidebar?.state;
+  const sidebarContext = useContext(SidebarContext);
+  const state = sidebarContext?.state;
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
