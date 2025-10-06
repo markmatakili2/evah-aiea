@@ -25,14 +25,16 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, UploadCloud, ChevronRight, ChevronLeft } from "lucide-react";
+import { Calendar as CalendarIcon, UploadCloud, ChevronRight, ChevronLeft, MapPin, LocateFixed } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { mockLabs, mockTests } from "@/lib/mock-data";
+import { mockLabs, mockTests, mockUserProfile } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import type { Test } from "@/lib/types";
 import { PaymentDialog } from "./payment-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
+import Image from "next/image";
+import Link from "next/link";
 
 interface RequestTestDialogProps {
   children: React.ReactNode;
@@ -48,6 +50,8 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
   const [isPaymentPromptOpen, setIsPaymentPromptOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [collectionMethod, setCollectionMethod] = useState("home");
+  const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
 
   const cheapestLabId = useMemo(() => {
     if (!selectedTest) return undefined;
@@ -103,6 +107,17 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
   const handlePayNow = () => {
       setIsPaymentPromptOpen(false);
       setIsPaymentDialogOpen(true);
+  }
+
+  const handleUseCurrentLocation = () => {
+    if (mockUserProfile.allowLocation) {
+        toast({
+            title: "Location Set",
+            description: "Your current location has been set for sample collection.",
+        });
+    } else {
+        setLocationPermissionDenied(true);
+    }
   }
 
   return (
@@ -167,7 +182,7 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
           <div className="space-y-6 py-4">
             <div className="space-y-3">
               <Label>Select Point of Collection</Label>
-              <RadioGroup defaultValue="home" className="flex gap-4">
+              <RadioGroup defaultValue={collectionMethod} onValueChange={setCollectionMethod} className="flex gap-4">
                 <Label htmlFor="r-home" className="flex-1 p-4 border rounded-md cursor-pointer hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary/5">
                   <RadioGroupItem value="home" id="r-home" className="sr-only" />
                   <span className="font-semibold block">Home Collection</span>
@@ -180,6 +195,29 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
                 </Label>
               </RadioGroup>
             </div>
+            
+            {collectionMethod === 'home' && (
+                <div className="space-y-3">
+                    <Label>Set Your Location</Label>
+                    <div className="relative aspect-video w-full rounded-lg overflow-hidden border">
+                        <Image src="https://picsum.photos/seed/map/600/400" alt="Map placeholder" fill className="object-cover" data-ai-hint="map satellite" />
+                        <div className="absolute inset-0 bg-black/20"></div>
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                            <MapPin className="w-8 h-8 text-white drop-shadow-lg" />
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button variant="outline" className="w-full" onClick={handleUseCurrentLocation}>
+                            <LocateFixed className="mr-2 h-4 w-4" />
+                            Use Current Location
+                        </Button>
+                         <Button variant="outline" className="w-full">
+                            <MapPin className="mr-2 h-4 w-4" />
+                            Pick on Map
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="collection-time">Preferred Time</Label>
@@ -256,6 +294,23 @@ export function RequestTestDialog({ children, test: initialTest }: RequestTestDi
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={locationPermissionDenied} onOpenChange={setLocationPermissionDenied}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Location Access Denied</AlertDialogTitle>
+                <AlertDialogDescription>
+                    To use your current location, you must grant location permissions in your profile settings.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction asChild>
+                    <Link href="/dashboard/profile">Go to Settings</Link>
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
 
     <AlertDialog open={isPaymentPromptOpen} onOpenChange={setIsPaymentPromptOpen}>
         <AlertDialogContent>

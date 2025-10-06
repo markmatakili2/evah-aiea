@@ -15,6 +15,7 @@ import {
   Star,
   MessageSquareWarning,
   Printer,
+  Map,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -269,8 +270,31 @@ const PersonnelActions = ({ personnelName, onOpenDialog }: { personnelName: stri
   );
 };
 
+const MapViewDialog = ({ open, onOpenChange, request }: { open: boolean, onOpenChange: (open: boolean) => void, request: (typeof mockTestRequests)[0] | null }) => {
+    if (!request) return null;
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle className="font-headline">Live Tracking</DialogTitle>
+                    <DialogDescription>Request for {request.testName}</DialogDescription>
+                </DialogHeader>
+                <div className="relative aspect-video w-full rounded-lg overflow-hidden border">
+                    <Image src="https://picsum.photos/seed/tracking-map/1200/675" alt="Map placeholder" fill className="object-cover" data-ai-hint="map satellite" />
+                    <div className="absolute inset-0 bg-black/10"></div>
+                     <div className="absolute top-4 left-4 bg-background p-2 rounded-lg shadow-lg text-sm">
+                        <p><strong>Personnel:</strong> {request.personnelName}</p>
+                        <p><strong>Distance:</strong> 2.3 km away</p>
+                        <p><strong>ETA:</strong> 7 minutes</p>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 export default function RequestsPage() {
-    const [dialogs, setDialogs] = useState({ profile: false, rate: false, report: false, payment: false });
+    const [dialogs, setDialogs] = useState({ profile: false, rate: false, report: false, payment: false, map: false });
     const [activePersonnel, setActivePersonnel] = useState("");
     const [activeRequest, setActiveRequest] = useState<(typeof mockTestRequests)[0] | null>(null);
     const { print } = usePrint();
@@ -279,12 +303,16 @@ export default function RequestsPage() {
         print(<TestResultPrintView result={result} />);
     }
 
-    const openDialog = (type: 'profile' | 'rate' | 'report', personnelName: string) => {
-        setActivePersonnel(personnelName);
+    const openDialog = (type: 'profile' | 'rate' | 'report' | 'payment' | 'map', data: any) => {
+        if (type === 'map') {
+            setActiveRequest(data);
+        } else {
+            setActivePersonnel(data);
+        }
         setDialogs(prev => ({ ...prev, [type]: true }));
     }
 
-    const closeDialog = (type: 'profile' | 'rate' | 'report' | 'payment') => {
+    const closeDialog = (type: 'profile' | 'rate' | 'report' | 'payment' | 'map') => {
         setDialogs(prev => ({ ...prev, [type]: false }));
     }
     
@@ -337,7 +365,7 @@ export default function RequestsPage() {
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {request.personnelName ? (
-                      <PersonnelActions personnelName={request.personnelName} onOpenDialog={openDialog} />
+                      <PersonnelActions personnelName={request.personnelName} onOpenDialog={(type, name) => openDialog(type, name)} />
                     ) : (
                       "N/A"
                     )}
@@ -347,6 +375,12 @@ export default function RequestsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2">
+                        {request.personnelName && request.status !== 'Completed' && request.status !== 'Cancelled' && (
+                             <Button variant="outline" size="sm" onClick={() => openDialog('map', request)}>
+                                <Map className="mr-2 h-4 w-4" />
+                                Track
+                            </Button>
+                        )}
                       {request.status === "Completed" && result ? (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -399,7 +433,7 @@ export default function RequestsPage() {
                               <div className="mt-6 pt-4 border-t">
                                 <p className="text-sm text-muted-foreground flex items-center gap-2">
                                   Analysis performed by:
-                                  <PersonnelActions personnelName={result.personnelName} onOpenDialog={openDialog} />
+                                  <PersonnelActions personnelName={result.personnelName} onOpenDialog={(type, name) => openDialog(type, name)} />
                                 </p>
                               </div>
                             </div>
@@ -536,6 +570,8 @@ export default function RequestsPage() {
     <PersonnelProfileDialog open={dialogs.profile} onOpenChange={() => closeDialog('profile')} personnelName={activePersonnel} />
     <RatePersonnelDialog open={dialogs.rate} onOpenChange={() => closeDialog('rate')} personnelName={activePersonnel} />
     <ReportAbuseDialog open={dialogs.report} onOpenChange={() => closeDialog('report')} personnelName={activePersonnel} />
+    <MapViewDialog open={dialogs.map} onOpenChange={() => closeDialog('map')} request={activeRequest} />
+
     {activeRequest && (
         <PaymentDialog 
             open={dialogs.payment}
