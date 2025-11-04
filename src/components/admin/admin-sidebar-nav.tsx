@@ -6,9 +6,9 @@ import { usePathname } from "next/navigation";
 import {
   Home,
   Users,
-  Beaker,
   Shield,
   Briefcase,
+  Activity,
 } from "lucide-react";
 import {
   Tooltip,
@@ -17,6 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { Logo } from "../logo";
 
 export const navItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
@@ -35,8 +36,8 @@ export function AdminSidebarNav() {
           href="/"
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
-          <Beaker className="h-4 w-4 transition-all group-hover:scale-110" />
-          <span className="sr-only">DigiLab</span>
+          <Activity className="h-4 w-4 transition-all group-hover:scale-110" />
+          <span className="sr-only">DigiLab Admin</span>
         </Link>
         <TooltipProvider>
           {navItems.map((item) => (
