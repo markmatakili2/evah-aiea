@@ -100,6 +100,7 @@ export default function MyTestsPage() {
 
   return (
     <>
+    <AlertDialog>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
@@ -108,12 +109,10 @@ export default function MyTestsPage() {
                 Manage the tests offered by your laboratory.
             </CardDescription>
         </div>
-        <DialogTrigger asChild>
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Test
-            </Button>
-        </DialogTrigger>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add New Test
+        </Button>
       </CardHeader>
       <CardContent>
         <Table>
@@ -155,20 +154,6 @@ export default function MyTestsPage() {
                                     </AlertDialogTrigger>
                                 </DropdownMenuContent>
                              </DropdownMenu>
-                              <AlertDialog>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete the "{test.name}" test.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(test)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
                         </TableCell>
                     </TableRow>
                 ))}
@@ -176,6 +161,20 @@ export default function MyTestsPage() {
         </Table>
       </CardContent>
     </Card>
+    
+    <AlertDialogContent>
+        <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the test.
+            </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleDelete(mockTests[0])} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+        </AlertDialogFooter>
+    </AlertDialogContent>
+    </AlertDialog>
     <AddEditTestDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
     {editingTest && <AddEditTestDialog open={!!editingTest} onOpenChange={() => setEditingTest(undefined)} test={editingTest} />}
     </>
