@@ -18,12 +18,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Download, Wallet, ArrowUpRight } from "lucide-react";
+import { Download, Wallet } from "lucide-react";
 import { mockTestRequests } from "@/lib/mock-data";
 import { format } from "date-fns";
+import { useState } from "react";
+import { WithdrawalDialog } from "@/components/technician/withdrawal-dialog";
 
 export default function EarningsPage() {
+  const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false);
+
   const completedTasks = mockTestRequests.filter(
     (req) => req.personnelId === "tech1" && req.status === "Completed"
   );
@@ -31,6 +34,7 @@ export default function EarningsPage() {
   const totalEarnings = 12500;
 
   return (
+    <>
     <div className="grid gap-6">
       <Card>
         <CardHeader>
@@ -54,7 +58,7 @@ export default function EarningsPage() {
                 </CardContent>
               </Card>
                <Card className="flex flex-col justify-center items-center p-6 bg-accent/10">
-                    <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                    <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setIsWithdrawalDialogOpen(true)}>
                         Withdraw Funds
                     </Button>
                     <p className="text-xs text-muted-foreground mt-2">Withdrawals are processed within 24 hours.</p>
@@ -100,5 +104,7 @@ export default function EarningsPage() {
         </CardFooter>
       </Card>
     </div>
+    <WithdrawalDialog open={isWithdrawalDialogOpen} onOpenChange={setIsWithdrawalDialogOpen} />
+    </>
   );
 }
