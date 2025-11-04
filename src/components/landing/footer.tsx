@@ -43,8 +43,9 @@ export function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
+        <div className="mt-8 border-t pt-8 flex justify-between text-center text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} DigiLab Connect. All rights reserved.</p>
+          <Link href="/admin/login" className="hover:text-primary">Admin</Link>
         </div>
       </div>
     </footer>
