@@ -8,7 +8,16 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CheckCircle, Clock, Package, User } from "lucide-react";
+import { mockTestRequests } from "@/lib/mock-data";
+import { formatDistanceToNow } from "date-fns";
+
+const recentActivities = [
+  { id: 1, icon: Package, text: "New request for CBC from A. Miller", time: new Date(Date.now() - 3600000), href: "/lab-owner/dashboard/requests" },
+  { id: 2, icon: User, text: "Technician John D. accepted Lipid Panel task.", time: new Date(Date.now() - 3600000 * 2), href: "/lab-owner/dashboard/requests" },
+  { id: 3, icon: CheckCircle, text: "TSH results for M. Garcia uploaded.", time: new Date(Date.now() - 3600000 * 5), href: "/lab-owner/dashboard/history" },
+];
+
 
 export default function LabOwnerDashboardPage() {
   return (
@@ -52,6 +61,7 @@ export default function LabOwnerDashboardPage() {
           </CardHeader>
           <CardContent className="flex items-center justify-between">
              <p className="text-4xl font-bold">12</p>
+              <Clock className="h-8 w-8 text-muted-foreground" />
           </CardContent>
         </Card>
          <Card>
@@ -76,7 +86,24 @@ export default function LabOwnerDashboardPage() {
                     <CardDescription>A log of recent events in your lab.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                     <p className="text-muted-foreground">Placeholder for recent activity feed...</p>
+                    <div className="space-y-4">
+                        {recentActivities.map((activity) => (
+                            <Link key={activity.id} href={activity.href}>
+                                <div className="flex items-center gap-4 hover:bg-muted/50 p-2 rounded-md transition-colors">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                                        <activity.icon className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="font-medium">{activity.text}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {formatDistanceToNow(activity.time, { addSuffix: true })}
+                                        </p>
+                                    </div>
+                                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
                 </CardContent>
             </Card>
        </div>
