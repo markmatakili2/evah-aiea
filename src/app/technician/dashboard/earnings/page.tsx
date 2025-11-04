@@ -19,10 +19,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Download, Wallet } from "lucide-react";
-import { mockTestRequests } from "@/lib/mock-data";
+import { mockTestRequests, mockWithdrawals } from "@/lib/mock-data";
 import { format } from "date-fns";
 import { useState } from "react";
 import { WithdrawalDialog } from "@/components/technician/withdrawal-dialog";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import type { Withdrawal } from "@/lib/types";
+
+const statusVariant: Record<Withdrawal['status'], "secondary" | "destructive" | "outline"> = {
+  Pending: "outline",
+  Completed: "secondary",
+  Rejected: "destructive",
+};
 
 export default function EarningsPage() {
   const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false);
@@ -89,6 +98,38 @@ export default function EarningsPage() {
                                 }
                             </TableCell>
                             <TableCell className="text-right font-medium">Ksh 2500.00</TableCell>
+                        </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </Card>
+          </div>
+
+          <div>
+            <h3 className="text-xl font-semibold mb-4 mt-6">My Withdrawals</h3>
+            <Card>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Payment Method</TableHead>
+                            <TableHead>Status</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {mockWithdrawals.map((withdrawal) => (
+                        <TableRow key={withdrawal.id}>
+                            <TableCell>{format(new Date(withdrawal.date), 'PPP')}</TableCell>
+                            <TableCell className="font-medium">Ksh {withdrawal.amount.toFixed(2)}</TableCell>
+                            <TableCell>{withdrawal.method}</TableCell>
+                            <TableCell>
+                                <Badge variant={statusVariant[withdrawal.status]} className={cn(
+                                    withdrawal.status === 'Completed' && 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                                )}>
+                                    {withdrawal.status}
+                                </Badge>
+                            </TableCell>
                         </TableRow>
                         ))}
                     </TableBody>

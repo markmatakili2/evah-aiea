@@ -36,6 +36,18 @@ export type TestRequest = {
   personnelName?: string;
   personnelId?: string;
   collectionDate?: string;
+  patient: {
+    name: string;
+    email?: string;
+    phone?: string;
+    age?: number;
+    gender?: string;
+    proximity?: string;
+  };
+  lab: {
+    id: string;
+    name: string;
+  };
   progress: ProgressStep[];
 };
 
@@ -88,3 +100,12 @@ export type ReferredUser = {
   dateJoined: string;
   status: 'Completed' | 'Pending Test';
 }
+
+export type Withdrawal = {
+  id: string;
+  date: string;
+  amount: number;
+  method: 'M-Pesa' | 'Bank';
+  status: 'Pending' | 'Completed' | 'Rejected';
+};
+

@@ -1,5 +1,6 @@
 
-import type { Test, Lab, TestRequest, TestResult, UserProfile, FaqItem, Notification, ReferredUser } from './types';
+
+import type { Test, Lab, TestRequest, TestResult, UserProfile, FaqItem, Notification, ReferredUser, Withdrawal } from './types';
 import { CreditCard, MessageSquare, FileText, CheckCircle } from 'lucide-react';
 
 export const mockLabs: Lab[] = [
@@ -279,4 +280,10 @@ export const mockReferredUsers: ReferredUser[] = [
     { id: 'ref2', name: 'Samuel K.', dateJoined: '2024-07-10T00:00:00Z', status: 'Completed' },
     { id: 'ref3', name: 'Faith A.', dateJoined: '2024-06-28T00:00:00Z', status: 'Pending Test' },
     { id: 'ref4', name: 'David O.', dateJoined: '2024-06-12T00:00:00Z', status: 'Pending Test' },
+];
+
+export const mockWithdrawals: Withdrawal[] = [
+  { id: 'wd1', date: '2024-07-28T10:00:00Z', amount: 5000, method: 'M-Pesa', status: 'Completed' },
+  { id: 'wd2', date: '2024-07-29T11:30:00Z', amount: 7500, method: 'Bank', status: 'Pending' },
+  { id: 'wd3', date: '2024-07-25T09:00:00Z', amount: 3000, method: 'M-Pesa', status: 'Rejected' },
 ];
