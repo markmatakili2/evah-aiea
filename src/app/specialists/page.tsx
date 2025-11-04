@@ -86,8 +86,12 @@ export default function SpecialistsPage() {
                   ))}
                 </ul>
                 <div className="flex space-x-4">
-                  <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">Register Your Lab</Button>
-                  <Button size="lg" variant="outline">Log In</Button>
+                  <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
+                    <Link href="/lab-owner/register">Register Your Lab</Link>
+                  </Button>
+                  <Button size="lg" variant="outline" asChild>
+                    <Link href="/lab-owner/login">Log In</Link>
+                  </Button>
                 </div>
               </div>
             </div>
