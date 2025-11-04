@@ -23,16 +23,23 @@ import { Copy, Gift, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { mockReferredUsers } from "@/lib/mock-data";
 import { format } from 'date-fns';
+import { useEffect, useState } from "react";
 
 export default function ReferralsPage() {
   const { toast } = useToast();
   const referralCode = "ALEXM-A4B8C";
+  const [referralLink, setReferralLink] = useState("");
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(referralCode);
+  useEffect(() => {
+    // Ensure this runs only on the client-side where `window` is available
+    setReferralLink(`${window.location.origin}/register?ref=${referralCode}`);
+  }, [referralCode]);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(referralLink);
     toast({
       title: "Copied!",
-      description: "Your referral code has been copied to the clipboard.",
+      description: "Your referral link has been copied to the clipboard.",
     });
   };
 
@@ -44,24 +51,24 @@ export default function ReferralsPage() {
             <Users className="w-6 h-6" /> Referrals
           </CardTitle>
           <CardDescription>
-            Share your code and earn bonuses when your friends sign up and complete their first test.
+            Share your unique link and earn bonuses when your friends sign up and complete their first test.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="p-6 bg-primary/5 border border-primary/10 rounded-lg text-center">
-            <h3 className="text-lg font-semibold text-primary">Your Unique Referral Code</h3>
+            <h3 className="text-lg font-semibold text-primary">Your Unique Referral Link</h3>
             <div className="flex items-center justify-center gap-2 my-4">
               <Input
                 readOnly
-                value={referralCode}
-                className="text-2xl font-bold font-mono tracking-widest text-center h-12 bg-background max-w-xs"
+                value={referralLink}
+                className="text-lg font-mono text-center h-12 bg-background max-w-md"
               />
-              <Button size="icon" onClick={handleCopyCode}>
+              <Button size="icon" onClick={handleCopyLink} disabled={!referralLink}>
                 <Copy className="w-5 h-5" />
-                <span className="sr-only">Copy Code</span>
+                <span className="sr-only">Copy Link</span>
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">Share this code with your friends!</p>
+            <p className="text-sm text-muted-foreground">Share this link with your friends!</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">

@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Logo } from '@/components/logo';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { useAuth } from '@/firebase';
 import { ShieldCheck } from 'lucide-react';
@@ -53,13 +54,15 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [step, setStep] = useState(1);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [agreed, setAgreed] = useState(false);
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const referralCode = searchParams.get('ref');
 
   const handleGoogleSignIn = () => {
     initiateGoogleSignIn(auth);
@@ -168,13 +171,17 @@ export default function RegisterPage() {
                     <Label htmlFor="country">Country</Label>
                     <Input id="country" placeholder="USA" required />
                   </div>
-                  <div className="space-y-2 md:col-span-2">
+                  <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
                     <Input id="password" type="password" required />
                   </div>
-                  <div className="space-y-2 md:col-span-2">
+                  <div className="space-y-2">
                     <Label htmlFor="confirm-password">Confirm Password</Label>
                     <Input id="confirm-password" type="password" required />
+                  </div>
+                   <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="referral-code">Referral Code (Optional)</Label>
+                    <Input id="referral-code" placeholder="Enter referral code" defaultValue={referralCode || ''} />
                   </div>
                 </div>
               </CardContent>
@@ -265,4 +272,13 @@ export default function RegisterPage() {
       </div>
     </div>
   );
+}
+
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RegisterForm />
+    </Suspense>
+  )
 }
