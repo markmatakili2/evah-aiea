@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, DollarSign, Users, Wallet } from "lucide-react";
+import { Activity, ArrowUpRight, DollarSign, Users, Wallet } from "lucide-react";
 import {
   Table,
   TableBody,
