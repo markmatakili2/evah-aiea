@@ -31,8 +31,8 @@ export default function ReferralsPage() {
   const [referralLink, setReferralLink] = useState("");
 
   useEffect(() => {
-    // Ensure this runs only on the client-side where `window` is available
-    setReferralLink(`${window.location.origin}/register?ref=${referralCode}`);
+    // Using a placeholder domain as requested
+    setReferralLink(`https://digilab.com/register?ref=${referralCode}`);
   }, [referralCode]);
 
   const handleCopyLink = () => {
