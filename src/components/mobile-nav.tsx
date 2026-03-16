@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Clipboard, List, User } from "lucide-react";
+import { Home, Clipboard, List, User, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Home" },
   { href: "/dashboard/assess", icon: Clipboard, label: "Assess" },
   { href: "/dashboard/records", icon: List, label: "Records" },
+  { href: "/dashboard/notifications", icon: Bell, label: "Alerts" },
   { href: "/dashboard/account", icon: User, label: "Account" },
 ];
 
@@ -25,16 +26,19 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center w-full h-full transition-colors",
+                "flex flex-col items-center justify-center w-full h-full transition-colors relative",
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <item.icon className={cn("h-6 w-6", isActive && "fill-primary/10")} />
-              <span className="text-[10px] font-medium mt-1 uppercase tracking-tight">
+              <item.icon className={cn("h-5 w-5", isActive && "fill-primary/10")} />
+              <span className="text-[10px] font-medium mt-1 uppercase tracking-tighter">
                 {item.label}
               </span>
               {isActive && (
                 <div className="absolute top-0 h-1 w-8 bg-primary rounded-b-full" />
+              )}
+              {item.label === 'Alerts' && (
+                <div className="absolute top-2 right-1/4 h-2 w-2 bg-red-500 rounded-full border border-white" />
               )}
             </Link>
           );

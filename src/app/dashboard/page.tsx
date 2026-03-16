@@ -1,8 +1,8 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Users, AlertTriangle, ChevronRight, UserPlus } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Users, AlertTriangle, ChevronRight, UserPlus } from "lucide-react";
 import { mockPatients, mockCHWProfile } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -47,7 +47,7 @@ export default function CHWDashboard() {
 
       {/* Primary Action */}
       <Button asChild size="lg" className="w-full h-16 text-lg font-headline gap-3 shadow-lg shadow-primary/20">
-        <Link href="/dashboard/records?add=true">
+        <Link href="/dashboard/new-encounter">
           <UserPlus className="h-6 w-6" />
           New Encounter
         </Link>

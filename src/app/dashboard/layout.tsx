@@ -1,6 +1,8 @@
 import { MobileNav } from "@/components/mobile-nav";
 import { Suspense } from 'react';
 import { PageLoader } from '@/components/ui/loader';
+import { Bell } from 'lucide-react';
+import Link from 'next/link';
 
 export default function DashboardLayout({
   children,
@@ -17,9 +19,12 @@ export default function DashboardLayout({
           <span className="font-headline font-bold text-primary">Epilepsy Assistant</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-muted overflow-hidden">
-            <img src="https://picsum.photos/seed/chw1/100" alt="Profile" />
-          </div>
+          <Link href="/dashboard/notifications" className="relative p-2 hover:bg-muted rounded-full transition-colors">
+            <Bell className="h-5 w-5 text-primary" />
+            <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-background">
+              3
+            </span>
+          </Link>
         </div>
       </header>
       

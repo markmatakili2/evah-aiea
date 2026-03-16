@@ -54,10 +54,28 @@ export default function RegisterPage() {
           {step === 1 && (
             <form onSubmit={handleRegister}>
               <CardHeader className="px-0 text-center">
-                <CardTitle className="text-2xl font-headline font-bold">Join the Mission</CardTitle>
-                <CardDescription>Select your role to get started</CardDescription>
+                <CardTitle className="text-2xl font-headline font-bold text-primary">Join the Mission</CardTitle>
+                <CardDescription>Secure registration for epilepsy care teams</CardDescription>
               </CardHeader>
               <CardContent className="px-0 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input id="firstName" placeholder="Jane" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input id="lastName" placeholder="Doe" required />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input id="email" type="email" placeholder="jane@example.com" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input id="phone" type="tel" placeholder="+254..." required />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="role">Your Role</Label>
                   <Select onValueChange={setRole} required>
@@ -72,25 +90,21 @@ export default function RegisterPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" placeholder="John Doe" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email or Phone</Label>
-                  <Input id="email" placeholder="email@example.com" required />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input id="password" type="password" required />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input id="confirmPassword" type="password" required />
+                </div>
               </CardContent>
               <CardFooter className="px-0 flex flex-col gap-4 mt-4">
-                <Button type="submit" className="w-full bg-primary h-12 text-lg" disabled={!role}>
+                <Button type="submit" className="w-full bg-primary h-12 text-lg shadow-lg shadow-primary/20" disabled={!role}>
                   Register
                 </Button>
                 <div className="text-center text-sm text-muted-foreground">
                   Already have an account?{' '}
-                  <Link href="/login" className="font-semibold text-primary hover:underline">
+                  <Link href="/login" className="font-bold text-primary hover:underline">
                     Log In
                   </Link>
                 </div>
@@ -110,11 +124,11 @@ export default function RegisterPage() {
               <CardContent className="px-0 space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="otp">6-Digit Code</Label>
-                  <Input id="otp" type="text" placeholder="000000" className="text-center text-2xl tracking-widest" maxLength={6} />
+                  <Input id="otp" type="text" placeholder="000000" className="text-center text-2xl tracking-widest h-14" maxLength={6} />
                 </div>
               </CardContent>
-              <CardFooter className="px-0 flex flex-col gap-4">
-                <Button className="w-full bg-primary h-12 text-lg" onClick={handleVerify}>
+              <CardFooter className="px-0 flex flex-col gap-4 mt-4">
+                <Button className="w-full bg-primary h-12 text-lg shadow-lg shadow-primary/20" onClick={handleVerify}>
                   Complete Setup
                 </Button>
                 <Button variant="ghost" onClick={() => setStep(1)}>
