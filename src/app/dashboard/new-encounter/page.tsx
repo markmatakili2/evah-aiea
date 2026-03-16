@@ -8,6 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   ChevronRight, 
   ChevronLeft, 
@@ -21,6 +28,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 
 type Step = 'patient' | 'history' | 'redflags' | 'assessment' | 'report';
 
@@ -291,10 +299,7 @@ export default function NewEncounterPage() {
 
       {step === 'report' && (
         <div className="space-y-4">
-          <Card className={cn(
-            "border-none shadow-xl",
-            aiReport.referral.includes('URGENT') ? "bg-red-50" : "bg-green-50"
-          )}>
+          <Card className={aiReport.referral.includes('URGENT') ? "bg-red-50 border-none shadow-xl" : "bg-green-50 border-none shadow-xl"}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <Badge variant={aiReport.referral.includes('URGENT') ? 'destructive' : 'secondary'} className="px-3 py-1">
@@ -371,8 +376,4 @@ export default function NewEncounterPage() {
       )}
     </div>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
 }
