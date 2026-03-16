@@ -2,9 +2,17 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Users, AlertTriangle, ChevronRight, UserPlus } from "lucide-react";
+import { Users, AlertTriangle, MoreVertical, UserPlus, History, AlertCircle } from "lucide-react";
 import { mockPatients, mockCHWProfile } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +73,7 @@ export default function CHWDashboard() {
         <div className="space-y-3">
           {mockPatients.length > 0 ? (
             mockPatients.slice(0, 4).map((patient) => (
-              <Card key={patient.id} className="group hover:bg-muted/50 transition-colors cursor-pointer border-none shadow-sm bg-card/50">
+              <Card key={patient.id} className="border-none shadow-sm bg-card/50">
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground uppercase">
                     {patient.name.charAt(0)}
@@ -87,7 +95,31 @@ export default function CHWDashboard() {
                       </Badge>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-muted-foreground">
+                        <MoreVertical className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Patient Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
+                          <UserPlus className="mr-2 h-4 w-4" /> Start Encounter
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/new-encounter?patientId=${patient.id}&startAt=redflags`}>
+                          <AlertCircle className="mr-2 h-4 w-4" /> Quick Red Flags
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <History className="mr-2 h-4 w-4" /> View History
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </CardContent>
               </Card>
             ))
