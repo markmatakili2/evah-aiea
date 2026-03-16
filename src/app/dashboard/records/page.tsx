@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, MoreVertical, History, UserPlus } from "lucide-react";
+import { Search, Filter, MoreVertical, History, UserPlus, AlertCircle } from "lucide-react";
 import { mockPatients } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
