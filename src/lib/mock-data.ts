@@ -1,5 +1,5 @@
 import type { Patient, UserProfile, Notification } from './types';
-import { AlertCircle, Calendar, ClipboardCheck, User } from 'lucide-react';
+import { AlertCircle, Calendar, ClipboardCheck } from 'lucide-react';
 
 export const mockPatients: Patient[] = [
   {
@@ -8,6 +8,7 @@ export const mockPatients: Patient[] = [
     age: 12,
     gender: 'Male',
     village: 'Kijiji Village',
+    contact: '+254 711 000 111',
     status: 'Urgent',
     lastEncounter: '2024-07-20T10:30:00Z',
   },
@@ -17,6 +18,7 @@ export const mockPatients: Patient[] = [
     age: 28,
     gender: 'Female',
     village: 'Lower River Crossing',
+    contact: '+254 722 000 222',
     status: 'Stable',
     lastEncounter: '2024-07-15T09:00:00Z',
   },
@@ -26,6 +28,7 @@ export const mockPatients: Patient[] = [
     age: 45,
     gender: 'Male',
     village: 'Green Hills',
+    contact: '+254 733 000 333',
     status: 'Follow-up',
     lastEncounter: '2024-07-18T14:20:00Z',
   },
@@ -35,6 +38,7 @@ export const mockPatients: Patient[] = [
     age: 7,
     gender: 'Female',
     village: 'Kijiji Village',
+    contact: '+254 744 000 444',
     status: 'Stable',
     lastEncounter: '2024-07-22T11:00:00Z',
   }

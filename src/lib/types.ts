@@ -8,6 +8,7 @@ export type Patient = {
   age: number;
   gender: string;
   village: string;
+  contact: string;
   status: 'Stable' | 'Urgent' | 'Follow-up';
   lastEncounter?: string;
   referralId?: string;

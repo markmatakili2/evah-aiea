@@ -1,24 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { 
   ChevronRight, 
   ChevronLeft, 
-  Stethoscope, 
   AlertCircle, 
   CheckCircle2, 
   Sparkles,
@@ -26,13 +18,18 @@ import {
   UserCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { mockPatients } from '@/lib/mock-data';
 
 type Step = 'patient' | 'history' | 'redflags' | 'assessment' | 'report';
 
-export default function NewEncounterPage() {
+function NewEncounterContent() {
+  const searchParams = useSearchParams();
+  const patientId = searchParams.get('patientId');
+  const startAt = searchParams.get('startAt');
+
   const [step, setStep] = useState<Step>('patient');
   const { toast } = useToast();
   const router = useRouter();
@@ -44,6 +41,7 @@ export default function NewEncounterPage() {
     age: '',
     sex: '',
     location: '',
+    contact: '',
   });
 
   const [historyData, setHistoryData] = useState({
@@ -59,6 +57,7 @@ export default function NewEncounterPage() {
     injury: false,
     newOnsetUnder5: false,
     medicationFail: false,
+    additionalNotes: '',
   });
 
   const [aiReport, setAiReport] = useState({
@@ -68,6 +67,24 @@ export default function NewEncounterPage() {
     counseling: '',
     decision: '',
   });
+
+  useEffect(() => {
+    if (patientId) {
+      const patient = mockPatients.find(p => p.id === patientId);
+      if (patient) {
+        setPatientData({
+          name: patient.name,
+          age: patient.age.toString(),
+          sex: patient.gender.toLowerCase(),
+          location: patient.village,
+          contact: patient.contact,
+        });
+        if (startAt === 'redflags') {
+          setStep('redflags');
+        }
+      }
+    }
+  }, [patientId, startAt]);
 
   const triggers = [
     'Sleep deprivation', 'Missed medication', 'Alcohol', 
@@ -99,7 +116,7 @@ export default function NewEncounterPage() {
     // Simulated AI Logic
     setTimeout(() => {
       const detected = Object.entries(redFlags)
-        .filter(([_, value]) => value === true)
+        .filter(([key, value]) => value === true && key !== 'additionalNotes')
         .map(([key]) => redFlagItems.find(i => i.id === key)?.label || '');
 
       const isUrgent = detected.length > 0;
@@ -108,12 +125,12 @@ export default function NewEncounterPage() {
         flagsDetected: detected,
         referral: isUrgent ? 'URGENT REFERRAL' : 'STABLE - LOCAL FOLLOW-UP',
         reasoning: isUrgent 
-          ? 'Patient exhibits one or more clinical red flags associated with high-risk neurological complications or status epilepticus risk.'
-          : 'Clinical signs suggest controlled seizure activity. No immediate life-threatening markers detected during this assessment.',
-        counseling: 'Advise family on safety (avoiding heights/fire), medication adherence, and recognizing early warning signs of recurrence.',
+          ? 'Patient exhibits one or more clinical red flags associated with high-risk neurological complications.'
+          : 'Clinical signs suggest controlled seizure activity. No immediate life-threatening markers detected.',
+        counseling: 'Advise family on safety (avoiding heights/fire), medication adherence, and early warning signs.',
         decision: isUrgent 
-          ? 'Refer to nearest tertiary hospital immediately for specialist review and possible EEG/Imaging.'
-          : 'Schedule routine follow-up in 2 weeks at community clinic. Monitor medication log.',
+          ? 'Refer to nearest tertiary hospital immediately for specialist review.'
+          : 'Schedule routine follow-up in 2 weeks. Monitor medication log.',
       });
       setStep('report');
     }, 2000);
@@ -172,6 +189,7 @@ export default function NewEncounterPage() {
                   <SelectContent>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Prefer not to say</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -182,6 +200,14 @@ export default function NewEncounterPage() {
                 value={patientData.location} 
                 onChange={e => setPatientData({...patientData, location: e.target.value})} 
                 placeholder="Village name" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Contact Number</Label>
+              <Input 
+                value={patientData.contact} 
+                onChange={e => setPatientData({...patientData, contact: e.target.value})} 
+                placeholder="+254..." 
               />
             </div>
             <Button className="w-full mt-4 h-12 gap-2" onClick={handleNext}>
@@ -267,12 +293,21 @@ export default function NewEncounterPage() {
                   <Checkbox 
                     id={item.id} 
                     className="mt-1"
-                    checked={redFlags[item.id as keyof typeof redFlags]}
+                    checked={redFlags[item.id as keyof typeof redFlags] === true}
                     onCheckedChange={(c) => setRedFlags({...redFlags, [item.id]: !!c})}
                   />
                   <label htmlFor={item.id} className="text-xs font-semibold text-red-950 leading-relaxed">{item.label}</label>
                 </div>
               ))}
+            </div>
+            <div className="space-y-2 pt-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Additional Notes (Optional)</Label>
+              <Textarea 
+                value={redFlags.additionalNotes} 
+                onChange={e => setRedFlags({...redFlags, additionalNotes: e.target.value})} 
+                placeholder="Any other clinical observations..."
+                className="bg-muted/20"
+              />
             </div>
             <div className="flex gap-3 pt-4">
               <Button variant="outline" className="flex-1" onClick={handleBack}><ChevronLeft className="h-4 w-4" /> Back</Button>
@@ -375,5 +410,13 @@ export default function NewEncounterPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function NewEncounterPage() {
+  return (
+    <Suspense fallback={<div>Loading encounter form...</div>}>
+      <NewEncounterContent />
+    </Suspense>
   );
 }

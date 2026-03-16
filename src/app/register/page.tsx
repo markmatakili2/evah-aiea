@@ -77,6 +77,10 @@ export default function RegisterPage() {
                   <Input id="phone" type="tel" placeholder="+254..." required />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="address">Work Address / Clinic</Label>
+                  <Input id="address" placeholder="Sector or Facility Name" required />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="role">Your Role</Label>
                   <Select onValueChange={setRole} required>
                     <SelectTrigger>
