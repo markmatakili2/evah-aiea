@@ -1,8 +1,6 @@
-
 'use client';
 
-import { Suspense } from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -23,170 +21,71 @@ import {
 } from '@/components/ui/select';
 import { Logo } from '@/components/logo';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
-import { useAuth } from '@/firebase';
+import { useRouter } from 'next/navigation';
 import { ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Checkbox } from '@/components/ui/checkbox';
 
-function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="4" />
-      <line x1="21.17" y1="8" x2="12" y2="8" />
-      <line x1="3.95" y1="6.06" x2="8.54" y2="14" />
-      <line x1="10.88" y1="21.94" x2="15.46" y2="14" />
-    </svg>
-  );
-}
-
-function RegisterForm() {
+export default function RegisterPage() {
   const [step, setStep] = useState(1);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [agreed, setAgreed] = useState(false);
-  const auth = useAuth();
+  const [role, setRole] = useState('');
   const router = useRouter();
   const { toast } = useToast();
-  const searchParams = useSearchParams();
-  const referralCode = searchParams.get('ref');
 
-  const handleGoogleSignIn = () => {
-    initiateGoogleSignIn(auth);
-  };
-  
-  const handleProceedToVerification = (e: React.FormEvent) => {
+  const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     setStep(2);
   };
 
-  const handleSendCode = () => {
-    toast({
-      title: "Code Sent!",
-      description: "An OTP code has been sent to your phone number.",
-    });
-  };
-
   const handleVerify = () => {
-    // In a real app, you'd verify the code here.
-    toast({
-      title: "Verification Successful!",
-      description: "Please review our terms of service.",
-    });
-    setStep(3); // Proceed to terms
-  };
-
-  const handleFinishRegistration = () => {
     toast({
       title: "Success!",
-      description: "Your account has been created.",
-      className: 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600',
+      description: "Account created successfully.",
     });
     router.push('/dashboard');
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4 py-12">
-      <div className="w-full max-w-lg">
-        <Link href="/" className="flex justify-center mb-6">
+    <div className="flex flex-col min-h-screen items-center justify-center p-4">
+      <div className="w-full max-w-sm">
+        <div className="flex justify-center mb-8">
           <Logo />
-        </Link>
-        <Card className="shadow-2xl">
+        </div>
+        <Card className="border-none shadow-none bg-transparent">
           {step === 1 && (
-            <form onSubmit={handleProceedToVerification}>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
-                <CardDescription>Join DigiLab to manage your health conveniently.</CardDescription>
+            <form onSubmit={handleRegister}>
+              <CardHeader className="px-0 text-center">
+                <CardTitle className="text-2xl font-headline font-bold">Join the Mission</CardTitle>
+                <CardDescription>Select your role to get started</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} type="button">
-                  <GoogleIcon className="mr-2 h-4 w-4" />
-                  Continue with Google
-                </Button>
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Or with email</span>
-                  </div>
+              <CardContent className="px-0 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="role">Your Role</Label>
+                  <Select onValueChange={setRole} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="chw">Community Health Worker (CHW)</SelectItem>
+                      <SelectItem value="clinician">Healthcare Clinician</SelectItem>
+                      <SelectItem value="supervisor">Supervisor</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="first-name">First Name</Label>
-                    <Input id="first-name" placeholder="John" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="surname">Surname</Label>
-                    <Input id="surname" placeholder="Doe" required />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" placeholder="john.doe@example.com" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="gender">Gender</Label>
-                    <Select>
-                      <SelectTrigger id="gender">
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                        <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dob">Date of Birth</Label>
-                    <Input id="dob" type="date" required />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" type="tel" placeholder="+1 234 567 890" required value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input id="address" placeholder="123 Main Street" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City/Town</Label>
-                    <Input id="city" placeholder="Springfield" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    <Input id="country" placeholder="USA" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <Input id="confirm-password" type="password" required />
-                  </div>
-                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="referral-code">Referral Code (Optional)</Label>
-                    <Input id="referral-code" placeholder="Enter referral code" defaultValue={referralCode || ''} />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input id="name" placeholder="John Doe" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email or Phone</Label>
+                  <Input id="email" placeholder="email@example.com" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" type="password" required />
                 </div>
               </CardContent>
-              <CardFooter className="flex flex-col gap-4">
-                <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+              <CardFooter className="px-0 flex flex-col gap-4 mt-4">
+                <Button type="submit" className="w-full bg-primary h-12 text-lg" disabled={!role}>
                   Register
                 </Button>
                 <div className="text-center text-sm text-muted-foreground">
@@ -200,70 +99,26 @@ function RegisterForm() {
           )}
 
           {step === 2 && (
-             <>
-              <CardHeader className="text-center">
+            <>
+              <CardHeader className="px-0 text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <ShieldCheck className="h-6 w-6 text-primary" />
+                  <ShieldCheck className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle className="text-2xl font-headline mt-4">Verify Your Phone Number</CardTitle>
-                <CardDescription>A verification code has been sent to {phoneNumber}.</CardDescription>
+                <CardTitle className="text-2xl font-headline mt-4">Verify Identity</CardTitle>
+                <CardDescription>Enter the code sent to your device</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="px-0 space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="otp">Verification Code</Label>
-                    <Input id="otp" type="text" placeholder="Enter 6-digit code" maxLength={6} />
-                </div>
-                <Button type="button" variant="link" className="text-sm p-0 h-auto" onClick={handleSendCode}>
-                  Resend Code
-                </Button>
-              </CardContent>
-              <CardFooter className="flex flex-col gap-4">
-                <Button type="button" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleVerify}>
-                  Verify Phone Number
-                </Button>
-                 <Button variant="link" onClick={() => setStep(1)}>
-                    Back to registration
-                </Button>
-              </CardFooter>
-            </>
-          )}
-          
-           {step === 3 && (
-             <>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-headline">Terms of Service</CardTitle>
-                <CardDescription>Please read and accept our terms before proceeding.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ScrollArea className="h-64 w-full rounded-md border p-4">
-                    <h3 className="font-bold mb-2">1. Payments, Cancellations, and Refunds</h3>
-                    <ul className="list-disc pl-5 space-y-2 text-sm">
-                        <li>There shall be no refund of any monies after sample collection.</li>
-                        <li>A 45% of the test cost price shall be charged for cancelling the test after DIGI-LAB SOLUTIONS LTD has allocated a Medical Lab Office.</li>
-                        <li>Plans to change the location of sample collection must be communicated 15 minutes prior; failure will attract a 20% penalty on the test cost price.</li>
-                        <li>A complete cashback will be performed by DIGI-LAB SOLUTIONS LTD in the event of a system failure.</li>
-                        <li>A cashback on the patient's demise shall be promptly pursued.</li>
-                    </ul>
-                    <h3 className="font-bold mt-4 mb-2">2. Penalties for Service Providers</h3>
-                    <ul className="list-disc pl-5 space-y-2 text-sm">
-                        <li>A 10% penalty fee will be charged on the Medical Lab Officer for any delay in locating the client within a window of 15 minutes.</li>
-                        <li>10% of the cost of the test will be charged on any clinical lab registered with DIGI-LAB SOLUTIONS LTD for any inconvenience in conducting the requested lab investigation. This rule is exclusive of circumstances limited to natural calamities.</li>
-                    </ul>
-                     <p className="text-sm mt-4">For the full terms, please visit our <Link href="/terms-of-service" target="_blank" className="text-primary underline">Terms of Service page</Link>.</p>
-                </ScrollArea>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="terms" onCheckedChange={(checked) => setAgreed(!!checked)} />
-                    <label
-                        htmlFor="terms"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                        I have read and agree to the terms of service.
-                    </label>
+                  <Label htmlFor="otp">6-Digit Code</Label>
+                  <Input id="otp" type="text" placeholder="000000" className="text-center text-2xl tracking-widest" maxLength={6} />
                 </div>
               </CardContent>
-              <CardFooter>
-                <Button type="button" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleFinishRegistration} disabled={!agreed}>
-                  Continue to Dashboard
+              <CardFooter className="px-0 flex flex-col gap-4">
+                <Button className="w-full bg-primary h-12 text-lg" onClick={handleVerify}>
+                  Complete Setup
+                </Button>
+                <Button variant="ghost" onClick={() => setStep(1)}>
+                  Back
                 </Button>
               </CardFooter>
             </>
@@ -272,13 +127,4 @@ function RegisterForm() {
       </div>
     </div>
   );
-}
-
-
-export default function RegisterPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <RegisterForm />
-    </Suspense>
-  )
 }

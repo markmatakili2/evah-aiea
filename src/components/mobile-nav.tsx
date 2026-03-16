@@ -1,0 +1,45 @@
+'use client';
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Home, Clipboard, List, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const navItems = [
+  { href: "/dashboard", icon: Home, label: "Home" },
+  { href: "/dashboard/assess", icon: Clipboard, label: "Assess" },
+  { href: "/dashboard/records", icon: List, label: "Records" },
+  { href: "/dashboard/account", icon: User, label: "Account" },
+];
+
+export function MobileNav() {
+  const pathname = usePathname();
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t max-w-md mx-auto">
+      <div className="flex items-center justify-around h-16">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex flex-col items-center justify-center w-full h-full transition-colors",
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <item.icon className={cn("h-6 w-6", isActive && "fill-primary/10")} />
+              <span className="text-[10px] font-medium mt-1 uppercase tracking-tight">
+                {item.label}
+              </span>
+              {isActive && (
+                <div className="absolute top-0 h-1 w-8 bg-primary rounded-b-full" />
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}

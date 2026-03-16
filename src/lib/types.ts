@@ -1,88 +1,33 @@
-
-
 import type { LucideIcon } from "lucide-react";
 
-export type Test = {
+export type Role = 'chw' | 'clinician' | 'supervisor';
+
+export type Patient = {
   id: string;
   name: string;
-  description: string;
-  category: 'Hematology' | 'Biochemistry' | 'Microbiology' | 'Serology' | 'Endocrinology';
-  prices: {
-    labId: string;
-    price: number;
-  }[];
+  age: number;
+  gender: string;
+  village: string;
+  status: 'Stable' | 'Urgent' | 'Follow-up';
+  lastEncounter?: string;
+  referralId?: string;
 };
 
-export type Lab = {
+export type Encounter = {
   id: string;
-  name: string;
-  location: string;
-};
-
-export type TestRequestStatus = 'Pending' | 'Allocated' | 'Sample Collected' | 'In Analysis' | 'Completed' | 'Cancelled';
-
-export type ProgressStep = {
-    status: TestRequestStatus;
-    date: string;
-    details: string;
-}
-
-export type TestRequest = {
-  id: string;
-  testId: string;
-  testName: string;
-  requestDate: string;
-  status: TestRequestStatus;
-  personnelName?: string;
-  personnelId?: string;
-  collectionDate?: string;
-  patient: {
-    name: string;
-    email?: string;
-    phone?: string;
-    age?: number;
-    gender?: string;
-    proximity?: string;
-  };
-  lab: {
-    id: string;
-    name: string;
-  };
-  progress: ProgressStep[];
-};
-
-export type TestResult = {
-  id: string;
-  requestId: string;
-  testName: string;
+  patientId: string;
   date: string;
-  pdfUrl: string;
-  personnelName: string;
-  personnelId: string;
-  rating?: number;
-  results: Record<string, { value: string; range: string, flag: 'Normal' | 'High' | 'Low' }>;
+  type: 'Initial' | 'Routine' | 'Emergency';
+  notes: string;
+  recommendation: string;
 };
 
 export type UserProfile = {
-    firstName: string;
-    surname: string;
+    name: string;
+    role: Role;
     email: string;
-    dob: string;
-    gender: 'Male' | 'Female' | 'Other' | 'Prefer not to say';
-    phone: string;
     imageUrl: string;
-    imageHint: string;
-    address: {
-        line1: string;
-        city: string;
-        country: string;
-    };
-    allowLocation: boolean;
-};
-
-export type FaqItem = {
-    question: string;
-    answer: string;
+    location: string;
 };
 
 export type Notification = {
@@ -93,19 +38,3 @@ export type Notification = {
     timestamp: string;
     read: boolean;
 };
-
-export type ReferredUser = {
-  id: string;
-  name: string;
-  dateJoined: string;
-  status: 'Completed' | 'Pending Test';
-}
-
-export type Withdrawal = {
-  id: string;
-  date: string;
-  amount: number;
-  method: 'M-Pesa' | 'Bank';
-  status: 'Pending' | 'Completed' | 'Rejected';
-};
-

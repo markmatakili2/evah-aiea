@@ -1,7 +1,5 @@
-
+import { MobileNav } from "@/components/mobile-nav";
 import { Suspense } from 'react';
-import { DashboardHeader } from "@/components/dashboard/dashboard-header";
-import { SidebarNav } from "@/components/dashboard/sidebar-nav";
 import { PageLoader } from '@/components/ui/loader';
 
 export default function DashboardLayout({
@@ -9,18 +7,29 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   return (
-      <div className="flex min-h-screen w-full flex-col bg-muted/40">
-        <SidebarNav />
-        <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
-          <DashboardHeader />
-          <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-              <Suspense fallback={<PageLoader />}>
-                  {children}
-              </Suspense>
-          </main>
+    <div className="flex flex-col min-h-screen pb-20">
+      <header className="p-4 flex items-center justify-between border-b sticky top-0 bg-background/95 backdrop-blur z-40">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <span className="text-accent font-bold text-xs leading-none">AI</span>
+          </div>
+          <span className="font-headline font-bold text-primary">Epilepsy Assistant</span>
         </div>
-      </div>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-muted overflow-hidden">
+            <img src="https://picsum.photos/seed/chw1/100" alt="Profile" />
+          </div>
+        </div>
+      </header>
+      
+      <main className="flex-1 p-4">
+        <Suspense fallback={<PageLoader />}>
+          {children}
+        </Suspense>
+      </main>
+
+      <MobileNav />
+    </div>
   );
 }

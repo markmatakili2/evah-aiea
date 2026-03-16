@@ -18,9 +18,9 @@ const fontPTSans = PT_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'DigiLab Connect - Home Sample Collection & Lab Results',
+  title: 'AI Epilepsy Assistant',
   description:
-    'Connect with nearby laboratory personnel for home sample collection, analysis, and quick, secure online results.',
+    'Helping community health workers manage epilepsy in remote areas with AI-guided tools.',
 };
 
 export default function RootLayout({
@@ -46,7 +46,9 @@ export default function RootLayout({
         )}
       >
         <FirebaseClientProvider>
-          {children}
+          <div className="mx-auto max-w-md min-h-screen bg-background shadow-xl border-x">
+            {children}
+          </div>
           <Toaster />
         </FirebaseClientProvider>
       </body>

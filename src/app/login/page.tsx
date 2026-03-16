@@ -13,84 +13,42 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import Link from 'next/link';
-import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
-import { useAuth } from '@/firebase';
-
-function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="4" />
-      <line x1="21.17" y1="8" x2="12" y2="8" />
-      <line x1="3.95" y1="6.06" x2="8.54" y2="14" />
-      <line x1="10.88" y1="21.94" x2="15.46" y2="14" />
-    </svg>
-  );
-}
 
 export default function LoginPage() {
-  const auth = useAuth();
-
-  const handleGoogleSignIn = () => {
-    initiateGoogleSignIn(auth);
-  };
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
-        <Link href="/" className="flex justify-center mb-6">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="w-full max-w-sm">
+        <div className="flex justify-center mb-12">
           <Logo />
-        </Link>
-        <Card className="shadow-2xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-headline">Welcome Back</CardTitle>
-            <CardDescription>Enter your credentials to access your account</CardDescription>
+        </div>
+        <Card className="border-none shadow-none bg-transparent">
+          <CardHeader className="px-0 text-center">
+            <CardTitle className="text-3xl font-headline font-bold text-primary">Welcome Back</CardTitle>
+            <CardDescription className="text-lg">Secure Access for Health Workers</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="px-0 space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="m@example.com" required />
+              <Label htmlFor="email">Email or Username</Label>
+              <Input id="email" type="text" placeholder="m@example.com" className="h-12 text-lg" required />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
-                  Forgot password?
+                <Link href="#" className="text-sm text-primary/60 hover:text-primary font-semibold">
+                  Forgot?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input id="password" type="password" className="h-12 text-lg" required />
             </div>
-            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
+          </CardContent>
+          <CardFooter className="px-0 flex flex-col gap-6 mt-6">
+            <Button className="w-full bg-primary h-14 text-xl font-headline shadow-lg shadow-primary/20" asChild>
               <Link href="/dashboard">Log In</Link>
             </Button>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-              </div>
-            </div>
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
-              <GoogleIcon className="mr-2 h-4 w-4" />
-              Continue with Google
-            </Button>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <div className="text-center text-sm text-muted-foreground">
-              Don't have an account?{' '}
-              <Link href="/register" className="font-semibold text-primary hover:underline">
-                Register
+            <div className="text-center text-sm text-muted-foreground font-medium">
+              Not registered?{' '}
+              <Link href="/register" className="font-bold text-primary hover:underline underline-offset-4">
+                Join the Mission
               </Link>
             </div>
           </CardFooter>

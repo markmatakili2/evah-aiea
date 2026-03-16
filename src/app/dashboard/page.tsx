@@ -1,91 +1,103 @@
-
 'use client';
 
-import { useState, useMemo } from "react";
-import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TestCard } from "@/components/dashboard/test-card";
-import { mockTests, mockUserProfile } from "@/lib/mock-data";
-import { RequestTestDialog } from "@/components/dashboard/request-test-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Test } from "@/lib/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PlusCircle, Users, AlertTriangle, ChevronRight, UserPlus } from "lucide-react";
+import { mockPatients, mockCHWProfile } from "@/lib/mock-data";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
-const TEST_CATEGORIES = ['All', 'Hematology', 'Biochemistry', 'Microbiology', 'Serology', 'Endocrinology'];
-const INITIAL_VISIBLE_TESTS = 4;
-
-export default function DashboardPage() {
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [visibleTestsCount, setVisibleTestsCount] = useState(INITIAL_VISIBLE_TESTS);
-
-  const filteredTests = useMemo(() => {
-    if (selectedCategory === 'All') {
-      return mockTests;
-    }
-    return mockTests.filter(test => test.category === selectedCategory);
-  }, [selectedCategory]);
-
-  const visibleTests = filteredTests.slice(0, visibleTestsCount);
-  const hasMoreTests = visibleTestsCount < filteredTests.length;
-
-  const handleLoadMore = () => {
-    setVisibleTestsCount(prevCount => prevCount + INITIAL_VISIBLE_TESTS);
-  };
-  
-  const handleCategoryChange = (category: string) => {
-      setSelectedCategory(category);
-      setVisibleTestsCount(INITIAL_VISIBLE_TESTS); // Reset count on category change
-  }
+export default function CHWDashboard() {
+  const urgentCount = mockPatients.filter(p => p.status === 'Urgent').length;
 
   return (
-    <>
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-bold tracking-tight font-headline">
-                Welcome back, {mockUserProfile.firstName}!
-            </h1>
-            <p className="text-muted-foreground">
-                Here's a list of available tests. You can request a test or search for a specific one.
-            </p>
-        </div>
-        <div className="flex items-center gap-2">
-            <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                    {TEST_CATEGORIES.map(category => (
-                        <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <RequestTestDialog>
-                <Button size="sm" className="h-9 gap-1">
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Request a Test
-                    </span>
-                </Button>
-            </RequestTestDialog>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {visibleTests.map((test) => (
-          <TestCard key={test.id} test={test} />
-        ))}
+    <div className="space-y-6">
+      {/* Welcome Header */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-xl font-headline font-bold text-primary">
+          Habari, {mockCHWProfile.name.split(' ')[0]}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Reporting from {mockCHWProfile.location}
+        </p>
       </div>
 
-      {visibleTests.length === 0 && (
-        <div className="text-center col-span-full py-12">
-            <p className="text-muted-foreground">No tests found for the selected category.</p>
-        </div>
-      )}
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="bg-primary/5 border-primary/10">
+          <CardHeader className="p-4 pb-0">
+            <Users className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent className="p-4 pt-2">
+            <div className="text-2xl font-bold text-primary">{mockPatients.length}</div>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Total Patients</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-red-50 border-red-100">
+          <CardHeader className="p-4 pb-0">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+          </CardHeader>
+          <CardContent className="p-4 pt-2">
+            <div className="text-2xl font-bold text-red-600">{urgentCount}</div>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Urgent Alerts</p>
+          </CardContent>
+        </Card>
+      </div>
 
-      {hasMoreTests && (
-        <div className="flex justify-center mt-6">
-            <Button onClick={handleLoadMore}>Load More</Button>
+      {/* Primary Action */}
+      <Button asChild size="lg" className="w-full h-16 text-lg font-headline gap-3 shadow-lg shadow-primary/20">
+        <Link href="/dashboard/records?add=true">
+          <UserPlus className="h-6 w-6" />
+          New Encounter
+        </Link>
+      </Button>
+
+      {/* Registered Patients List */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-headline font-bold text-primary">Registered Patients</h2>
+          <Link href="/dashboard/records" className="text-xs font-semibold text-primary/60 hover:text-primary">
+            View All
+          </Link>
         </div>
-      )}
-    </>
+
+        <div className="space-y-3">
+          {mockPatients.length > 0 ? (
+            mockPatients.slice(0, 4).map((patient) => (
+              <Card key={patient.id} className="group hover:bg-muted/50 transition-colors cursor-pointer border-none shadow-sm bg-card/50">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground uppercase">
+                    {patient.name.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground">{patient.name}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-muted-foreground">{patient.age}Y • {patient.gender}</span>
+                      <Badge 
+                        variant="secondary" 
+                        className={cn(
+                          "text-[10px] h-5 px-2",
+                          patient.status === 'Urgent' && "bg-red-100 text-red-700",
+                          patient.status === 'Stable' && "bg-green-100 text-green-700",
+                          patient.status === 'Follow-up' && "bg-blue-100 text-blue-700",
+                        )}
+                      >
+                        {patient.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="py-12 text-center text-muted-foreground bg-muted/20 rounded-xl border-2 border-dashed">
+              No patients registered yet.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
