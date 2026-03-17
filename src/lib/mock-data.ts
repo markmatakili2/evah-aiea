@@ -1,4 +1,4 @@
-import type { Patient, UserProfile, Notification } from './types';
+import type { Patient, UserProfile, Notification, Encounter } from './types';
 import { AlertCircle, Calendar, ClipboardCheck } from 'lucide-react';
 
 export const mockPatients: Patient[] = [
@@ -41,6 +41,45 @@ export const mockPatients: Patient[] = [
     contact: '+254 744 000 444',
     status: 'Stable',
     lastEncounter: '2024-07-22T11:00:00Z',
+  }
+];
+
+export const mockEncounters: Encounter[] = [
+  {
+    id: 'e1',
+    patientId: 'p1',
+    date: '2024-07-20T10:30:00Z',
+    type: 'Emergency',
+    summary: 'Patient presented with 3 tonic-clonic seizures within 2 hours. Family reports no recovery of consciousness between events.',
+    redFlags: ['Repeated seizures without full recovery', 'Severe injury (tongue bite)'],
+    recommendation: 'Immediate referral to tertiary hospital for Status Epilepticus management.'
+  },
+  {
+    id: 'e2',
+    patientId: 'p1',
+    date: '2024-06-15T09:00:00Z',
+    type: 'Routine',
+    summary: 'Follow-up visit. Seizure frequency decreased to 1/month. Adherence to Phenobarbital is good.',
+    redFlags: [],
+    recommendation: 'Continue current dosage. Review in 3 months.'
+  },
+  {
+    id: 'e3',
+    patientId: 'p2',
+    date: '2024-07-15T09:00:00Z',
+    type: 'Initial',
+    summary: 'New onset focal seizures. Patient remains conscious during events. No fever or injury.',
+    redFlags: [],
+    recommendation: 'Initiate Carbamazepine 200mg BD. Monitor for 2 weeks.'
+  },
+  {
+    id: 'e4',
+    patientId: 'p3',
+    date: '2024-07-18T14:20:00Z',
+    type: 'Routine',
+    summary: 'Seizures continuing despite correct dosage. Patient reports stress as a major trigger.',
+    redFlags: ['Seizures continuing despite medication at correct dose'],
+    recommendation: 'Increase dosage by 25%. Counseling on stress management and sleep hygiene.'
   }
 ];
 

@@ -115,8 +115,10 @@ export default function CHWDashboard() {
                           <AlertCircle className="mr-2 h-4 w-4" /> Quick Red Flags
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <History className="mr-2 h-4 w-4" /> View History
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/records/${patient.id}/history`}>
+                          <History className="mr-2 h-4 w-4" /> View History
+                        </Link>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

@@ -17,10 +17,11 @@ export type Patient = {
 export type Encounter = {
   id: string;
   patientId: string;
-  date: string;
-  type: 'Initial' | 'Routine' | 'Emergency';
-  notes: string;
+  date: string; // ISO format
+  summary: string;
+  redFlags: string[];
   recommendation: string;
+  type: 'Initial' | 'Routine' | 'Emergency';
 };
 
 export type UserProfile = {
