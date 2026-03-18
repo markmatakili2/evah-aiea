@@ -8,6 +8,7 @@
     pkgs.nodejs_20
     pkgs.zulu
     pkgs.zip
+    pkgs.bfg-repo-cleaner 
   ];
   # Sets environment variables in the workspace
   env = {};

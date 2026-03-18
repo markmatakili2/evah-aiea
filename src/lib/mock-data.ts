@@ -1,4 +1,4 @@
-import type { Patient, UserProfile, Notification, Encounter } from './types';
+import type { Patient, UserProfile, Notification, Encounter, Test, Lab, TestResult, Withdrawal } from './types';
 import { AlertCircle, Calendar, ClipboardCheck } from 'lucide-react';
 
 export const mockPatients: Patient[] = [
@@ -91,8 +91,43 @@ export const mockCHWProfile: UserProfile = {
     imageUrl: 'https://picsum.photos/seed/chw1/200/200',
 };
 
+// Standard UserProfile for legacy profile pages
+export const mockUserProfile: UserProfile = {
+    firstName: "Alex",
+    surname: "Miller",
+    name: "Alex Miller",
+    role: "chw",
+    email: "alex.miller@assistant.ai",
+    phone: "+254 711 222 333",
+    dob: "1990-05-15",
+    gender: "Male",
+    address: {
+        line1: "123 Health Sector",
+        city: "Nairobi",
+        country: "Kenya"
+    },
+    allowLocation: true,
+    imageUrl: 'https://picsum.photos/seed/chw1/200/200',
+    location: "Kijiji Sector",
+    imageHint: "profile man"
+};
+
 export const mockNotifications: Notification[] = [
     { id: '1', icon: AlertCircle, text: "Urgent review needed for Samuel Mbeki", href: "/dashboard/records", timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), read: false },
     { id: '2', icon: ClipboardCheck, text: "Clinician approved Alice's follow-up plan", href: "/dashboard/records", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), read: false },
     { id: '3', icon: Calendar, text: "Monthly report for supervisor is ready", href: "/dashboard", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), read: true },
 ];
+
+// Restore legacy mock data to satisfy build requirements
+export const mockTests: Test[] = [
+  { id: 't1', name: 'Complete Blood Count', category: 'Hematology', description: 'Comprehensive blood analysis', prices: [{ labId: 'lab1', price: 2500 }] }
+];
+
+export const mockLabs: Lab[] = [
+  { id: 'lab1', name: 'City Central Labs', address: '123 Health St' }
+];
+
+export const mockTestRequests: any[] = [];
+export const mockTestResults: TestResult[] = [];
+export const mockWithdrawals: Withdrawal[] = [];
+export const mockReferredUsers: any[] = [];

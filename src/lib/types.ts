@@ -25,11 +25,19 @@ export type Encounter = {
 };
 
 export type UserProfile = {
+    firstName?: string;
+    surname?: string;
     name: string;
-    role: Role;
+    role: string;
     email: string;
     imageUrl: string;
     location: string;
+    phone?: string;
+    dob?: string;
+    gender?: string;
+    address?: any;
+    allowLocation?: boolean;
+    imageHint?: string;
 };
 
 export type Notification = {
@@ -40,3 +48,44 @@ export type Notification = {
     timestamp: string;
     read: boolean;
 };
+
+// Legacy types to support existing build routes
+export type TestRequestStatus = "Pending" | "Allocated" | "Sample Collected" | "In Analysis" | "Completed" | "Cancelled";
+
+export interface ProgressStep {
+  status: TestRequestStatus;
+  date: string;
+  details: string;
+}
+
+export interface Test {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  prices: { labId: string; price: number }[];
+}
+
+export interface Lab {
+  id: string;
+  name: string;
+  address: string;
+}
+
+export interface TestResult {
+  id: string;
+  requestId: string;
+  testName: string;
+  date: string;
+  personnelName: string;
+  results: Record<string, { value: string; range: string; flag: "Normal" | "High" | "Low" }>;
+  rating?: number;
+}
+
+export interface Withdrawal {
+  id: string;
+  date: string;
+  amount: number;
+  method: string;
+  status: 'Pending' | 'Completed' | 'Rejected';
+}
