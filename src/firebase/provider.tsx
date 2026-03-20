@@ -1,25 +1,29 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { Auth } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseContextProps {
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
+  firebaseApp: FirebaseApp | null;
+  firestore: Firestore | null;
+  auth: Auth | null;
 }
 
-const FirebaseContext = createContext<FirebaseContextProps | undefined>(undefined);
+const FirebaseContext = createContext<FirebaseContextProps>({
+  firebaseApp: null,
+  firestore: null,
+  auth: null,
+});
 
 export const FirebaseProvider: React.FC<{
-  children: ReactNode;
   firebaseApp: FirebaseApp;
   firestore: Firestore;
   auth: Auth;
-}> = ({ children, firebaseApp, firestore, auth }) => {
+  children: React.ReactNode;
+}> = ({ firebaseApp, firestore, auth, children }) => {
   return (
     <FirebaseContext.Provider value={{ firebaseApp, firestore, auth }}>
       <FirebaseErrorListener />
@@ -28,14 +32,28 @@ export const FirebaseProvider: React.FC<{
   );
 };
 
-export const useFirebase = () => {
+export const useFirebase = () => useContext(FirebaseContext);
+
+export const useFirebaseApp = () => {
   const context = useContext(FirebaseContext);
-  if (!context) {
-    throw new Error('useFirebase must be used within a FirebaseProvider');
+  if (!context.firebaseApp) {
+    throw new Error('useFirebaseApp must be used within a FirebaseProvider');
   }
-  return context;
+  return context.firebaseApp;
 };
 
-export const useFirebaseApp = () => useFirebase().firebaseApp;
-export const useFirestore = () => useFirebase().firestore;
-export const useAuth = () => useFirebase().auth;
+export const useFirestore = () => {
+  const context = useContext(FirebaseContext);
+  if (!context.firestore) {
+    throw new Error('useFirestore must be used within a FirebaseProvider');
+  }
+  return context.firestore;
+};
+
+export const useAuth = () => {
+  const context = useContext(FirebaseContext);
+  if (!context.auth) {
+    throw new Error('useAuth must be used within a FirebaseProvider');
+  }
+  return context.auth;
+};
