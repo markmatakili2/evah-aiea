@@ -18,7 +18,8 @@ import {
   Loader2,
   MoreVertical,
   TriangleAlert,
-  MapPin
+  MapPin,
+  FileText
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -38,18 +39,22 @@ import {
 import { useFirestore, useCollection, useUser } from "@/firebase";
 import { collection, query, where, orderBy } from "firebase/firestore";
 import { FacilityMap } from "@/components/dashboard/facility-map";
+import { mockPatients } from "@/lib/mock-data";
+import { useToast } from "@/hooks/use-toast";
 
 type Message = {
   id: string;
   role: 'user' | 'ai';
   content: string;
-  type?: 'text' | 'audio' | 'analysis';
+  type?: 'text' | 'audio' | 'analysis' | 'file';
+  fileName?: string;
   recommendation?: Recommendation;
 };
 
 export default function AssessPage() {
   const { user } = useUser();
   const db = useFirestore();
+  const { toast } = useToast();
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(true);
@@ -60,17 +65,23 @@ export default function AssessPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
 
-  // Fetch real patients from DB
+  // Check for Demo Mode
+  const isDemo = typeof window !== 'undefined' && localStorage.getItem('demo_session') === 'true';
+
+  // Fetch real patients from DB if not in demo
   const patientsQuery = useMemo(() => {
-    if (!db || !user) return null;
+    if (!db || !user || isDemo) return null;
     return query(
       collection(db, 'patients'),
       where('chwId', '==', user.uid),
       orderBy('updatedAt', 'desc')
     );
-  }, [db, user]);
+  }, [db, user, isDemo]);
 
-  const { data: patients } = useCollection(patientsQuery);
+  const { data: firebasePatients } = useCollection(patientsQuery);
+  
+  // Use mock data if in demo mode
+  const patients = isDemo ? mockPatients : (firebasePatients || []);
   const selectedPatient = patients?.find(p => p.id === selectedPatientId);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -88,7 +99,7 @@ export default function AssessPage() {
       {
         id: '1',
         role: 'ai',
-        content: `I'm ready to assist with ${patients?.find(p => p.id === id)?.name}. Describe symptoms via voice or text for real-time WHO protocol analysis.`,
+        content: `I'm ready to assist with ${patients?.find(p => p.id === id)?.name}. Describe symptoms via voice or text, or upload medical reports for WHO-aligned protocol analysis.`,
         type: 'text'
       }
     ]);
@@ -105,6 +116,7 @@ export default function AssessPage() {
 
   const startRecording = () => {
     setIsRecording(true);
+    // Simulate recording duration
     setTimeout(() => {
       setIsRecording(false);
       setTranscriptionDraft("Mgonjwa amepata kifafa mara tatu leo asubuhi. Kila mara kilidumu kwa dakika mbili. Hana homa lakini amekosa dawa kwa siku tatu.");
@@ -120,16 +132,36 @@ export default function AssessPage() {
     runOnDeviceAnalysis(textToAnalyze);
   };
 
+  const handleFileUpload = () => {
+    toast({
+      title: "File Attachment",
+      description: "Selecting medical record for attachment...",
+    });
+    
+    setTimeout(() => {
+      const userMsg: Message = { 
+        id: Date.now().toString(), 
+        role: 'user', 
+        content: "Attached medical report from previous clinic visit.", 
+        type: 'file',
+        fileName: "CLINIC_REPORT_OCT.pdf"
+      };
+      setMessages(prev => [...prev, userMsg]);
+      runOnDeviceAnalysis("Reviewing attached report for clinical context.");
+    }, 1000);
+  };
+
   const runOnDeviceAnalysis = (input: string) => {
     setIsProcessing(true);
     
-    const isEmergency = input.toLowerCase().includes("mara tatu") || input.toLowerCase().includes("repeated");
-    const isMedFail = input.toLowerCase().includes("amekosa dawa") || input.toLowerCase().includes("missed");
+    // Simple mock logic for urgency detection in demo
+    const isEmergency = input.toLowerCase().includes("mara tatu") || input.toLowerCase().includes("repeated") || input.toLowerCase().includes("emergency");
+    const isMedFail = input.toLowerCase().includes("amekosa dawa") || input.toLowerCase().includes("missed") || input.toLowerCase().includes("fail");
 
     const clinicalInput: ClinicalInput = {
       patientProfile: {
         age: selectedPatient?.age || 30,
-        sex: selectedPatient?.gender || 'other',
+        sex: (selectedPatient?.gender || 'other').toLowerCase(),
       },
       seizureHistory: {
         type: 'generalized',
@@ -174,7 +206,7 @@ export default function AssessPage() {
         <div className="flex flex-col h-full">
           <div className="p-4 border-b flex items-center justify-between bg-primary text-primary-foreground">
             <h2 className="font-headline font-bold flex items-center gap-2">
-              <History className="h-5 w-5" /> Encounter History
+              <History className="h-5 w-5" /> Select Patient
             </h2>
             <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)}>
               <X className="h-5 w-5" />
@@ -184,7 +216,7 @@ export default function AssessPage() {
           <div className="p-4">
             <Button asChild className="w-full justify-start gap-2 h-12" variant="outline">
               <Link href="/dashboard/new-encounter">
-                <Plus className="h-5 w-5 text-primary" /> New Patient Record
+                <Plus className="h-5 w-5 text-primary" /> Start New Encounter
               </Link>
             </Button>
           </div>
@@ -200,14 +232,17 @@ export default function AssessPage() {
                   >
                     <div className="flex justify-between items-start">
                       <span className="font-bold text-primary group-hover:text-primary/80">{patient.name}</span>
-                      <Badge variant="outline" className="text-[10px] uppercase">{patient.status}</Badge>
+                      <Badge variant="outline" className={cn(
+                        "text-[10px] uppercase",
+                        patient.status === 'Urgent' ? "border-red-200 text-red-600 bg-red-50" : ""
+                      )}>{patient.status}</Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Village: {patient.location}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{patient.location} • {patient.gender}</p>
                   </button>
                 ))
               ) : (
                 <div className="text-center py-10 text-muted-foreground text-sm">
-                  No registered patients found.
+                  {isProcessing ? "Loading Registry..." : "No registered patients found."}
                 </div>
               )}
             </div>
@@ -222,10 +257,10 @@ export default function AssessPage() {
           </div>
           <h2 className="text-xl font-headline font-bold text-primary">Clinical AI Chat</h2>
           <p className="text-sm text-muted-foreground max-w-xs">
-            Select a patient to begin WHO-guided diagnosis and triage.
+            Select a patient from your registry to begin WHO-guided diagnosis and triage.
           </p>
           <Button onClick={() => setShowHistory(true)} variant="outline" className="gap-2">
-            <History className="h-4 w-4" /> View History
+            <History className="h-4 w-4" /> Open Registry
           </Button>
         </div>
       ) : (
@@ -240,7 +275,7 @@ export default function AssessPage() {
                 <Badge variant="secondary" className="h-4 text-[9px]">{selectedPatient?.status}</Badge>
               </div>
               <p className="text-[10px] text-muted-foreground truncate">
-                {selectedPatient?.age}Y • {selectedPatient?.location} • AI Assisted
+                {selectedPatient?.location} • AI Assisted • On-Device Engine
               </p>
             </div>
             <Button variant="ghost" size="icon">
@@ -262,6 +297,15 @@ export default function AssessPage() {
                       : "bg-white border rounded-tl-none"
                   )}>
                     {msg.type === 'audio' && <div className="flex items-center gap-2 mb-1 opacity-70 text-[10px] font-bold uppercase"><Mic className="h-3 w-3" /> Voice Input</div>}
+                    {msg.type === 'file' && (
+                      <div className="flex items-center gap-3 mb-2 p-2 bg-white/10 rounded-lg">
+                        <FileText className="h-8 w-8 text-accent" />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold uppercase tracking-tight">Attached Document</span>
+                          <span className="text-xs font-mono">{msg.fileName}</span>
+                        </div>
+                      </div>
+                    )}
                     {msg.content}
                   </div>
 
@@ -334,7 +378,7 @@ export default function AssessPage() {
                       className="text-sm bg-white border-none shadow-none focus-visible:ring-0 min-h-[80px]"
                     />
                     <div className="flex gap-2">
-                      <Button onClick={handleFinalizeTranscription} className="flex-1 h-9 text-xs font-bold bg-primary">
+                      <Button onClick={handleFinalizeTranscription} className="flex-1 h-9 text-xs font-bold bg-primary text-white">
                         Confirm & Analyze
                       </Button>
                     </div>
@@ -346,7 +390,12 @@ export default function AssessPage() {
 
           <div className="p-4 bg-card border-t border-muted pb-6">
             <div className="flex items-end gap-2 max-w-md mx-auto">
-              <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground shrink-0">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-10 w-10 text-muted-foreground shrink-0 hover:bg-muted"
+                onClick={handleFileUpload}
+              >
                 <Paperclip className="h-5 w-5" />
               </Button>
               
@@ -380,7 +429,7 @@ export default function AssessPage() {
                   size="icon" 
                   className={cn(
                     "h-10 w-10 rounded-full transition-all duration-300 shrink-0",
-                    isRecording ? "bg-red-500 scale-110 shadow-lg" : "bg-accent text-accent-foreground"
+                    isRecording ? "bg-red-500 scale-110 shadow-lg text-white" : "bg-accent text-accent-foreground"
                   )}
                 >
                   <Mic className={cn("h-5 w-5", isRecording && "animate-pulse")} />
