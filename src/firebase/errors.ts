@@ -1,4 +1,6 @@
-'use client';
+/**
+ * @fileOverview Custom error types for Firebase operations.
+ */
 
 export type SecurityRuleContext = {
   path: string;
@@ -11,16 +13,11 @@ export class FirestorePermissionError extends Error {
 
   constructor(context: SecurityRuleContext) {
     const message = `FirestoreError: Missing or insufficient permissions: The following request was denied by Firestore Security Rules:
-${JSON.stringify({
-  method: context.operation,
-  path: context.path,
-  request: {
-    resource: {
-      data: context.requestResourceData
-    }
-  }
-}, null, 2)}`;
-    
+{
+  "operation": "${context.operation}",
+  "path": "${context.path}",
+  "data": ${JSON.stringify(context.requestResourceData || {}, null, 2)}
+}`;
     super(message);
     this.name = 'FirestorePermissionError';
     this.context = context;

@@ -1,13 +1,12 @@
 'use client';
 
-import { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { Auth } from 'firebase/auth';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseContextProps {
-  firebaseApp: FirebaseApp;
+  app: FirebaseApp;
   firestore: Firestore;
   auth: Auth;
 }
@@ -16,13 +15,12 @@ const FirebaseContext = createContext<FirebaseContextProps | undefined>(undefine
 
 export function FirebaseProvider({
   children,
-  firebaseApp,
+  app,
   firestore,
   auth,
 }: FirebaseContextProps & { children: ReactNode }) {
   return (
-    <FirebaseContext.Provider value={{ firebaseApp, firestore, auth }}>
-      <FirebaseErrorListener />
+    <FirebaseContext.Provider value={{ app, firestore, auth }}>
       {children}
     </FirebaseContext.Provider>
   );
@@ -37,7 +35,7 @@ export function useFirebase() {
 }
 
 export function useFirebaseApp() {
-  return useFirebase().firebaseApp;
+  return useFirebase().app;
 }
 
 export function useFirestore() {

@@ -1,22 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import {
-  onSnapshot,
-  DocumentReference,
-  DocumentData,
-  DocumentSnapshot,
+import { useState, useEffect } from 'react';
+import { 
+  onSnapshot, 
+  DocumentReference, 
+  DocumentData, 
+  DocumentSnapshot 
 } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '../error-emitter';
+import { FirestorePermissionError } from '../errors';
 
-export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
+/**
+ * Hook for real-time Firestore document updates.
+ */
+export function useDoc<T = DocumentData>(docRef: DocumentReference<T> | null) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!ref) {
+    if (!docRef) {
       setData(null);
       setLoading(false);
       return;
@@ -24,14 +27,14 @@ export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
 
     setLoading(true);
     const unsubscribe = onSnapshot(
-      ref,
+      docRef,
       (snapshot: DocumentSnapshot<T>) => {
         setData(snapshot.exists() ? { ...snapshot.data()!, id: snapshot.id } : null);
         setLoading(false);
       },
       async (err) => {
         const permissionError = new FirestorePermissionError({
-          path: ref.path,
+          path: docRef.path,
           operation: 'get',
         });
         errorEmitter.emit('permission-error', permissionError);
@@ -40,8 +43,8 @@ export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
       }
     );
 
-    return () => unsubscribe();
-  }, [ref]);
+    return unsubscribe;
+  }, [docRef]);
 
   return { data, loading, error };
 }
