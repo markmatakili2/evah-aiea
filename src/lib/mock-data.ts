@@ -40,6 +40,16 @@ export const mockPatients = [
   { id: 'p4', name: 'David Omondi', age: 31, gender: 'Male', location: 'Ziwani Block', status: 'Stable', contact: '+254 744 000 444', updatedAt: new Date(Date.now() - 86400000).toISOString(), chwId: 'demo-uid' },
 ];
 
+export const mockClinicians = [
+  { id: 'c1', name: 'Dr. Sarah Mwangi', role: 'Senior Neurologist', hospital: 'National Referral', email: 's.mwangi@health.go.ke', phone: '+254 700 111 222', license: 'KMPDC-9982' },
+  { id: 'c2', name: 'Dr. Robert Chen', role: 'General Practitioner', hospital: 'District General', email: 'r.chen@health.go.ke', phone: '+254 700 333 444', license: 'KMPDC-4421' },
+];
+
+export const mockCHWs = [
+  { id: 'chw1', name: 'Alex Mutua', sector: 'Kijiji Village', activePatients: 28, email: 'a.mutua@chw.org', phone: '+254 711 555 666', performance: 'Excellent' },
+  { id: 'chw2', name: 'Grace Achieng', sector: 'Mlimani Sector', activePatients: 15, email: 'g.achieng@chw.org', phone: '+254 711 777 888', performance: 'Good' },
+];
+
 export const mockHealthFacilities: HealthFacility[] = [
   {
     id: 'f1',
