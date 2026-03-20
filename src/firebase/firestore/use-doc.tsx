@@ -1,15 +1,11 @@
 'use client';
 
-/**
- * @fileOverview Hook for real-time Firestore document data.
- */
-
-import { useState, useEffect } from 'react';
-import {
-  onSnapshot,
-  type DocumentReference,
-  type DocumentData,
-  type DocumentSnapshot,
+import { useEffect, useState } from 'react';
+import { 
+  DocumentReference, 
+  onSnapshot, 
+  DocumentSnapshot, 
+  DocumentData 
 } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
@@ -33,13 +29,13 @@ export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
         setData(snapshot.exists() ? { ...snapshot.data(), id: snapshot.id } : null);
         setLoading(false);
       },
-      async (serverError) => {
+      async (err) => {
         const permissionError = new FirestorePermissionError({
           path: ref.path,
           operation: 'get',
         });
         errorEmitter.emit('permission-error', permissionError);
-        setError(serverError);
+        setError(err);
         setLoading(false);
       }
     );

@@ -1,35 +1,31 @@
 'use client';
 
-/**
- * @fileOverview Firebase React Provider and associated hooks for accessing service instances.
- */
-
 import React, { createContext, useContext } from 'react';
-import type { FirebaseApp } from 'firebase/app';
-import type { Firestore } from 'firebase/firestore';
-import type { Auth } from 'firebase/auth';
+import { FirebaseApp } from 'firebase/app';
+import { Auth } from 'firebase/auth';
+import { Firestore } from 'firebase/firestore';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseContextProps {
-  firebaseApp: FirebaseApp | null;
-  firestore: Firestore | null;
+  app: FirebaseApp | null;
   auth: Auth | null;
+  db: Firestore | null;
 }
 
 const FirebaseContext = createContext<FirebaseContextProps>({
-  firebaseApp: null,
-  firestore: null,
+  app: null,
   auth: null,
+  db: null,
 });
 
 export const FirebaseProvider: React.FC<{
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
+  app: FirebaseApp;
   auth: Auth;
+  db: Firestore;
   children: React.ReactNode;
-}> = ({ firebaseApp, firestore, auth, children }) => {
+}> = ({ app, auth, db, children }) => {
   return (
-    <FirebaseContext.Provider value={{ firebaseApp, firestore, auth }}>
+    <FirebaseContext.Provider value={{ app, auth, db }}>
       <FirebaseErrorListener />
       {children}
     </FirebaseContext.Provider>
@@ -37,19 +33,6 @@ export const FirebaseProvider: React.FC<{
 };
 
 export const useFirebase = () => useContext(FirebaseContext);
-
-export const useFirebaseApp = () => {
-  const { firebaseApp } = useFirebase();
-  return firebaseApp;
-};
-
-export const useFirestore = () => {
-  const { firestore } = useFirebase();
-  // In a real app, you might want to throw if firestore is null
-  return firestore!;
-};
-
-export const useAuth = () => {
-  const { auth } = useFirebase();
-  return auth;
-};
+export const useFirebaseApp = () => useContext(FirebaseContext).app;
+export const useAuth = () => useContext(FirebaseContext).auth;
+export const useFirestore = () => useContext(FirebaseContext).db;

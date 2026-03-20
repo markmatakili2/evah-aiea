@@ -1,19 +1,14 @@
-'use client';
-
 export type SecurityRuleContext = {
   path: string;
   operation: 'get' | 'list' | 'create' | 'update' | 'delete' | 'write';
   requestResourceData?: any;
 };
 
-/**
- * A custom error class for Firestore permission issues.
- */
 export class FirestorePermissionError extends Error {
   context: SecurityRuleContext;
 
   constructor(context: SecurityRuleContext) {
-    const message = `Firestore Permission Denied: ${context.operation} on ${context.path}`;
+    const message = `Firestore Security Rules: Permission denied for ${context.operation} at ${context.path}`;
     super(message);
     this.name = 'FirestorePermissionError';
     this.context = context;
