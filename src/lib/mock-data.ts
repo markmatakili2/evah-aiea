@@ -3,13 +3,12 @@ import type { Notification, Test, Lab, TestResult, Withdrawal } from './types';
 import type { HealthFacility } from './clinical-engine/types';
 
 /**
- * @fileOverview Standardized mock data for the AI Epilepsy Assistant prototype.
- * All data is served locally to facilitate zero-backend demos.
+ * @fileOverview WHO mhGAP-aligned mock data for the AI Epilepsy Assistant prototype.
  */
 
 export const mockNotifications: Notification[] = [
     { id: '1', icon: AlertCircle, text: "Urgent review needed for Zahara Hassan", href: "/dashboard/records", timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), read: false },
-    { id: '2', icon: ClipboardCheck, text: "Clinical guidance updated to WHO 2024", href: "/dashboard", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), read: false },
+    { id: '2', icon: ClipboardCheck, text: "Clinical guidance updated to mhGAP 2024", href: "/dashboard", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), read: false },
     { id: '3', icon: Calendar, text: "Monthly sync completed successfully", href: "/dashboard", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), read: true },
 ];
 
@@ -38,6 +37,45 @@ export const mockPatients = [
   { id: 'p2', name: 'John Kamau', age: 45, gender: 'Male', location: 'Mlimani Sector', status: 'Stable', contact: '+254 722 000 222', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
   { id: 'p3', name: 'Amina Juma', age: 12, gender: 'Female', location: 'Pwani Area', status: 'Follow-up', contact: '+254 733 000 333', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
   { id: 'p4', name: 'David Omondi', age: 31, gender: 'Male', location: 'Ziwani Block', status: 'Stable', contact: '+254 744 000 444', updatedAt: new Date(Date.now() - 86400000).toISOString(), chwId: 'demo-uid' },
+];
+
+export const mockEncounters = [
+  {
+    id: 'e1',
+    patientId: 'p1',
+    date: new Date(Date.now() - 86400000 * 2).toISOString(),
+    summary: 'Emergency presentation: Prolonged convulsive seizure lasting 7 minutes. Status Epilepticus protocol initiated. Patient was stabilized and referral to tertiary hospital recommended.',
+    redFlags: ['Prolonged Seizure (> 5 min)', 'Repeated Seizures without recovery'],
+    recommendation: { action: 'IMMEDIATE EMERGENCY REFERRAL' },
+    type: 'Emergency'
+  },
+  {
+    id: 'e2',
+    patientId: 'p1',
+    date: new Date(Date.now() - 86400000 * 15).toISOString(),
+    summary: 'Routine review. Patient reporting good adherence to medication. Seizure frequency decreased to 1 per month.',
+    redFlags: [],
+    recommendation: { action: 'Continue current management and adherence counseling.' },
+    type: 'Routine'
+  },
+  {
+    id: 'e3',
+    patientId: 'p3',
+    date: new Date(Date.now() - 86400000 * 5).toISOString(),
+    summary: 'Pediatric assessment. New onset seizures in child under 5. Fever noted (38.5C). CNS infection suspected.',
+    redFlags: ['Fever & Neck Stiffness', 'New onset under 5 years'],
+    recommendation: { action: 'Urgent referral for pediatric specialist review and lumbar puncture.' },
+    type: 'Emergency'
+  },
+  {
+    id: 'e4',
+    patientId: 'p2',
+    date: new Date(Date.now() - 86400000 * 30).toISOString(),
+    summary: 'Initial assessment. History of head trauma 2 years ago. Seizures are focal with secondary generalization.',
+    redFlags: [],
+    recommendation: { action: 'Start first-line antiseizure medication (Carbamazepine). Schedule 2-week follow-up.' },
+    type: 'Initial'
+  }
 ];
 
 export const mockClinicians = [
@@ -77,41 +115,6 @@ export const mockHealthFacilities: HealthFacility[] = [
     capabilities: ['First Aid', 'Basic Meds', 'Observation'],
     contact: '+254 20 7654321',
     isOpen24h: false
-  }
-];
-
-export const mockEncounters = [
-  { 
-    id: 'e1', 
-    patientId: 'p1', 
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), 
-    summary: 'WHO Protocol: Emergency review. Patient reported 3 tonic-clonic seizures in 24 hours. Adherence check: missed 3 doses of Phenobarbital.', 
-    redFlags: ['repeated', 'medicationFail'], 
-    recommendation: { action: 'IMMEDIATE EMERGENCY REFERRAL', urgencyLevel: 'EMERGENCY', clinicalReasoning: 'WHO Status Epilepticus Risk detected. High frequency of repeated seizures coupled with treatment non-adherence.' } 
-  },
-  { 
-    id: 'e2', 
-    patientId: 'p2', 
-    date: new Date(Date.now() - 86400000 * 15).toISOString(), 
-    summary: 'Routine WHO follow-up. No seizure activity reported in last 3 months. Adherence is 100%. Family counseling provided on safety.', 
-    redFlags: [], 
-    recommendation: { action: 'Continue local management', urgencyLevel: 'STABLE', clinicalReasoning: 'Clinical signs suggest well-controlled epilepsy under current local protocols.' } 
-  },
-  {
-    id: 'e3',
-    patientId: 'p3',
-    date: new Date(Date.now() - 86400000 * 2).toISOString(),
-    summary: 'Urgent review for pediatric onset. Fever reported alongside first focal seizure. WHO Pediatric Protocol triggered.',
-    redFlags: ['newOnsetUnder5', 'feverNeck'],
-    recommendation: { action: 'Refer for Clinician Review within 24h', urgencyLevel: 'URGENT', clinicalReasoning: 'Suspected underlying infection or fever-triggered seizure in a child under 5.' }
-  },
-  {
-    id: 'e4',
-    patientId: 'p4',
-    date: new Date(Date.now() - 86400000 * 30).toISOString(),
-    summary: 'Initial assessment. Seizure type generalized. Frequency 1/month. Triggers identified: Sleep deprivation.',
-    redFlags: [],
-    recommendation: { action: 'Continue monitoring and counseling', urgencyLevel: 'STABLE', clinicalReasoning: 'Infrequent seizures with clear triggers. Advised on sleep hygiene.' }
   }
 ];
 
