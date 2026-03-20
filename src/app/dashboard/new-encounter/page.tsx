@@ -20,7 +20,9 @@ import {
   TriangleAlert,
   Loader2,
   Edit3,
-  MapPin
+  MapPin,
+  Clock,
+  Activity
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -66,7 +68,7 @@ function NewEncounterContent() {
   // Form State
   const [patientData, setPatientData] = useState({
     name: '',
-    age: '',
+    dob: '',
     sex: '',
     location: '',
     contact: '',
@@ -95,7 +97,7 @@ function NewEncounterContent() {
     if (existingPatient) {
       setPatientData({
         name: existingPatient.name,
-        age: existingPatient.age.toString(),
+        dob: existingPatient.dob || '',
         sex: existingPatient.gender.toLowerCase(),
         location: existingPatient.location,
         contact: existingPatient.contact || '',
@@ -108,8 +110,14 @@ function NewEncounterContent() {
 
   const runAssessment = () => {
     setStep('assessment');
+    
+    // Calculate approximate age from DOB for clinical logic
+    const birthYear = new Date(patientData.dob).getFullYear();
+    const currentYear = new Date().getFullYear();
+    const age = isNaN(birthYear) ? 30 : currentYear - birthYear;
+
     const input: ClinicalInput = {
-      patientProfile: { age: parseInt(patientData.age) || 0, sex: patientData.sex },
+      patientProfile: { age, sex: patientData.sex },
       seizureHistory: historyData,
       redFlags: redFlags
     };
@@ -129,10 +137,16 @@ function NewEncounterContent() {
     const targetPatientId = patientId || doc(collection(db, 'patients')).id;
     const patientRef = doc(db, 'patients', targetPatientId);
     
+    // Calculate Age for list view display
+    const birthYear = new Date(patientData.dob).getFullYear();
+    const currentYear = new Date().getFullYear();
+    const age = isNaN(birthYear) ? 30 : currentYear - birthYear;
+
     const patientUpdate = {
       id: targetPatientId,
       name: patientData.name,
-      age: parseInt(patientData.age),
+      dob: patientData.dob,
+      age: age,
       gender: patientData.sex,
       location: patientData.location,
       contact: patientData.contact,
@@ -151,7 +165,8 @@ function NewEncounterContent() {
       patientId: targetPatientId,
       chwId: user.uid,
       date: new Date().toISOString(),
-      summary: `Assessment. Seizure type: ${historyData.type}. Notes: ${redFlags.additionalNotes}`,
+      summary: `Assessment. Seizure type: ${historyData.type}. Duration: ${historyData.duration}m. Frequency: ${historyData.frequency}/mo. Notes: ${redFlags.additionalNotes}`,
+      history: historyData,
       redFlags: Object.keys(redFlags).filter(k => redFlags[k as keyof typeof redFlags] === true),
       recommendation: recommendation,
       status: status,
@@ -164,6 +179,7 @@ function NewEncounterContent() {
     setDoc(encounterRef, encounterData)
       .then(() => {
         toast({ title: "Clinical Record Logged", description: status === 'overridden' ? "Safety override captured for audit." : "Standard record synced." });
+        setShowOverrideDialog(false);
         router.push('/dashboard');
       })
       .catch(async (err) => {
@@ -176,6 +192,15 @@ function NewEncounterContent() {
       .finally(() => setIsSaving(false));
   };
 
+  const handleTriggerToggle = (trigger: string) => {
+    setHistoryData(prev => ({
+      ...prev,
+      triggers: prev.triggers.includes(trigger) 
+        ? prev.triggers.filter(t => t !== trigger)
+        : [...prev.triggers, trigger]
+    }));
+  };
+
   return (
     <div className="max-w-md mx-auto space-y-6 pb-10">
       <div className="flex flex-col gap-2">
@@ -186,12 +211,12 @@ function NewEncounterContent() {
       {step === 'patient' && (
         <Card className="border-none shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2"><UserCircle className="h-5 w-5 text-primary" /> Profile</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2"><UserCircle className="h-5 w-5 text-primary" /> Patient Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2"><Label>Full Name</Label><Input value={patientData.name} onChange={e => setPatientData({...patientData, name: e.target.value})} /></div>
+            <div className="space-y-2"><Label>Full Name</Label><Input value={patientData.name} onChange={e => setPatientData({...patientData, name: e.target.value})} placeholder="Patient's name" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Age</Label><Input type="number" value={patientData.age} onChange={e => setPatientData({...patientData, age: e.target.value})} /></div>
+              <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={patientData.dob} onChange={e => setPatientData({...patientData, dob: e.target.value})} /></div>
               <div className="space-y-2">
                 <Label>Sex</Label>
                 <Select value={patientData.sex} onValueChange={v => setPatientData({...patientData, sex: v})}>
@@ -199,13 +224,13 @@ function NewEncounterContent() {
                   <SelectContent>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Prefer not to say</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="space-y-2"><Label>Village</Label><Input value={patientData.location} onChange={e => setPatientData({...patientData, location: e.target.value})} /></div>
-            <div className="space-y-2"><Label>Contact</Label><Input value={patientData.contact} onChange={e => setPatientData({...patientData, contact: e.target.value})} /></div>
+            <div className="space-y-2"><Label>Village / Sector</Label><Input value={patientData.location} onChange={e => setPatientData({...patientData, location: e.target.value})} placeholder="e.g. Kijiji Village" /></div>
+            <div className="space-y-2"><Label>Contact Number</Label><Input value={patientData.contact} onChange={e => setPatientData({...patientData, contact: e.target.value})} placeholder="+254..." /></div>
             <Button className="w-full h-12" onClick={() => setStep('history')}>Next <ChevronRight className="h-4 w-4" /></Button>
           </CardContent>
         </Card>
@@ -213,15 +238,56 @@ function NewEncounterContent() {
 
       {step === 'history' && (
         <Card className="border-none shadow-sm">
-          <CardHeader><CardTitle className="text-lg">History</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2"><Activity className="h-5 w-5 text-primary" /> Seizure History</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2"><Label>Seizure Type</Label>
+            <div className="space-y-2">
+              <Label>Seizure Type</Label>
               <Select value={historyData.type} onValueChange={v => setHistoryData({...historyData, type: v})}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent><SelectItem value="generalized">Generalized</SelectItem><SelectItem value="focal">Focal</SelectItem></SelectContent>
+                <SelectTrigger><SelectValue placeholder="Select classification" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="generalized">Generalized (Tonic-Clonic)</SelectItem>
+                  <SelectItem value="focal">Focal (Partial)</SelectItem>
+                  <SelectItem value="absence">Absence</SelectItem>
+                  <SelectItem value="unknown">Unknown / Other</SelectItem>
+                </SelectContent>
               </Select>
             </div>
-            <Button className="w-full h-12" onClick={() => setStep('redflags')}>Next <ChevronRight className="h-4 w-4" /></Button>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1"><Clock className="h-3 w-3" /> Duration (min)</Label>
+                <Input type="number" value={historyData.duration} onChange={e => setHistoryData({...historyData, duration: e.target.value})} placeholder="Minutes" />
+              </div>
+              <div className="space-y-2">
+                <Label>Freq (per month)</Label>
+                <Input type="number" value={historyData.frequency} onChange={e => setHistoryData({...historyData, frequency: e.target.value})} placeholder="e.g. 3" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Known Triggers</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {['Stress', 'Fever', 'Missed Meds', 'Alcohol', 'Sleep Deprivation', 'Lights'].map(t => (
+                  <Button 
+                    key={t} 
+                    type="button"
+                    variant={historyData.triggers.includes(t) ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-8 text-[10px] uppercase font-bold"
+                    onClick={() => handleTriggerToggle(t)}
+                  >
+                    {t}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button variant="outline" className="flex-1" onClick={() => setStep('patient')}><ChevronLeft className="h-4 w-4" /> Back</Button>
+              <Button className="flex-1" onClick={() => setStep('redflags')}>Next <ChevronRight className="h-4 w-4" /></Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -230,14 +296,26 @@ function NewEncounterContent() {
         <Card className="border-none shadow-sm">
           <CardHeader><CardTitle className="text-lg text-red-600 flex gap-2"><ShieldAlert /> Red Flags</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            {['repeated', 'feverNeck', 'injury'].map(id => (
-              <div key={id} className="flex items-center space-x-3 p-3 bg-red-50/20 rounded-lg">
-                <Checkbox id={id} checked={redFlags[id as keyof typeof redFlags] === true} onCheckedChange={c => setRedFlags({...redFlags, [id]: !!c})} />
-                <Label htmlFor={id} className="text-xs font-bold leading-relaxed">{id === 'repeated' ? 'Repeated seizures' : id === 'feverNeck' ? 'Fever & Neck Stiffness' : 'Injury'}</Label>
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-2">Check all that apply</p>
+            {[
+              { id: 'repeated', label: 'Repeated seizures (Status Risk)' },
+              { id: 'feverNeck', label: 'Fever & Neck Stiffness' },
+              { id: 'injury', label: 'Severe Injury sustained' },
+              { id: 'medicationFail', label: 'Failing standard medication' }
+            ].map(flag => (
+              <div key={flag.id} className="flex items-center space-x-3 p-3 bg-red-50/20 rounded-lg border border-red-100/50">
+                <Checkbox id={flag.id} checked={redFlags[flag.id as keyof typeof redFlags] === true} onCheckedChange={c => setRedFlags({...redFlags, [flag.id]: !!c})} />
+                <Label htmlFor={flag.id} className="text-xs font-bold leading-relaxed">{flag.label}</Label>
               </div>
             ))}
-            <Textarea placeholder="Additional observations..." value={redFlags.additionalNotes} onChange={e => setRedFlags({...redFlags, additionalNotes: e.target.value})} />
-            <Button className="w-full h-12 bg-primary font-bold" onClick={runAssessment}>Assess Patient</Button>
+            <div className="space-y-2 pt-2">
+              <Label>Additional Observations</Label>
+              <Textarea placeholder="Any other clinical notes..." value={redFlags.additionalNotes} onChange={e => setRedFlags({...redFlags, additionalNotes: e.target.value})} />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button variant="outline" className="flex-1" onClick={() => setStep('history')}><ChevronLeft className="h-4 w-4" /> Back</Button>
+              <Button className="flex-1 bg-primary font-bold" onClick={runAssessment}>Assess Patient</Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -246,19 +324,23 @@ function NewEncounterContent() {
         <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
           <h3 className="text-xl font-bold font-headline text-primary">On-Device Clinical Logic Active</h3>
+          <p className="text-sm text-muted-foreground">Running WHO epilepsy protocols...</p>
         </div>
       )}
 
       {step === 'report' && recommendation && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <Card className={recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-50 border-red-200" : recommendation.urgencyLevel === 'URGENT' ? "bg-orange-50 border-orange-200" : "bg-green-50 border-green-200"}>
             <CardHeader>
-              <Badge variant={recommendation.urgencyLevel === 'EMERGENCY' ? 'destructive' : 'secondary'}>{recommendation.urgencyLevel}</Badge>
+              <div className="flex justify-between items-center">
+                <Badge variant={recommendation.urgencyLevel === 'EMERGENCY' ? 'destructive' : 'secondary'}>{recommendation.urgencyLevel}</Badge>
+                <Sparkles className="h-4 w-4 text-primary/40" />
+              </div>
               <CardTitle className="text-xl mt-2">AI Triage Result</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <section><h4 className="text-[10px] font-bold uppercase text-muted-foreground">Reasoning</h4><p className="text-sm">{recommendation.clinicalReasoning}</p></section>
-              <section><h4 className="text-[10px] font-bold uppercase text-muted-foreground">Action</h4><p className="text-sm font-bold">{recommendation.action}</p></section>
+              <section><h4 className="text-[10px] font-bold uppercase text-muted-foreground">Action</h4><p className="text-sm font-bold text-primary">{recommendation.action}</p></section>
             </CardContent>
           </Card>
 
@@ -273,9 +355,11 @@ function NewEncounterContent() {
           )}
 
           <div className="flex flex-col gap-3">
-            <Button className="w-full h-14 font-bold" onClick={() => saveRecord('approved')} disabled={isSaving}>Accept & Sync</Button>
+            <Button className="w-full h-14 font-bold shadow-lg" onClick={() => saveRecord('approved')} disabled={isSaving}>
+              {isSaving ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle2 className="mr-2" />} Accept & Sync
+            </Button>
             <Button variant="outline" className="w-full h-12" onClick={() => setShowOverrideDialog(true)}>
-              <Edit3 className="h-4 w-4 mr-2" /> Safety Override
+              <Edit3 className="h-4 w-4 mr-2" /> Clinical Override
             </Button>
           </div>
         </div>
@@ -283,7 +367,7 @@ function NewEncounterContent() {
 
       <Dialog open={showOverrideDialog} onOpenChange={setShowOverrideDialog}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Clinical Override Reason</DialogTitle><DialogDescription>All overrides are logged for safety audit.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>Clinical Override Reason</DialogTitle><DialogDescription>All overrides are logged for safety audit and AI improvement.</DialogDescription></DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Primary Reason</Label>
@@ -297,21 +381,23 @@ function NewEncounterContent() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2"><Label>Detailed Notes</Label><Textarea value={overrideData.notes} onChange={e => setOverrideData({...overrideData, notes: e.target.value})} placeholder="Why is this recommendation being overridden?" /></div>
+            <div className="space-y-2"><Label>Detailed Notes</Label><Textarea value={overrideData.notes} onChange={e => setOverrideData({...overrideData, notes: e.target.value})} placeholder="Provide context for the override..." /></div>
           </div>
-          <DialogFooter><Button variant="destructive" className="w-full" disabled={!overrideData.reason} onClick={() => saveRecord('overridden')}>Confirm Override</Button></DialogFooter>
+          <DialogFooter><Button variant="destructive" className="w-full h-12 font-bold" disabled={!overrideData.reason || isSaving} onClick={() => saveRecord('overridden')}>
+            {isSaving ? <Loader2 className="animate-spin mr-2" /> : null} Confirm Override
+          </Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showSafetyDialog} onOpenChange={setShowSafetyDialog}>
-        <DialogContent className="bg-red-600 text-white">
+        <DialogContent className="bg-red-600 text-white border-none shadow-2xl">
           <DialogHeader><div className="mx-auto bg-white/20 p-3 rounded-full mb-2"><TriangleAlert className="h-10 w-10 text-white animate-pulse" /></div><DialogTitle className="text-2xl font-bold text-center">SAFETY ALERT</DialogTitle></DialogHeader>
-          <p className="text-center text-lg">Patient exhibits <strong>EMERGENCY RED FLAGS</strong>. Immediate specialist intervention required.</p>
-          <DialogFooter><Button onClick={() => setShowSafetyDialog(false)} className="w-full h-14 bg-white text-red-600 font-bold">I ACKNOWLEDGE</Button></DialogFooter>
+          <p className="text-center text-lg leading-relaxed">Patient exhibits <strong>EMERGENCY RED FLAGS</strong>. Immediate specialist intervention and facility referral required.</p>
+          <DialogFooter><Button onClick={() => setShowSafetyDialog(false)} className="w-full h-14 bg-white text-red-600 font-bold hover:bg-white/90">I ACKNOWLEDGE</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
 
-export default function NewEncounterPage() { return <Suspense fallback={<div>Loading...</div>}><NewEncounterContent /></Suspense>; }
+export default function NewEncounterPage() { return <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin" /></div>}><NewEncounterContent /></Suspense>; }

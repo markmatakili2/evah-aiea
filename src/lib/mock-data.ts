@@ -37,6 +37,7 @@ export const mockPatients = [
   { id: 'p1', name: 'Zahara Hassan', age: 24, gender: 'Female', location: 'Kijiji Village', status: 'Urgent', contact: '+254 711 000 111', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
   { id: 'p2', name: 'John Kamau', age: 45, gender: 'Male', location: 'Mlimani Sector', status: 'Stable', contact: '+254 722 000 222', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
   { id: 'p3', name: 'Amina Juma', age: 12, gender: 'Female', location: 'Pwani Area', status: 'Follow-up', contact: '+254 733 000 333', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
+  { id: 'p4', name: 'David Omondi', age: 31, gender: 'Male', location: 'Ziwani Block', status: 'Stable', contact: '+254 744 000 444', updatedAt: new Date(Date.now() - 86400000).toISOString(), chwId: 'demo-uid' },
 ];
 
 export const mockHealthFacilities: HealthFacility[] = [
