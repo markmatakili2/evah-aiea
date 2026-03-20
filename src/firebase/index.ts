@@ -1,27 +1,25 @@
 'use client';
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getFirestore, Firestore } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
-export function initializeFirebase() {
-  let app: FirebaseApp;
-  
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApp();
-  }
+export function initializeFirebase(): {
+  firebaseApp: FirebaseApp;
+  auth: Auth;
+  firestore: Firestore;
+} {
+  const firebaseApp =
+    getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+  const auth = getAuth(firebaseApp);
+  const firestore = getFirestore(firebaseApp);
 
-  const firestore = getFirestore(app);
-  const auth = getAuth(app);
-
-  return { firebaseApp: app, firestore, auth };
+  return { firebaseApp, auth, firestore };
 }
 
 export * from './provider';
 export * from './client-provider';
-export { useCollection } from './firestore/use-collection';
-export { useDoc } from './firestore/use-doc';
-export { useUser } from './auth/use-user';
+export * from './auth/use-user';
+export * from './firestore/use-collection';
+export * from './firestore/use-doc';

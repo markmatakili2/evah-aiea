@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useMemo, ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { initializeFirebase } from './index';
 import { FirebaseProvider } from './provider';
 
-export const FirebaseClientProvider = ({ children }: { children: ReactNode }) => {
+export function FirebaseClientProvider({ children }: { children: ReactNode }) {
   const { firebaseApp, firestore, auth } = useMemo(() => initializeFirebase(), []);
 
   return (
@@ -12,4 +12,4 @@ export const FirebaseClientProvider = ({ children }: { children: ReactNode }) =>
       {children}
     </FirebaseProvider>
   );
-};
+}
