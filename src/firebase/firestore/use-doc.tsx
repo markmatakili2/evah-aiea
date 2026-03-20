@@ -1,39 +1,40 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { 
-  DocumentReference, 
-  onSnapshot, 
-  DocumentSnapshot, 
-  DocumentData 
+import { useState, useEffect } from 'react';
+import {
+  DocumentReference,
+  onSnapshot,
+  DocumentSnapshot,
+  DocumentData,
+  FirestoreError,
 } from 'firebase/firestore';
-import { errorEmitter } from '../error-emitter';
-import { FirestorePermissionError } from '../errors';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
-export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
+export function useDoc<T = DocumentData>(docRef: DocumentReference<T> | null) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<FirestoreError | null>(null);
 
   useEffect(() => {
-    if (!ref) {
-      setData(null);
+    if (!docRef) {
       setLoading(false);
       return;
     }
 
     setLoading(true);
     const unsubscribe = onSnapshot(
-      ref,
+      docRef,
       (snapshot: DocumentSnapshot<T>) => {
-        setData(snapshot.exists() ? { ...snapshot.data(), id: snapshot.id } : null);
+        setData(snapshot.exists() ? ({ ...snapshot.data(), id: snapshot.id } as T) : null);
         setLoading(false);
       },
-      async (err) => {
+      async (err: FirestoreError) => {
         const permissionError = new FirestorePermissionError({
-          path: ref.path,
+          path: docRef.path,
           operation: 'get',
-        });
+        } satisfies SecurityRuleContext);
+
         errorEmitter.emit('permission-error', permissionError);
         setError(err);
         setLoading(false);
@@ -41,7 +42,7 @@ export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
     );
 
     return () => unsubscribe();
-  }, [ref]);
+  }, [docRef]);
 
   return { data, loading, error };
 }
