@@ -2,19 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Clipboard, List, User, Bell } from "lucide-react";
+import { Home, Clipboard, List, User, Bell, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/dashboard", icon: Home, label: "Home" },
-  { href: "/dashboard/assess", icon: Clipboard, label: "Assess" },
-  { href: "/dashboard/records", icon: List, label: "Records" },
-  { href: "/dashboard/notifications", icon: Bell, label: "Alerts" },
-  { href: "/dashboard/account", icon: User, label: "Account" },
-];
+interface MobileNavProps {
+  userRole?: string;
+}
 
-export function MobileNav() {
+export function MobileNav({ userRole }: MobileNavProps) {
   const pathname = usePathname();
+
+  const baseItems = [
+    { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/assess", icon: Clipboard, label: "Assess", roles: ['chw', 'clinician'] },
+    { href: "/dashboard/analytics", icon: Activity, label: "Data", roles: ['supervisor'] },
+    { href: "/dashboard/records", icon: List, label: "Records", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/notifications", icon: Bell, label: "Alerts", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/account", icon: User, label: "Account", roles: ['chw', 'clinician', 'supervisor'] },
+  ];
+
+  const navItems = baseItems.filter(item => !userRole || item.roles.includes(userRole));
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t max-w-md mx-auto">

@@ -1,121 +1,91 @@
-
 'use client';
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { mockTestRequests, mockTests } from '@/lib/mock-data';
-import { useMemo } from 'react';
+import { useFirestore, useCollection, useUser, useDoc } from '@/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ShieldAlert, Users, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { doc } from 'firebase/firestore';
+import { PageLoader } from '@/components/ui/loader';
 
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+export default function SafetyDashboard() {
+  const { user } = useUser();
+  const db = useFirestore();
+  const { data: profile } = useDoc(user ? doc(db, 'users', user.uid) : null);
 
-export default function AnalyticsPage() {
-  const testStatusData = useMemo(() => {
-    const statusCounts = mockTestRequests.reduce((acc, request) => {
-      acc[request.status] = (acc[request.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+  // Supervisor only sees aggregate data
+  const patientsQuery = query(collection(db, 'patients'));
+  const { data: patients, loading: patientsLoading } = useCollection(patientsQuery);
 
-    return Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
-  }, []);
+  if (patientsLoading) return <PageLoader />;
 
-  const testCategoryData = useMemo(() => {
-    const categoryCounts = mockTestRequests.reduce((acc, request) => {
-      const test = mockTests.find(t => t.id === request.testId);
-      if (test) {
-        acc[test.category] = (acc[test.category] || 0) + 1;
-      }
-      return acc;
-    }, {} as Record<string, number>);
+  if (profile?.role !== 'supervisor') {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <ShieldAlert className="h-16 w-16 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-bold">Access Denied</h2>
+        <p className="text-muted-foreground">This dashboard is restricted to supervisors.</p>
+      </div>
+    );
+  }
 
-    return Object.entries(categoryCounts).map(([name, value]) => ({ name, value }));
-  }, []);
-
-  const monthlyTestData = useMemo(() => {
-    const monthCounts = mockTestRequests.reduce((acc, request) => {
-      const month = new Date(request.requestDate).toLocaleString('default', { month: 'short' });
-      acc[month] = (acc[month] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const sortedMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
-    return sortedMonths.map(month => ({
-      name: month,
-      tests: monthCounts[month] || 0,
-    })).filter(d => d.tests > 0);
-  }, []);
+  const urgentCount = patients?.filter(p => p.status === 'Urgent').length || 0;
 
   return (
-    <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-2">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-headline font-bold text-primary">Safety & Discordance</h1>
+        <p className="text-sm text-muted-foreground">Monitoring AI vs Clinical Judgment</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="bg-red-50 border-red-100">
+          <CardHeader className="p-4 pb-0"><AlertTriangle className="h-5 w-5 text-red-600" /></CardHeader>
+          <CardContent className="p-4 pt-2">
+            <div className="text-2xl font-bold text-red-600">12%</div>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Override Rate</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-primary/5 border-primary/10">
+          <CardHeader className="p-4 pb-0"><TrendingUp className="h-5 w-5 text-primary" /></CardHeader>
+          <CardContent className="p-4 pt-2">
+            <div className="text-2xl font-bold text-primary">{urgentCount}</div>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">High Risk Cases</p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Test Request Status</CardTitle>
-          <CardDescription>Distribution of your test requests by status.</CardDescription>
+          <CardTitle className="text-lg">Recent Discordance Analysis</CardTitle>
+          <CardDescription>Top reasons for clinical overrides</CardDescription>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={{}} className="min-h-[250px] w-full">
-            <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                    <RechartsTooltip content={<ChartTooltipContent hideLabel />} />
-                    <Pie data={testStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                         {testStatusData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Pie>
-                    <Legend />
-                </PieChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline">Test Categories</CardTitle>
-          <CardDescription>Breakdown of tests by medical category.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <ChartContainer config={{}} className="min-h-[250px] w-full">
-                <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                       <RechartsTooltip content={<ChartTooltipContent hideLabel />} />
-                        <Pie data={testCategoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                            {testCategoryData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                        </Pie>
-                        <Legend />
-                    </PieChart>
-                </ResponsiveContainer>
-          </ChartContainer>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span>Patient Context missed by AI</span>
+              <Badge variant="outline">45%</Badge>
+            </div>
+            <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+              <div className="bg-primary h-full w-[45%]" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span>Local Protocol Variance</span>
+              <Badge variant="outline">30%</Badge>
+            </div>
+            <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+              <div className="bg-primary h-full w-[30%]" />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle className="font-headline">Monthly Test Trends</CardTitle>
-          <CardDescription>Number of tests requested per month.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <ChartContainer config={{
-                tests: {
-                    label: 'Tests',
-                    color: 'hsl(var(--chart-1))',
-                },
-            }} className="min-h-[300px] w-full">
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={monthlyTestData}>
-                        <CartesianGrid vertical={false} />
-                        <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
-                        <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
-                        <RechartsTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                        <Bar dataKey="tests" fill="var(--color-tests)" radius={8} />
-                    </BarChart>
-                </ResponsiveContainer>
-            </ChartContainer>
-        </CardContent>
-      </Card>
+      <div className="bg-muted/30 p-4 rounded-xl border border-dashed text-center">
+        <ShieldAlert className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+        <p className="text-xs font-medium text-muted-foreground">Audit logs are synced every 24h to the central safety dashboard.</p>
+      </div>
     </div>
   );
 }

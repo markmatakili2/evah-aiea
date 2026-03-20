@@ -22,26 +22,66 @@ import {
 import { Logo } from '@/components/logo';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth, useFirestore } from '@/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function RegisterPage() {
-  const [step, setStep] = useState(1);
-  const [role, setRole] = useState('');
+  const auth = useAuth();
+  const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep(2);
-  };
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    role: '',
+    password: '',
+    confirmPassword: '',
+  });
 
-  const handleVerify = () => {
-    toast({
-      title: "Success!",
-      description: "Account created successfully.",
-    });
-    router.push('/dashboard');
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth || !db) return;
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Passwords do not match.' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+
+      await updateProfile(user, { displayName: `${formData.firstName} ${formData.lastName}` });
+
+      const profileData = {
+        id: user.uid,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        role: formData.role,
+        createdAt: serverTimestamp(),
+      };
+
+      await setDoc(doc(db, 'users', user.uid), profileData);
+
+      toast({ title: 'Welcome!', description: 'Account created successfully.' });
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Registration Failed', description: error.message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,96 +91,68 @@ export default function RegisterPage() {
           <Logo />
         </div>
         <Card className="border-none shadow-none bg-transparent">
-          {step === 1 && (
-            <form onSubmit={handleRegister}>
-              <CardHeader className="px-0 text-center">
-                <CardTitle className="text-2xl font-headline font-bold text-primary">Join the Mission</CardTitle>
-                <CardDescription>Secure registration for epilepsy care teams</CardDescription>
-              </CardHeader>
-              <CardContent className="px-0 space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" placeholder="Jane" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" placeholder="Doe" required />
-                  </div>
+          <form onSubmit={handleRegister}>
+            <CardHeader className="px-0 text-center">
+              <CardTitle className="text-2xl font-headline font-bold text-primary">Join the Mission</CardTitle>
+              <CardDescription>Secure registration for care teams</CardDescription>
+            </CardHeader>
+            <CardContent className="px-0 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>First Name</Label>
+                  <Input value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder="Jane" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" placeholder="jane@example.com" required />
+                  <Label>Last Name</Label>
+                  <Input value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder="Doe" required />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" type="tel" placeholder="+254..." required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Work Address / Clinic</Label>
-                  <Input id="address" placeholder="Sector or Facility Name" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Your Role</Label>
-                  <Select onValueChange={setRole} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="chw">Community Health Worker (CHW)</SelectItem>
-                      <SelectItem value="clinician">Healthcare Clinician</SelectItem>
-                      <SelectItem value="supervisor">Supervisor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input id="confirmPassword" type="password" required />
-                </div>
-              </CardContent>
-              <CardFooter className="px-0 flex flex-col gap-4 mt-4">
-                <Button type="submit" className="w-full bg-primary h-12 text-lg shadow-lg shadow-primary/20" disabled={!role}>
-                  Register
-                </Button>
-                <div className="text-center text-sm text-muted-foreground">
-                  Already have an account?{' '}
-                  <Link href="/login" className="font-bold text-primary hover:underline">
-                    Log In
-                  </Link>
-                </div>
-              </CardFooter>
-            </form>
-          )}
-
-          {step === 2 && (
-            <>
-              <CardHeader className="px-0 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <ShieldCheck className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-2xl font-headline mt-4">Verify Identity</CardTitle>
-                <CardDescription>Enter the code sent to your device</CardDescription>
-              </CardHeader>
-              <CardContent className="px-0 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="otp">6-Digit Code</Label>
-                  <Input id="otp" type="text" placeholder="000000" className="text-center text-2xl tracking-widest h-14" maxLength={6} />
-                </div>
-              </CardContent>
-              <CardFooter className="px-0 flex flex-col gap-4 mt-4">
-                <Button className="w-full bg-primary h-12 text-lg shadow-lg shadow-primary/20" onClick={handleVerify}>
-                  Complete Setup
-                </Button>
-                <Button variant="ghost" onClick={() => setStep(1)}>
-                  Back
-                </Button>
-              </CardFooter>
-            </>
-          )}
+              </div>
+              <div className="space-y-2">
+                <Label>Email Address</Label>
+                <Input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="jane@example.ai" required />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone Number</Label>
+                <Input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+254..." required />
+              </div>
+              <div className="space-y-2">
+                <Label>Work Address / Clinic</Label>
+                <Input value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Sector name" required />
+              </div>
+              <div className="space-y-2">
+                <Label>Your Role</Label>
+                <Select onValueChange={v => setFormData({...formData, role: v})} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="chw">Community Health Worker (CHW)</SelectItem>
+                    <SelectItem value="clinician">Healthcare Clinician</SelectItem>
+                    <SelectItem value="supervisor">Supervisor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Password</Label>
+                <Input type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Confirm Password</Label>
+                <Input type="password" value={formData.confirmPassword} onChange={e => setFormData({...formData, confirmPassword: e.target.value})} required />
+              </div>
+            </CardContent>
+            <CardFooter className="px-0 flex flex-col gap-4 mt-4">
+              <Button type="submit" className="w-full bg-primary h-12 text-lg shadow-lg shadow-primary/20" disabled={loading || !formData.role}>
+                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Register'}
+              </Button>
+              <div className="text-center text-sm text-muted-foreground">
+                Already have an account?{' '}
+                <Link href="/login" className="font-bold text-primary hover:underline">
+                  Log In
+                </Link>
+              </div>
+            </CardFooter>
+          </form>
         </Card>
       </div>
     </div>
