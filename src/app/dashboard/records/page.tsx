@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,19 +9,24 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useFirestore, useCollection, useUser } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, orderBy } from "firebase/firestore";
 import { PageLoader } from "@/components/ui/loader";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 export default function RecordsPage() {
   const { user } = useUser();
   const db = useFirestore();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const patientsQuery = query(
-    collection(db, 'patients'),
-    where('chwId', '==', user?.uid || 'anonymous')
-  );
+  // Memoize the query to prevent infinite re-renders
+  const patientsQuery = useMemo(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, 'patients'),
+      where('chwId', '==', user.uid),
+      orderBy('updatedAt', 'desc')
+    );
+  }, [db, user]);
   
   const { data: patients, loading } = useCollection(patientsQuery);
 
@@ -58,7 +62,7 @@ export default function RecordsPage() {
             <Card key={patient.id} className="border-none shadow-sm bg-card hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary">
-                  {patient.name.charAt(0)}
+                  {patient.name?.charAt(0) || 'P'}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground truncate">{patient.name}</h3>
@@ -110,7 +114,7 @@ export default function RecordsPage() {
           ))
         ) : (
           <div className="py-20 text-center text-muted-foreground">
-            No patients found matching your search.
+            {searchTerm ? "No patients found matching your search." : "No patients registered yet."}
           </div>
         )}
       </div>

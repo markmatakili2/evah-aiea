@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -13,7 +13,6 @@ import {
   History, 
   ChevronLeft, 
   Sparkles,
-  AlertCircle,
   CheckCircle2,
   Edit3,
   Loader2,
@@ -24,7 +23,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { mockPatients } from "@/lib/mock-data";
 import Link from "next/link";
 import { runClinicalLogic } from "@/lib/clinical-engine/engine";
 import { Recommendation, ClinicalInput } from "@/lib/clinical-engine/types";
@@ -36,6 +34,8 @@ import {
   DialogDescription, 
   DialogFooter 
 } from "@/components/ui/dialog";
+import { useFirestore, useCollection, useUser } from "@/firebase";
+import { collection, query, where, orderBy } from "firebase/firestore";
 
 type Message = {
   id: string;
@@ -46,6 +46,9 @@ type Message = {
 };
 
 export default function AssessPage() {
+  const { user } = useUser();
+  const db = useFirestore();
+
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -55,6 +58,19 @@ export default function AssessPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
 
+  // Fetch real patients from DB
+  const patientsQuery = useMemo(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, 'patients'),
+      where('chwId', '==', user.uid),
+      orderBy('updatedAt', 'desc')
+    );
+  }, [db, user]);
+
+  const { data: patients } = useCollection(patientsQuery);
+  const selectedPatient = patients?.find(p => p.id === selectedPatientId);
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,8 +79,6 @@ export default function AssessPage() {
     }
   }, [messages, transcriptionDraft]);
 
-  const selectedPatient = mockPatients.find(p => p.id === selectedPatientId);
-
   const handleSelectPatient = (id: string) => {
     setSelectedPatientId(id);
     setShowHistory(false);
@@ -72,7 +86,7 @@ export default function AssessPage() {
       {
         id: '1',
         role: 'ai',
-        content: `I'm ready to assist with ${mockPatients.find(p => p.id === id)?.name}. Describe symptoms via voice or text for real-time WHO protocol analysis.`,
+        content: `I'm ready to assist with ${patients?.find(p => p.id === id)?.name}. Describe symptoms via voice or text for real-time WHO protocol analysis.`,
         type: 'text'
       }
     ]);
@@ -107,7 +121,6 @@ export default function AssessPage() {
   const runOnDeviceAnalysis = (input: string) => {
     setIsProcessing(true);
     
-    // Simulate data extraction from text for the engine
     const isEmergency = input.toLowerCase().includes("mara tatu") || input.toLowerCase().includes("repeated");
     const isMedFail = input.toLowerCase().includes("amekosa dawa") || input.toLowerCase().includes("missed");
 
@@ -176,19 +189,25 @@ export default function AssessPage() {
 
           <ScrollArea className="flex-1 px-4">
             <div className="space-y-2 pb-4">
-              {mockPatients.map(patient => (
-                <button
-                  key={patient.id}
-                  onClick={() => handleSelectPatient(patient.id)}
-                  className="w-full text-left p-4 rounded-xl border hover:bg-muted transition-colors group"
-                >
-                  <div className="flex justify-between items-start">
-                    <span className="font-bold text-primary group-hover:text-primary/80">{patient.name}</span>
-                    <Badge variant="outline" className="text-[10px] uppercase">{patient.status}</Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">Last encounter: 20 July</p>
-                </button>
-              ))}
+              {patients && patients.length > 0 ? (
+                patients.map(patient => (
+                  <button
+                    key={patient.id}
+                    onClick={() => handleSelectPatient(patient.id)}
+                    className="w-full text-left p-4 rounded-xl border hover:bg-muted transition-colors group"
+                  >
+                    <div className="flex justify-between items-start">
+                      <span className="font-bold text-primary group-hover:text-primary/80">{patient.name}</span>
+                      <Badge variant="outline" className="text-[10px] uppercase">{patient.status}</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Village: {patient.location}</p>
+                  </button>
+                ))
+              ) : (
+                <div className="text-center py-10 text-muted-foreground text-sm">
+                  No registered patients found.
+                </div>
+              )}
             </div>
           </ScrollArea>
         </div>
@@ -219,7 +238,7 @@ export default function AssessPage() {
                 <Badge variant="secondary" className="h-4 text-[9px]">{selectedPatient?.status}</Badge>
               </div>
               <p className="text-[10px] text-muted-foreground truncate">
-                {selectedPatient?.age}Y • {selectedPatient?.village} • Follow-up required
+                {selectedPatient?.age}Y • {selectedPatient?.location} • AI Assisted
               </p>
             </div>
             <Button variant="ghost" size="icon">
@@ -261,11 +280,6 @@ export default function AssessPage() {
                           <h4 className="text-[10px] font-bold uppercase text-primary tracking-widest mb-1">Recommended Action</h4>
                           <p className="text-xs font-bold text-slate-800">{msg.recommendation.action}</p>
                           <p className="text-[10px] text-muted-foreground mt-1">To: {msg.recommendation.referralDestination}</p>
-                        </section>
-
-                        <section>
-                          <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">Follow-up</h4>
-                          <p className="text-xs font-medium">{msg.recommendation.followUpInterval}</p>
                         </section>
 
                         <div className="grid grid-cols-2 gap-2 pt-2 border-t border-primary/10">
@@ -363,7 +377,7 @@ export default function AssessPage() {
         </>
       )}
 
-      {/* Explicit Acknowledgment for Emergency Detected in Chat */}
+      {/* Safety Alert Modal */}
       <Dialog open={showSafetyDialog} onOpenChange={setShowSafetyDialog}>
         <DialogContent className="bg-red-600 text-white border-none shadow-2xl">
           <DialogHeader>
