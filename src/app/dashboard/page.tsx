@@ -4,7 +4,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Users, AlertTriangle, MoreVertical, UserPlus, History, Shield, Activity, MapPin } from "lucide-react";
+import { 
+  Users, 
+  AlertTriangle, 
+  MoreVertical, 
+  UserPlus, 
+  History, 
+  Shield, 
+  Activity, 
+  MapPin,
+  ClipboardList
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
   DropdownMenu, 
@@ -46,13 +56,22 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-4">
         {isSupervisor ? (
           <>
-            <Card className="bg-primary/5 border-primary/10">
+            <Card className="bg-primary/5 border-primary/10 col-span-2">
               <CardHeader className="p-4 pb-0">
                 <Users className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent className="p-4 pt-2">
+                <div className="text-3xl font-bold text-primary">1,240</div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">Total Patients in Region</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-primary/5 border-primary/10">
+              <CardHeader className="p-4 pb-0">
+                <ClipboardList className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent className="p-4 pt-2">
                 <div className="text-2xl font-bold text-primary">45</div>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">CHWs Registered</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">CHWs Active</p>
               </CardContent>
             </Card>
             <Card className="bg-primary/5 border-primary/10">
@@ -128,7 +147,7 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 pb-10">
           {patients.map((patient) => (
             <Card key={patient.id} className="border-none shadow-sm bg-card/50">
               <CardContent className="p-4 flex items-center gap-4">
