@@ -1,24 +1,24 @@
 'use client';
 
-import { EventEmitter } from 'events';
-import { FirestorePermissionError } from './errors';
-
-type FirebaseEvents = {
-  'permission-error': [FirestorePermissionError];
+type ErrorEvents = {
+  'permission-error': (error: any) => void;
 };
 
-class FirebaseErrorEmitter extends EventEmitter {
-  emit<K extends keyof FirebaseEvents>(event: K, ...args: FirebaseEvents[K]): boolean {
-    return super.emit(event, ...args);
+class ErrorEmitter {
+  private listeners: { [K in keyof ErrorEvents]?: ErrorEvents[K][] } = {};
+
+  on<K extends keyof ErrorEvents>(event: K, listener: ErrorEvents[K]) {
+    if (!this.listeners[event]) this.listeners[event] = [];
+    this.listeners[event]?.push(listener);
   }
 
-  on<K extends keyof FirebaseEvents>(event: K, listener: (...args: FirebaseEvents[K]) => void): this {
-    return super.on(event, listener as any);
+  off<K extends keyof ErrorEvents>(event: K, listener: ErrorEvents[K]) {
+    this.listeners[event] = this.listeners[event]?.filter(l => l !== listener);
   }
 
-  off<K extends keyof FirebaseEvents>(event: K, listener: (...args: FirebaseEvents[K]) => void): this {
-    return super.off(event, listener as any);
+  emit<K extends keyof ErrorEvents>(event: K, ...args: Parameters<ErrorEvents[K]>) {
+    this.listeners[event]?.forEach(listener => listener(...args));
   }
 }
 
-export const errorEmitter = new FirebaseErrorEmitter();
+export const errorEmitter = new ErrorEmitter();

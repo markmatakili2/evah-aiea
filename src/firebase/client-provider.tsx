@@ -1,26 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { initializeFirebase } from './index';
 import { FirebaseProvider } from './provider';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
-export function FirebaseClientProvider({ children }: { children: React.ReactNode }) {
-  const [instances, setInstances] = useState<ReturnType<typeof initializeFirebase> | null>(null);
-
-  useEffect(() => {
-    setInstances(initializeFirebase());
-  }, []);
-
-  if (!instances) return null;
+export function FirebaseClientProvider({ children }: { children: ReactNode }) {
+  const { firebaseApp, firestore, auth } = useMemo(() => initializeFirebase(), []);
 
   return (
-    <FirebaseProvider
-      firebaseApp={instances.firebaseApp}
-      firestore={instances.firestore}
-      auth={instances.auth}
-    >
-      <FirebaseErrorListener />
+    <FirebaseProvider firebaseApp={firebaseApp} firestore={firestore} auth={auth}>
       {children}
     </FirebaseProvider>
   );

@@ -10,12 +10,7 @@ export class FirestorePermissionError extends Error {
   context: SecurityRuleContext;
 
   constructor(context: SecurityRuleContext) {
-    const message = `FirestorePermissionError: Missing or insufficient permissions: The following request was denied by Firestore Security Rules:
-{
-  "operation": "${context.operation}",
-  "path": "${context.path}"${context.requestResourceData ? `,\n  "data": ${JSON.stringify(context.requestResourceData, null, 2)}` : ''}
-}`;
-    super(message);
+    super(`Firestore Permission Denied: ${context.operation} on ${context.path}`);
     this.name = 'FirestorePermissionError';
     this.context = context;
   }
