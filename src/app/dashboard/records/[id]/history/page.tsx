@@ -21,12 +21,32 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { format, isAfter, subDays } from 'date-fns';
+import { format, isAfter, subDays, isValid } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { usePrint } from '@/hooks/usePrint';
 import { useFirestore, useDoc, useCollection } from '@/firebase';
 import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { PageLoader } from '@/components/ui/loader';
+
+/**
+ * Safely parses and formats a date from various formats (String, Date, or Firestore Timestamp)
+ */
+const formatSafeDate = (dateValue: any, formatStr: string = 'PPP p') => {
+  if (!dateValue) return 'N/A';
+  
+  let date: Date;
+  
+  // Handle Firestore Timestamp
+  if (dateValue && typeof dateValue.toDate === 'function') {
+    date = dateValue.toDate();
+  } else {
+    date = new Date(dateValue);
+  }
+
+  if (!isValid(date)) return 'Invalid Date';
+  
+  return format(date, formatStr);
+};
 
 export default function PatientHistoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -54,7 +74,11 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
     const now = new Date();
     const days = parseInt(timeFilter);
     const cutoff = subDays(now, days);
-    return encounters.filter(e => isAfter(new Date(e.date), cutoff));
+    
+    return encounters.filter(e => {
+      const date = e.date?.toDate ? e.date.toDate() : new Date(e.date);
+      return isValid(date) && isAfter(date, cutoff);
+    });
   }, [encounters, timeFilter]);
 
   const handleDownload = () => {
@@ -101,7 +125,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
                 <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-primary border-4 border-white shadow-sm" />
                 <div className="mb-1 flex items-center justify-between">
                   <span className="text-sm font-bold text-slate-500 uppercase tracking-tighter">
-                    {format(new Date(e.date), 'PPP p')}
+                    {formatSafeDate(e.date)}
                   </span>
                 </div>
                 <div className="space-y-4">
@@ -185,7 +209,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-primary font-bold">
                       <Clock className="h-4 w-4" />
-                      <span className="text-sm">{format(new Date(encounter.date), 'PPP p')}</span>
+                      <span className="text-sm">{formatSafeDate(encounter.date)}</span>
                     </div>
                   </div>
                 </div>
