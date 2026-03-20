@@ -1,10 +1,11 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useFirestore, useCollection, useUser, useDoc } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShieldAlert, Users, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, TrendingUp, AlertTriangle } from 'lucide-react';
 import { doc } from 'firebase/firestore';
 import { PageLoader } from '@/components/ui/loader';
 
@@ -12,19 +13,31 @@ export default function SafetyDashboard() {
   const { user } = useUser();
   const db = useFirestore();
   const { data: profile } = useDoc(user ? doc(db, 'users', user.uid) : null);
+  
+  const [demoRole, setDemoRole] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    // In Demo Mode, the role is stored in localStorage by the login page
+    setDemoRole(localStorage.getItem('demo_role'));
+  }, []);
 
   // Supervisor only sees aggregate data
   const patientsQuery = query(collection(db, 'patients'));
   const { data: patients, loading: patientsLoading } = useCollection(patientsQuery);
 
-  if (patientsLoading) return <PageLoader />;
+  if (!isClient || patientsLoading) return <PageLoader />;
 
-  if (profile?.role !== 'supervisor') {
+  // Allow access if either the DB profile OR the current Demo Role is supervisor
+  const isSupervisor = demoRole === 'supervisor' || profile?.role === 'supervisor';
+
+  if (!isSupervisor) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <ShieldAlert className="h-16 w-16 text-muted-foreground mb-4" />
         <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-muted-foreground">This dashboard is restricted to supervisors.</p>
+        <p className="text-muted-foreground">This dashboard is restricted to supervisors. (Current Session Role: {demoRole || 'CHW'})</p>
       </div>
     );
   }

@@ -1,6 +1,6 @@
-
 'use client';
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LogOut, Settings, Bell, MapPin, Globe } from "lucide-react";
@@ -9,6 +9,13 @@ import { useRouter } from "next/navigation";
 
 export default function AccountPage() {
   const router = useRouter();
+  const [role, setRole] = useState<string>('chw');
+
+  useEffect(() => {
+    // Read the active demo role from the session
+    const savedRole = localStorage.getItem('demo_role');
+    if (savedRole) setRole(savedRole);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('demo_session');
@@ -29,7 +36,7 @@ export default function AccountPage() {
         </div>
         <div>
           <h1 className="text-2xl font-headline font-bold text-primary">{mockUserProfile.name}</h1>
-          <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">{mockUserProfile.role.toUpperCase()}</p>
+          <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">{role.toUpperCase()}</p>
         </div>
       </div>
 
