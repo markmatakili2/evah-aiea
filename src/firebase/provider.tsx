@@ -1,41 +1,46 @@
+
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
-import { FirebaseApp } from 'firebase/app';
-import { Firestore } from 'firebase/firestore';
-import { Auth } from 'firebase/auth';
+import React, { createContext, useContext, useMemo } from 'react';
+import type { FirebaseApp } from 'firebase/app';
+import type { Firestore } from 'firebase/firestore';
+import type { Auth } from 'firebase/auth';
 
-interface FirebaseContextProps {
-  app: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
+export interface FirebaseContextValue {
+  firebaseApp: FirebaseApp | null;
+  firestore: Firestore | null;
+  auth: Auth | null;
 }
 
-const FirebaseContext = createContext<FirebaseContextProps | undefined>(undefined);
+const FirebaseContext = createContext<FirebaseContextValue | undefined>(undefined);
 
 export function FirebaseProvider({
   children,
-  app,
+  firebaseApp,
   firestore,
   auth,
-}: FirebaseContextProps & { children: ReactNode }) {
-  return (
-    <FirebaseContext.Provider value={{ app, firestore, auth }}>
-      {children}
-    </FirebaseContext.Provider>
+}: {
+  children: React.ReactNode;
+  firebaseApp: FirebaseApp | null;
+  firestore: Firestore | null;
+  auth: Auth | null;
+}) {
+  const value = useMemo(
+    () => ({ firebaseApp, firestore, auth }),
+    [firebaseApp, firestore, auth]
   );
+
+  return <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>;
 }
 
 export function useFirebase() {
   const context = useContext(FirebaseContext);
-  if (!context) {
-    throw new Error('useFirebase must be used within a FirebaseProvider');
-  }
-  return context;
+  // Relax check for demo mode to allow rendering without a valid backend
+  return context || { firebaseApp: null, firestore: null, auth: null };
 }
 
 export function useFirebaseApp() {
-  return useFirebase().app;
+  return useFirebase().firebaseApp;
 }
 
 export function useFirestore() {

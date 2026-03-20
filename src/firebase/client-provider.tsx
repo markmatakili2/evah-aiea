@@ -1,20 +1,32 @@
+
 'use client';
 
-import React, { useMemo } from 'react';
-import { initializeFirebase } from './index';
+import React, { useState, useEffect } from 'react';
 import { FirebaseProvider } from './provider';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
+import { initializeFirebase } from './index';
 
-/**
- * Entry point for Firebase on the client.
- * Composes the FirebaseProvider and includes the global error listener.
- */
 export function FirebaseClientProvider({ children }: { children: React.ReactNode }) {
-  const { app, firestore, auth } = useMemo(() => initializeFirebase(), []);
+  const [services, setServices] = useState<{
+    firebaseApp: any;
+    firestore: any;
+    auth: any;
+  }>({
+    firebaseApp: null,
+    firestore: null,
+    auth: null,
+  });
+
+  useEffect(() => {
+    const { firebaseApp, firestore, auth } = initializeFirebase();
+    setServices({ firebaseApp, firestore, auth });
+  }, []);
 
   return (
-    <FirebaseProvider app={app} firestore={firestore} auth={auth}>
-      <FirebaseErrorListener />
+    <FirebaseProvider
+      firebaseApp={services.firebaseApp}
+      firestore={services.firestore}
+      auth={services.auth}
+    >
       {children}
     </FirebaseProvider>
   );
