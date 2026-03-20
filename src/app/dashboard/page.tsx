@@ -1,9 +1,9 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Users, AlertTriangle, MoreVertical, UserPlus, History, AlertCircle } from "lucide-react";
-import { mockPatients, mockCHWProfile } from "@/lib/mock-data";
+import { Users, AlertTriangle, MoreVertical, UserPlus, History, AlertCircle, CloudUpload, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
   DropdownMenu, 
@@ -15,31 +15,46 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useFirestore, useCollection, useUser } from "@/firebase";
+import { collection, query, where, limit } from "firebase/firestore";
+import { PageLoader } from "@/components/ui/loader";
 
 export default function CHWDashboard() {
-  const urgentCount = mockPatients.filter(p => p.status === 'Urgent').length;
+  const { user } = useUser();
+  const db = useFirestore();
+
+  // Real-time listener for patients assigned to this CHW
+  const patientsQuery = query(
+    collection(db, 'patients'),
+    where('chwId', '==', user?.uid || 'anonymous'),
+    limit(5)
+  );
+  
+  const { data: patients, loading } = useCollection(patientsQuery);
+
+  const urgentCount = patients?.filter(p => p.status === 'Urgent').length || 0;
+
+  if (loading) return <PageLoader />;
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-headline font-bold text-primary">
-          Habari, {mockCHWProfile.name.split(' ')[0]}
+          Habari, {user?.displayName || 'Health Worker'}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Reporting from {mockCHWProfile.location}
+          AI Epilepsy Assistant Dashboard
         </p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4">
         <Card className="bg-primary/5 border-primary/10">
           <CardHeader className="p-4 pb-0">
             <Users className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent className="p-4 pt-2">
-            <div className="text-2xl font-bold text-primary">{mockPatients.length}</div>
-            <p className="text-[10px] uppercase font-bold text-muted-foreground">Total Patients</p>
+            <div className="text-2xl font-bold text-primary">{patients?.length || 0}</div>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">My Patients</p>
           </CardContent>
         </Card>
         <Card className="bg-red-50 border-red-100">
@@ -53,7 +68,6 @@ export default function CHWDashboard() {
         </Card>
       </div>
 
-      {/* Primary Action */}
       <Button asChild size="lg" className="w-full h-16 text-lg font-headline gap-3 shadow-lg shadow-primary/20">
         <Link href="/dashboard/new-encounter">
           <UserPlus className="h-6 w-6" />
@@ -61,7 +75,6 @@ export default function CHWDashboard() {
         </Link>
       </Button>
 
-      {/* Registered Patients List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-headline font-bold text-primary">Registered Patients</h2>
@@ -71,8 +84,8 @@ export default function CHWDashboard() {
         </div>
 
         <div className="space-y-3">
-          {mockPatients.length > 0 ? (
-            mockPatients.slice(0, 4).map((patient) => (
+          {patients && patients.length > 0 ? (
+            patients.map((patient) => (
               <Card key={patient.id} className="border-none shadow-sm bg-card/50">
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground uppercase">
@@ -103,16 +116,11 @@ export default function CHWDashboard() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Patient Actions</DropdownMenuLabel>
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
                         <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
                           <UserPlus className="mr-2 h-4 w-4" /> Start Encounter
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/new-encounter?patientId=${patient.id}&startAt=redflags`}>
-                          <AlertCircle className="mr-2 h-4 w-4" /> Quick Red Flags
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
@@ -127,7 +135,7 @@ export default function CHWDashboard() {
             ))
           ) : (
             <div className="py-12 text-center text-muted-foreground bg-muted/20 rounded-xl border-2 border-dashed">
-              No patients registered yet.
+              No patients registered locally.
             </div>
           )}
         </div>

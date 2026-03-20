@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
@@ -17,13 +18,13 @@ import {
   FileText,
   UserCircle,
   ShieldAlert,
-  TriangleAlert
+  TriangleAlert,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { mockPatients } from '@/lib/mock-data';
 import { runClinicalLogic } from '@/lib/clinical-engine/engine';
 import { Recommendation, ClinicalInput } from '@/lib/clinical-engine/types';
 import { 
@@ -34,6 +35,10 @@ import {
   DialogDescription, 
   DialogFooter 
 } from '@/components/ui/dialog';
+import { useFirestore, useUser, useDoc } from '@/firebase';
+import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type Step = 'patient' | 'history' | 'redflags' | 'assessment' | 'report';
 
@@ -42,11 +47,16 @@ function NewEncounterContent() {
   const patientId = searchParams.get('patientId');
   const startAt = searchParams.get('startAt');
 
-  const [step, setStep] = useState<Step>('patient');
-  const { toast } = useToast();
+  const { user } = useUser();
+  const db = useFirestore();
   const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
+  const { toast } = useToast();
+
+  const [step, setStep] = useState<Step>('patient');
+  const [isSaving, setIsSaving] = useState(false);
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
+
+  const { data: existingPatient } = useDoc(patientId ? doc(db, 'patients', patientId) : null);
 
   // Form State
   const [patientData, setPatientData] = useState({
@@ -77,23 +87,22 @@ function NewEncounterContent() {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
 
   useEffect(() => {
-    if (patientId) {
-      const patient = mockPatients.find(p => p.id === patientId);
-      if (patient) {
-        setPatientData({
-          name: patient.name,
-          age: patient.age.toString(),
-          sex: patient.gender.toLowerCase(),
-          location: patient.village,
-          contact: patient.contact,
-          isPregnant: false,
-        });
-        if (startAt === 'redflags') {
-          setStep('redflags');
-        }
+    if (existingPatient) {
+      setPatientData({
+        name: existingPatient.name,
+        age: existingPatient.age.toString(),
+        sex: existingPatient.gender.toLowerCase(),
+        location: existingPatient.location,
+        contact: existingPatient.contact || '',
+        isPregnant: false,
+      });
+      if (startAt === 'redflags') {
+        setStep('redflags');
+      } else {
+        setStep('history');
       }
     }
-  }, [patientId, startAt]);
+  }, [existingPatient, startAt]);
 
   const triggers = [
     'Sleep deprivation', 'Missed medication', 'Alcohol', 
@@ -111,19 +120,17 @@ function NewEncounterContent() {
   const handleNext = () => {
     if (step === 'patient') setStep('history');
     else if (step === 'history') setStep('redflags');
-    else if (step === 'redflags') setStep('assessment');
+    else if (step === 'redflags') runAssessment();
   };
 
   const handleBack = () => {
     if (step === 'history') setStep('patient');
     else if (step === 'redflags') setStep('history');
-    else if (step === 'assessment') setStep('redflags');
   };
 
   const runAssessment = () => {
     setStep('assessment');
     
-    // Construct Input for Engine
     const input: ClinicalInput = {
       patientProfile: {
         age: parseInt(patientData.age) || 0,
@@ -142,11 +149,9 @@ function NewEncounterContent() {
       }
     };
 
-    // Execute On-Device Engine
     setTimeout(() => {
       const result = runClinicalLogic(input);
       setRecommendation(result);
-      
       if (result.urgencyLevel === 'EMERGENCY') {
         setShowSafetyDialog(true);
       }
@@ -155,8 +160,61 @@ function NewEncounterContent() {
   };
 
   const handleAccept = () => {
-    toast({ title: "Assessment Saved", description: "The encounter record has been synced." });
-    router.push('/dashboard');
+    if (!user || !db) return;
+    setIsSaving(true);
+
+    const targetPatientId = patientId || doc(collection(db, 'patients')).id;
+    const patientRef = doc(db, 'patients', targetPatientId);
+    
+    const patientUpdate = {
+      id: targetPatientId,
+      name: patientData.name,
+      age: parseInt(patientData.age),
+      gender: patientData.sex,
+      location: patientData.location,
+      contact: patientData.contact,
+      status: recommendation?.urgencyLevel === 'EMERGENCY' ? 'Urgent' : recommendation?.urgencyLevel === 'URGENT' ? 'Urgent' : 'Stable',
+      chwId: user.uid,
+      updatedAt: serverTimestamp(),
+      createdAt: existingPatient ? existingPatient.createdAt : serverTimestamp(),
+    };
+
+    setDoc(patientRef, patientUpdate, { merge: true })
+      .catch(async (err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: patientRef.path,
+          operation: 'write',
+          requestResourceData: patientUpdate
+        }));
+      });
+
+    const encounterId = doc(collection(db, 'encounters')).id;
+    const encounterRef = doc(db, 'patients', targetPatientId, 'encounters', encounterId);
+    const encounterData = {
+      id: encounterId,
+      patientId: targetPatientId,
+      chwId: user.uid,
+      date: new Date().toISOString(),
+      summary: `Assessment for ${patientData.name}. Seizure type: ${historyData.type}. Notes: ${redFlags.additionalNotes}`,
+      redFlags: Object.keys(redFlags).filter(k => redFlags[k as keyof typeof redFlags] === true),
+      recommendation: recommendation,
+      status: 'approved',
+      createdAt: serverTimestamp(),
+    };
+
+    setDoc(encounterRef, encounterData)
+      .then(() => {
+        toast({ title: "Clinical Record Synced", description: "Offline-first data saved locally." });
+        router.push('/dashboard');
+      })
+      .catch(async (err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: encounterRef.path,
+          operation: 'create',
+          requestResourceData: encounterData
+        }));
+      })
+      .finally(() => setIsSaving(false));
   };
 
   const progressValue = 
@@ -212,16 +270,6 @@ function NewEncounterContent() {
                 </Select>
               </div>
             </div>
-            {patientData.sex === 'female' && (
-              <div className="flex items-center space-x-2 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                <Checkbox 
-                  id="pregnant" 
-                  checked={patientData.isPregnant} 
-                  onCheckedChange={c => setPatientData({...patientData, isPregnant: !!c})} 
-                />
-                <label htmlFor="pregnant" className="text-sm font-medium">Currently Pregnant?</label>
-              </div>
-            )}
             <div className="space-y-2">
               <Label>Location / Village</Label>
               <Input 
@@ -329,17 +377,17 @@ function NewEncounterContent() {
               ))}
             </div>
             <div className="space-y-2 pt-2">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Additional Notes (Optional)</Label>
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Additional Notes</Label>
               <Textarea 
                 value={redFlags.additionalNotes} 
                 onChange={e => setRedFlags({...redFlags, additionalNotes: e.target.value})} 
-                placeholder="Any other clinical observations..."
+                placeholder="Clinical observations..."
                 className="bg-muted/20"
               />
             </div>
             <div className="flex gap-3 pt-4">
               <Button variant="outline" className="flex-1" onClick={handleBack}><ChevronLeft className="h-4 w-4" /> Back</Button>
-              <Button className="flex-[2] h-12 bg-primary font-bold shadow-lg shadow-primary/20" onClick={runAssessment}>
+              <Button className="flex-[2] h-12 bg-primary font-bold shadow-lg shadow-primary/20" onClick={handleNext}>
                 Assess Patient
               </Button>
             </div>
@@ -354,8 +402,8 @@ function NewEncounterContent() {
             <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 text-primary" />
           </div>
           <div>
-            <h3 className="text-xl font-bold font-headline text-primary">Analyzing Case Data</h3>
-            <p className="text-sm text-muted-foreground mt-1">On-Device WHO Protocol Engine Active...</p>
+            <h3 className="text-xl font-bold font-headline text-primary">Analyzing Clinical Data</h3>
+            <p className="text-sm text-muted-foreground mt-1">Applying WHO Clinical Rules...</p>
           </div>
         </div>
       )}
@@ -373,11 +421,11 @@ function NewEncounterContent() {
                 </Badge>
                 <ShieldAlert className={recommendation.urgencyLevel === 'EMERGENCY' ? "h-5 w-5 text-red-600" : "h-5 w-5 text-green-600"} />
               </div>
-              <CardTitle className="text-2xl font-headline font-bold mt-4">Clinical Recommendation</CardTitle>
+              <CardTitle className="text-2xl font-headline font-bold mt-4">Triage Result</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <section className="space-y-1">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Action & Destination</h4>
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Action</h4>
                 <p className="text-sm font-bold text-slate-900">{recommendation.action}</p>
                 <div className="flex items-center gap-2 mt-1 text-primary">
                   <UserCircle className="h-4 w-4" />
@@ -387,18 +435,11 @@ function NewEncounterContent() {
 
               <section className="space-y-1">
                 <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Clinical Reasoning</h4>
-                {isEditing ? (
-                  <Textarea 
-                    defaultValue={recommendation.clinicalReasoning} 
-                    className="bg-white text-sm"
-                  />
-                ) : (
-                  <p className="text-sm leading-relaxed">{recommendation.clinicalReasoning}</p>
-                )}
+                <p className="text-sm leading-relaxed">{recommendation.clinicalReasoning}</p>
               </section>
 
               <section className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Counseling Points</h4>
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Counseling Messages</h4>
                 <ul className="space-y-2">
                   {recommendation.counselingPoints.map((point, i) => (
                     <li key={i} className="text-xs flex items-start gap-2 leading-relaxed">
@@ -411,11 +452,11 @@ function NewEncounterContent() {
 
               <div className="flex items-center justify-between p-3 bg-white/50 rounded-lg border">
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Risk Score</p>
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Risk Level</p>
                   <p className="text-lg font-bold text-primary">{recommendation.riskScore}/10</p>
                 </div>
                 <div className="text-right space-y-0.5">
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Follow-up</p>
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Next Review</p>
                   <p className="text-xs font-bold">{recommendation.followUpInterval}</p>
                 </div>
               </div>
@@ -423,17 +464,18 @@ function NewEncounterContent() {
           </Card>
 
           <div className="flex flex-col gap-3">
-            <Button className="w-full h-14 text-lg font-bold gap-2" onClick={handleAccept}>
-              <CheckCircle2 className="h-5 w-5" /> Accept Recommendation
+            <Button className="w-full h-14 text-lg font-bold gap-2" onClick={handleAccept} disabled={isSaving}>
+              {isSaving ? <Loader2 className="animate-spin h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
+              {isSaving ? 'Syncing...' : 'Approve & Sync Record'}
             </Button>
-            <Button variant="outline" className="w-full h-12" onClick={() => setIsEditing(!isEditing)}>
-              {isEditing ? 'Finish Editing' : 'Override / Modify Report'}
+            <Button variant="outline" className="w-full h-12" onClick={() => setStep('redflags')}>
+              Modify Clinical Input
             </Button>
           </div>
         </div>
       )}
 
-      {/* Explicit Acknowledgment for Safety Warnings */}
+      {/* Safety Warning Dialog */}
       <Dialog open={showSafetyDialog} onOpenChange={setShowSafetyDialog}>
         <DialogContent className="bg-red-600 text-white border-none shadow-2xl">
           <DialogHeader>
@@ -442,21 +484,16 @@ function NewEncounterContent() {
             </div>
             <DialogTitle className="text-2xl font-bold text-center">SAFETY ALERT</DialogTitle>
             <DialogDescription className="text-white/90 text-center text-lg leading-relaxed">
-              This patient exhibits <strong>EMERGENCY RED FLAGS</strong> aligned with WHO guidelines. 
-              Immediate specialist intervention is required to prevent status epilepticus or severe complications.
+              Patient exhibits <strong>EMERGENCY RED FLAGS</strong>. 
+              Immediate specialist intervention required.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 text-center">
-            <p className="text-sm font-medium bg-black/10 p-3 rounded-lg">
-              Confirm you have initiated emergency referral procedures and provided safety counseling to the family.
-            </p>
-          </div>
           <DialogFooter>
             <Button 
               onClick={() => setShowSafetyDialog(false)} 
               className="w-full h-14 bg-white text-red-600 hover:bg-white/90 text-lg font-bold"
             >
-              I ACKNOWLEDGE & AGREE
+              I ACKNOWLEDGE
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -467,7 +504,7 @@ function NewEncounterContent() {
 
 export default function NewEncounterPage() {
   return (
-    <Suspense fallback={<div>Loading encounter form...</div>}>
+    <Suspense fallback={<div>Loading form...</div>}>
       <NewEncounterContent />
     </Suspense>
   );
