@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -14,14 +15,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import Link from 'next/link';
-import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Key, UserCheck, Shield } from 'lucide-react';
 
 export default function LoginPage() {
-  const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -30,30 +28,19 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) return;
     setLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/dashboard');
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: error.message || 'Invalid credentials.',
-      });
-    } finally {
+    // DEMO MODE: Bypassing Firebase Auth
+    setTimeout(() => {
       setLoading(false);
-    }
+      localStorage.setItem('demo_session', 'true');
+      localStorage.setItem('demo_role', email.split('@')[0] || 'chw');
+      toast({ title: 'Demo Login Success', description: 'Logged in to prototype environment.' });
+      router.push('/dashboard');
+    }, 1000);
   };
 
   const handleDemoLogin = (role: string) => {
-    // Demo accounts for review
-    const demoMap: Record<string, string> = {
-      chw: 'chw@demo.ai',
-      clinician: 'clinician@demo.ai',
-      supervisor: 'supervisor@demo.ai',
-    };
-    setEmail(demoMap[role]);
+    setEmail(`${role}@demo.ai`);
     setPassword('password123');
     toast({ title: 'Demo Creds Loaded', description: `Ready to login as ${role.toUpperCase()}` });
   };
@@ -117,7 +104,7 @@ export default function LoginPage() {
                   <Shield className="h-4 w-4 text-purple-600" /> Supervisor
                 </Button>
               </div>
-              <p className="text-[10px] text-center text-muted-foreground mt-2">Pass: password123</p>
+              <p className="text-[10px] text-center text-muted-foreground mt-2">Pass: any password</p>
             </div>
           </CardContent>
           <CardFooter className="px-0 flex flex-col gap-6 mt-6">

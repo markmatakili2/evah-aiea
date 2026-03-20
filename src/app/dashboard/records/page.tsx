@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,34 +9,17 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { useFirestore, useCollection, useUser } from "@/firebase";
-import { collection, query, where, orderBy } from "firebase/firestore";
-import { PageLoader } from "@/components/ui/loader";
-import { useState, useMemo } from "react";
+import { useState } from "react";
+import { mockPatients } from "@/lib/mock-data";
 
 export default function RecordsPage() {
-  const { user } = useUser();
-  const db = useFirestore();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Memoize the query to prevent infinite re-renders
-  const patientsQuery = useMemo(() => {
-    if (!db || !user) return null;
-    return query(
-      collection(db, 'patients'),
-      where('chwId', '==', user.uid),
-      orderBy('updatedAt', 'desc')
-    );
-  }, [db, user]);
-  
-  const { data: patients, loading } = useCollection(patientsQuery);
-
-  const filteredPatients = patients?.filter(p => 
+  // DEMO MODE: Using local mock data
+  const filteredPatients = mockPatients.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  if (loading) return <PageLoader />;
 
   return (
     <div className="space-y-6">
@@ -57,7 +41,7 @@ export default function RecordsPage() {
       </div>
 
       <div className="space-y-3 pb-4">
-        {filteredPatients && filteredPatients.length > 0 ? (
+        {filteredPatients.length > 0 ? (
           filteredPatients.map((patient) => (
             <Card key={patient.id} className="border-none shadow-sm bg-card hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex items-center gap-4">
@@ -79,7 +63,7 @@ export default function RecordsPage() {
                     >
                       {patient.status}
                     </Badge>
-                    <span className="text-[10px] text-muted-foreground">ID: {patient.id.slice(0, 8)}</span>
+                    <span className="text-[10px] text-muted-foreground">ID: {patient.id}</span>
                   </div>
                 </div>
                 

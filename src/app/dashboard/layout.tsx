@@ -1,37 +1,37 @@
+
 'use client';
 
 import { MobileNav } from "@/components/mobile-nav";
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { PageLoader } from '@/components/ui/loader';
-import { Bell, Loader2 } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import Link from 'next/link';
-import { useUser, useFirestore, useDoc } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { doc } from 'firebase/firestore';
+import { mockUserProfile } from '@/lib/mock-data';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading: authLoading } = useUser();
-  const db = useFirestore();
   const router = useRouter();
-
-  // Fetch real profile to check roles
-  const { data: profile, loading: profileLoading } = useDoc(user ? doc(db, 'users', user.uid) : null);
+  const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState('chw');
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    // DEMO MODE: Check local storage instead of Firebase
+    const isDemo = localStorage.getItem('demo_session') === 'true';
+    if (!isDemo) {
       router.push('/login');
+    } else {
+      setRole(localStorage.getItem('demo_role') || 'chw');
+      setLoading(false);
     }
-  }, [user, authLoading, router]);
+  }, [router]);
 
-  if (authLoading || (user && profileLoading)) {
+  if (loading) {
     return <PageLoader />;
   }
-
-  if (!user) return null;
 
   return (
     <div className="flex flex-col min-h-screen pb-20">
@@ -43,7 +43,7 @@ export default function DashboardLayout({
           <div className="flex flex-col">
             <span className="font-headline font-bold text-primary leading-tight text-sm">Epilepsy Assistant</span>
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-              {profile?.role || 'User'} Mode
+              {role.toUpperCase()} Mode
             </span>
           </div>
         </div>
@@ -63,7 +63,7 @@ export default function DashboardLayout({
         </Suspense>
       </main>
 
-      <MobileNav userRole={profile?.role} />
+      <MobileNav userRole={role} />
     </div>
   );
 }

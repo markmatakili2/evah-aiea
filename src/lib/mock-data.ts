@@ -1,52 +1,66 @@
+
 import { AlertCircle, Calendar, ClipboardCheck } from 'lucide-react';
 import type { Notification, Test, Lab, TestResult, Withdrawal } from './types';
 
 /**
- * @fileOverview This file now primarily hosts standard configuration and notifications.
- * Patient and Encounter data is now strictly managed via Firestore.
+ * @fileOverview Standardized mock data for the AI Epilepsy Assistant prototype.
+ * All data is served locally to facilitate zero-backend demos.
  */
 
 export const mockNotifications: Notification[] = [
-    { id: '1', icon: AlertCircle, text: "Urgent review needed for a new patient", href: "/dashboard/records", timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), read: false },
+    { id: '1', icon: AlertCircle, text: "Urgent review needed for Zahara Hassan", href: "/dashboard/records", timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), read: false },
     { id: '2', icon: ClipboardCheck, text: "Clinical guidance updated to WHO 2024", href: "/dashboard", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), read: false },
     { id: '3', icon: Calendar, text: "Monthly sync completed successfully", href: "/dashboard", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), read: true },
 ];
 
-// Fallback profile for initial development states
-export const mockCHWProfile = {
-    name: "Health Worker",
-    role: "chw",
-    email: "worker@assistant.ai",
-    location: "Kijiji Sector",
-    imageUrl: 'https://picsum.photos/seed/worker/200/200',
-};
-
 export const mockUserProfile = {
-    firstName: "Worker",
-    surname: "User",
-    name: "Health Worker",
+    firstName: "Demo",
+    surname: "Health Worker",
+    name: "Demo Health Worker",
     role: "chw",
-    email: "worker@assistant.ai",
-    phone: "+254...",
+    email: "chw@demo.ai",
+    phone: "+254 700 000 000",
     dob: "1990-05-15",
     gender: "Other",
     address: {
-        line1: "Sector Office",
+        line1: "Kijiji Health Post",
         city: "Local",
-        country: "Region"
+        country: "Kenya"
     },
     allowLocation: true,
     imageUrl: 'https://picsum.photos/seed/worker/200/200',
-    location: "Local Sector",
+    location: "Kijiji Sector",
     imageHint: "profile person"
 };
 
-// Legacy exports to maintain build compatibility
+export const mockPatients = [
+  { id: 'p1', name: 'Zahara Hassan', age: 24, gender: 'Female', location: 'Kijiji Village', status: 'Urgent', contact: '+254 711 000 111', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
+  { id: 'p2', name: 'John Kamau', age: 45, gender: 'Male', location: 'Mlimani Sector', status: 'Stable', contact: '+254 722 000 222', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
+  { id: 'p3', name: 'Amina Juma', age: 12, gender: 'Female', location: 'Pwani Area', status: 'Follow-up', contact: '+254 733 000 333', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
+];
+
+export const mockEncounters = [
+  { 
+    id: 'e1', 
+    patientId: 'p1', 
+    date: new Date().toISOString(), 
+    summary: 'Reported 3 seizures in 24h. Missed phenobarbital for 2 days. Family reports confusion post-seizure.', 
+    redFlags: ['repeated', 'medicationFail'], 
+    recommendation: { action: 'IMMEDIATE EMERGENCY REFERRAL', urgencyLevel: 'EMERGENCY', clinicalReasoning: 'Status Epilepticus Risk due to repeated seizures and medication non-adherence.' } 
+  },
+  { 
+    id: 'e2', 
+    patientId: 'p2', 
+    date: new Date(Date.now() - 86400000 * 5).toISOString(), 
+    summary: 'Routine follow-up. No seizures in 3 months. Adhering well to Carbamazepine.', 
+    redFlags: [], 
+    recommendation: { action: 'Continue local management', urgencyLevel: 'STABLE', clinicalReasoning: 'Clinical signs suggest controlled seizure activity.' } 
+  }
+];
+
 export const mockTests: Test[] = [];
 export const mockLabs: Lab[] = [];
 export const mockTestRequests: any[] = [];
 export const mockTestResults: TestResult[] = [];
 export const mockWithdrawals: Withdrawal[] = [];
 export const mockReferredUsers: any[] = [];
-export const mockPatients: any[] = [];
-export const mockEncounters: any[] = [];

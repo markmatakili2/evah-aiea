@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Users, AlertTriangle, MoreVertical, UserPlus, History, AlertCircle, CloudUpload, CheckCircle2 } from "lucide-react";
+import { Users, AlertTriangle, MoreVertical, UserPlus, History } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
   DropdownMenu, 
@@ -15,32 +15,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useFirestore, useCollection, useUser } from "@/firebase";
-import { collection, query, where, limit } from "firebase/firestore";
-import { PageLoader } from "@/components/ui/loader";
+import { mockPatients, mockUserProfile } from "@/lib/mock-data";
 
 export default function CHWDashboard() {
-  const { user } = useUser();
-  const db = useFirestore();
-
-  // Real-time listener for patients assigned to this CHW
-  const patientsQuery = query(
-    collection(db, 'patients'),
-    where('chwId', '==', user?.uid || 'anonymous'),
-    limit(5)
-  );
-  
-  const { data: patients, loading } = useCollection(patientsQuery);
-
-  const urgentCount = patients?.filter(p => p.status === 'Urgent').length || 0;
-
-  if (loading) return <PageLoader />;
+  // DEMO MODE: Using local mock patients
+  const patients = mockPatients;
+  const urgentCount = patients.filter(p => p.status === 'Urgent').length;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-headline font-bold text-primary">
-          Habari, {user?.displayName || 'Health Worker'}
+          Habari, {mockUserProfile.firstName}
         </h1>
         <p className="text-sm text-muted-foreground">
           AI Epilepsy Assistant Dashboard
@@ -53,7 +39,7 @@ export default function CHWDashboard() {
             <Users className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent className="p-4 pt-2">
-            <div className="text-2xl font-bold text-primary">{patients?.length || 0}</div>
+            <div className="text-2xl font-bold text-primary">{patients.length}</div>
             <p className="text-[10px] uppercase font-bold text-muted-foreground">My Patients</p>
           </CardContent>
         </Card>
@@ -84,60 +70,54 @@ export default function CHWDashboard() {
         </div>
 
         <div className="space-y-3">
-          {patients && patients.length > 0 ? (
-            patients.map((patient) => (
-              <Card key={patient.id} className="border-none shadow-sm bg-card/50">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground uppercase">
-                    {patient.name.charAt(0)}
+          {patients.map((patient) => (
+            <Card key={patient.id} className="border-none shadow-sm bg-card/50">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground uppercase">
+                  {patient.name.charAt(0)}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground">{patient.name}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-muted-foreground">{patient.age}Y • {patient.gender}</span>
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        "text-[10px] h-5 px-2",
+                        patient.status === 'Urgent' && "bg-red-100 text-red-700",
+                        patient.status === 'Stable' && "bg-green-100 text-green-700",
+                        patient.status === 'Follow-up' && "bg-blue-100 text-blue-700",
+                      )}
+                    >
+                      {patient.status}
+                    </Badge>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{patient.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-muted-foreground">{patient.age}Y • {patient.gender}</span>
-                      <Badge 
-                        variant="secondary" 
-                        className={cn(
-                          "text-[10px] h-5 px-2",
-                          patient.status === 'Urgent' && "bg-red-100 text-red-700",
-                          patient.status === 'Stable' && "bg-green-100 text-green-700",
-                          patient.status === 'Follow-up' && "bg-blue-100 text-blue-700",
-                        )}
-                      >
-                        {patient.status}
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground">
-                        <MoreVertical className="h-5 w-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
-                          <UserPlus className="mr-2 h-4 w-4" /> Start Encounter
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/records/${patient.id}/history`}>
-                          <History className="mr-2 h-4 w-4" /> View History
-                        </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <div className="py-12 text-center text-muted-foreground bg-muted/20 rounded-xl border-2 border-dashed">
-              No patients registered locally.
-            </div>
-          )}
+                </div>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-muted-foreground">
+                      <MoreVertical className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
+                        <UserPlus className="mr-2 h-4 w-4" /> Start Encounter
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/records/${patient.id}/history`}>
+                        <History className="mr-2 h-4 w-4" /> View History
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     </div>

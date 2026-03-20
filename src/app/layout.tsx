@@ -1,9 +1,9 @@
+
 import type { Metadata } from 'next';
 import { Poppins, PT_Sans } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase';
 
 const fontPoppins = Poppins({
   subsets: ['latin'],
@@ -18,7 +18,7 @@ const fontPTSans = PT_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'AI Epilepsy Assistant',
+  title: 'AI Epilepsy Assistant (Demo)',
   description:
     'Helping community health workers manage epilepsy in remote areas with AI-guided tools.',
 };
@@ -45,12 +45,10 @@ export default function RootLayout({
           fontPTSans.variable
         )}
       >
-        <FirebaseClientProvider>
-          <div className="mx-auto max-w-md min-h-screen bg-background shadow-xl border-x">
-            {children}
-          </div>
-          <Toaster />
-        </FirebaseClientProvider>
+        <div className="mx-auto max-w-md min-h-screen bg-background shadow-xl border-x">
+          {children}
+        </div>
+        <Toaster />
       </body>
     </html>
   );
