@@ -131,13 +131,25 @@ function NewEncounterContent() {
   };
 
   const saveRecord = (status: 'approved' | 'overridden') => {
-    if (!user || !db || !recommendation) return;
+    // DEMO MODE check
+    const isDemo = localStorage.getItem('demo_session') === 'true';
     setIsSaving(true);
+
+    if (isDemo) {
+      setTimeout(() => {
+        toast({ title: "Clinical Record Logged (Demo)", description: status === 'overridden' ? "Safety override captured for audit." : "Standard record synced." });
+        setShowOverrideDialog(false);
+        router.push('/dashboard');
+        setIsSaving(false);
+      }, 1000);
+      return;
+    }
+
+    if (!user || !db || !recommendation) return;
 
     const targetPatientId = patientId || doc(collection(db, 'patients')).id;
     const patientRef = doc(db, 'patients', targetPatientId);
     
-    // Calculate Age for list view display
     const birthYear = new Date(patientData.dob).getFullYear();
     const currentYear = new Date().getFullYear();
     const age = isNaN(birthYear) ? 30 : currentYear - birthYear;

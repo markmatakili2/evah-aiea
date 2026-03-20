@@ -74,18 +74,34 @@ export const mockEncounters = [
   { 
     id: 'e1', 
     patientId: 'p1', 
-    date: new Date().toISOString(), 
-    summary: 'Reported 3 seizures in 24h. Missed phenobarbital for 2 days. Family reports confusion post-seizure.', 
+    date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), 
+    summary: 'WHO Protocol: Emergency review. Patient reported 3 tonic-clonic seizures in 24 hours. Adherence check: missed 3 doses of Phenobarbital.', 
     redFlags: ['repeated', 'medicationFail'], 
-    recommendation: { action: 'IMMEDIATE EMERGENCY REFERRAL', urgencyLevel: 'EMERGENCY', clinicalReasoning: 'Status Epilepticus Risk due to repeated seizures and medication non-adherence.' } 
+    recommendation: { action: 'IMMEDIATE EMERGENCY REFERRAL', urgencyLevel: 'EMERGENCY', clinicalReasoning: 'WHO Status Epilepticus Risk detected. High frequency of repeated seizures coupled with treatment non-adherence.' } 
   },
   { 
     id: 'e2', 
     patientId: 'p2', 
-    date: new Date(Date.now() - 86400000 * 5).toISOString(), 
-    summary: 'Routine follow-up. No seizures in 3 months. Adhering well to Carbamazepine.', 
+    date: new Date(Date.now() - 86400000 * 15).toISOString(), 
+    summary: 'Routine WHO follow-up. No seizure activity reported in last 3 months. Adherence is 100%. Family counseling provided on safety.', 
     redFlags: [], 
-    recommendation: { action: 'Continue local management', urgencyLevel: 'STABLE', clinicalReasoning: 'Clinical signs suggest controlled seizure activity.' } 
+    recommendation: { action: 'Continue local management', urgencyLevel: 'STABLE', clinicalReasoning: 'Clinical signs suggest well-controlled epilepsy under current local protocols.' } 
+  },
+  {
+    id: 'e3',
+    patientId: 'p3',
+    date: new Date(Date.now() - 86400000 * 2).toISOString(),
+    summary: 'Urgent review for pediatric onset. Fever reported alongside first focal seizure. WHO Pediatric Protocol triggered.',
+    redFlags: ['newOnsetUnder5', 'feverNeck'],
+    recommendation: { action: 'Refer for Clinician Review within 24h', urgencyLevel: 'URGENT', clinicalReasoning: 'Suspected underlying infection or fever-triggered seizure in a child under 5.' }
+  },
+  {
+    id: 'e4',
+    patientId: 'p4',
+    date: new Date(Date.now() - 86400000 * 30).toISOString(),
+    summary: 'Initial assessment. Seizure type generalized. Frequency 1/month. Triggers identified: Sleep deprivation.',
+    redFlags: [],
+    recommendation: { action: 'Continue monitoring and counseling', urgencyLevel: 'STABLE', clinicalReasoning: 'Infrequent seizures with clear triggers. Advised on sleep hygiene.' }
   }
 ];
 

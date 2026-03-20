@@ -1,30 +1,51 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { onSnapshot, type Query } from 'firebase/firestore';
-import { mockPatients, mockEncounters } from '@/lib/mock-data';
+import {
+  onSnapshot,
+  Query,
+  DocumentData,
+  QuerySnapshot,
+} from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { mockEncounters } from '@/lib/mock-data';
 
-export function useCollection(query: Query | null) {
-  const [data, setData] = useState<any[]>([]);
+/**
+ * A custom hook to listen to a Firestore collection or query in real-time.
+ * In Demo Mode, it intercepts queries for 'encounters' and returns mock data.
+ *
+ * @param query - The Firestore query or collection reference to listen to.
+ * @returns An object containing the data, loading state, and any error encountered.
+ */
+export function useCollection<T = DocumentData>(query: Query<T> | null) {
+  const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<FirestorePermissionError | null>(null);
 
   useEffect(() => {
-    const isDemo = typeof window !== 'undefined' && localStorage.getItem('demo_session') === 'true';
-
+    // DEMO MODE HANDLING
+    const isDemo = localStorage.getItem('demo_session') === 'true';
+    
     if (isDemo && query) {
-      // Very basic path detection for demo mode
-      const path = (query as any)._query?.path?.segments?.join('/') || '';
-      
-      if (path.includes('patients')) {
-        setData(mockPatients);
-      } else if (path.includes('encounters')) {
-        setData(mockEncounters);
-      }
-      
-      setLoading(false);
-      return;
+      // Small delay to simulate network latency
+      const timer = setTimeout(() => {
+        // Basic path detection for encounters
+        // Since we can't easily get the path from a Query object in standard SDK,
+        // we'll check if the query object looks like it's targeting encounters
+        // In this prototype, we'll try to match patient-specific history
+        const url = window.location.pathname;
+        if (url.includes('/records/') && url.includes('/history')) {
+          const patientId = url.split('/records/')[1].split('/')[0];
+          const filtered = mockEncounters.filter(e => e.patientId === patientId);
+          setData(filtered as T[]);
+        } else {
+          // Default to an empty array for other collections in demo
+          setData([]);
+        }
+        setLoading(false);
+      }, 500);
+      return () => clearTimeout(timer);
     }
 
     if (!query) {
@@ -32,15 +53,24 @@ export function useCollection(query: Query | null) {
       return;
     }
 
-    setLoading(true);
     const unsubscribe = onSnapshot(
       query,
-      (snapshot) => {
-        setData(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      (snapshot: QuerySnapshot<T>) => {
+        const documents = snapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        setData(documents);
         setLoading(false);
       },
-      (err) => {
-        setError(err);
+      async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: 'collection', // query.path is not available on Query types directly
+          operation: 'list',
+        });
+
+        errorEmitter.emit('permission-error', permissionError);
+        setError(permissionError);
         setLoading(false);
       }
     );
