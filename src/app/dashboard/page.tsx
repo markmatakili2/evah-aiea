@@ -1,9 +1,10 @@
 
 'use client';
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Users, AlertTriangle, MoreVertical, UserPlus, History } from "lucide-react";
+import { Users, AlertTriangle, MoreVertical, UserPlus, History, Shield, Activity, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
   DropdownMenu, 
@@ -17,8 +18,16 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { mockPatients, mockUserProfile } from "@/lib/mock-data";
 
-export default function CHWDashboard() {
-  // DEMO MODE: Using local mock patients
+export default function Dashboard() {
+  const [role, setRole] = useState<string>('chw');
+  
+  useEffect(() => {
+    // Read the active demo role from the session
+    const savedRole = localStorage.getItem('demo_role');
+    if (savedRole) setRole(savedRole);
+  }, []);
+
+  const isSupervisor = role === 'supervisor';
   const patients = mockPatients;
   const urgentCount = patients.filter(p => p.status === 'Urgent').length;
 
@@ -29,41 +38,91 @@ export default function CHWDashboard() {
           Habari, {mockUserProfile.firstName}
         </h1>
         <p className="text-sm text-muted-foreground">
-          AI Epilepsy Assistant Dashboard
+          {isSupervisor ? "System Supervision & Monitoring" : "AI Epilepsy Assistant Dashboard"}
         </p>
       </div>
 
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4">
-        <Card className="bg-primary/5 border-primary/10">
-          <CardHeader className="p-4 pb-0">
-            <Users className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent className="p-4 pt-2">
-            <div className="text-2xl font-bold text-primary">{patients.length}</div>
-            <p className="text-[10px] uppercase font-bold text-muted-foreground">My Patients</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-red-50 border-red-100">
-          <CardHeader className="p-4 pb-0">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-          </CardHeader>
-          <CardContent className="p-4 pt-2">
-            <div className="text-2xl font-bold text-red-600">{urgentCount}</div>
-            <p className="text-[10px] uppercase font-bold text-muted-foreground">Urgent Alerts</p>
-          </CardContent>
-        </Card>
+        {isSupervisor ? (
+          <>
+            <Card className="bg-primary/5 border-primary/10">
+              <CardHeader className="p-4 pb-0">
+                <Users className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent className="p-4 pt-2">
+                <div className="text-2xl font-bold text-primary">45</div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">CHWs Registered</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-primary/5 border-primary/10">
+              <CardHeader className="p-4 pb-0">
+                <Shield className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent className="p-4 pt-2">
+                <div className="text-2xl font-bold text-primary">12</div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">Clinicians</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-primary/5 border-primary/10">
+              <CardHeader className="p-4 pb-0">
+                <MapPin className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent className="p-4 pt-2">
+                <div className="text-2xl font-bold text-primary">8</div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">Active Clinics</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-red-50 border-red-100">
+              <CardHeader className="p-4 pb-0">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </CardHeader>
+              <CardContent className="p-4 pt-2">
+                <div className="text-2xl font-bold text-red-600">{urgentCount}</div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">System Alerts</p>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <>
+            <Card className="bg-primary/5 border-primary/10">
+              <CardHeader className="p-4 pb-0">
+                <Users className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent className="p-4 pt-2">
+                <div className="text-2xl font-bold text-primary">{patients.length}</div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">My Patients</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-red-50 border-red-100">
+              <CardHeader className="p-4 pb-0">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </CardHeader>
+              <CardContent className="p-4 pt-2">
+                <div className="text-2xl font-bold text-red-600">{urgentCount}</div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">Urgent Alerts</p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
-      <Button asChild size="lg" className="w-full h-16 text-lg font-headline gap-3 shadow-lg shadow-primary/20">
-        <Link href="/dashboard/new-encounter">
-          <UserPlus className="h-6 w-6" />
-          New Encounter
-        </Link>
-      </Button>
+      {/* Conditional Call to Action */}
+      {!isSupervisor && (
+        <Button asChild size="lg" className="w-full h-16 text-lg font-headline gap-3 shadow-lg shadow-primary/20">
+          <Link href="/dashboard/new-encounter">
+            <UserPlus className="h-6 w-6" />
+            New Encounter
+          </Link>
+        </Button>
+      )}
 
+      {/* List Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-headline font-bold text-primary">Registered Patients</h2>
+          <h2 className="text-lg font-headline font-bold text-primary">
+            {isSupervisor ? "Regional Patient Registry" : "Registered Patients"}
+          </h2>
           <Link href="/dashboard/records" className="text-xs font-semibold text-primary/60 hover:text-primary">
             View All
           </Link>
@@ -103,11 +162,13 @@ export default function CHWDashboard() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
-                        <UserPlus className="mr-2 h-4 w-4" /> Start Encounter
-                      </Link>
-                    </DropdownMenuItem>
+                    {!isSupervisor && (
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
+                          <UserPlus className="mr-2 h-4 w-4" /> Start Encounter
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link href={`/dashboard/records/${patient.id}/history`}>
                         <History className="mr-2 h-4 w-4" /> View History
