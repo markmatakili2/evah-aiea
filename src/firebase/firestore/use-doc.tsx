@@ -1,23 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  DocumentReference,
-  onSnapshot,
-  DocumentSnapshot,
-  DocumentData,
-  FirestoreError,
-} from 'firebase/firestore';
-import { errorEmitter } from '../error-emitter';
-import { FirestorePermissionError } from '../errors';
+import { onSnapshot, DocumentReference, DocumentData, DocumentSnapshot } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
-export function useDoc<T = DocumentData>(docRef: DocumentReference<T> | null) {
+export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<FirestorePermissionError | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!docRef) {
+    if (!ref) {
       setData(null);
       setLoading(false);
       return;
@@ -25,24 +19,29 @@ export function useDoc<T = DocumentData>(docRef: DocumentReference<T> | null) {
 
     setLoading(true);
     const unsubscribe = onSnapshot(
-      docRef,
+      ref,
       (snapshot: DocumentSnapshot<T>) => {
-        setData(snapshot.exists() ? { ...snapshot.data(), id: snapshot.id } as T : null);
+        if (snapshot.exists()) {
+          setData({ ...snapshot.data(), id: snapshot.id } as T);
+        } else {
+          setData(null);
+        }
         setLoading(false);
       },
-      async (serverError: FirestoreError) => {
+      async (err) => {
         const permissionError = new FirestorePermissionError({
-          path: docRef.path,
+          path: ref.path,
           operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        setError(permissionError);
+        } satisfies SecurityRuleContext);
+        
+        setError(err);
         setLoading(false);
+        errorEmitter.emit('permission-error', permissionError);
       }
     );
 
     return () => unsubscribe();
-  }, [docRef]);
+  }, [ref]);
 
   return { data, loading, error };
 }

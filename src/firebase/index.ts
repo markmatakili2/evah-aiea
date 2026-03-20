@@ -18,8 +18,8 @@ export function initializeFirebase(): {
   return { firebaseApp, auth, firestore };
 }
 
-export * from './provider';
-export * from './client-provider';
-export * from './firestore/use-collection';
-export * from './firestore/use-doc';
-export * from './auth/use-user';
+export { FirebaseProvider, useFirebase, useFirebaseApp, useFirestore, useAuth } from './provider';
+export { FirebaseClientProvider } from './client-provider';
+export { useCollection } from './firestore/use-collection';
+export { useDoc } from './firestore/use-doc';
+export { useUser } from './auth/use-user';
