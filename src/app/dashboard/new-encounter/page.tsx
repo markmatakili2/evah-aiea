@@ -19,7 +19,8 @@ import {
   ShieldAlert,
   TriangleAlert,
   Loader2,
-  Edit3
+  Edit3,
+  MapPin
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -39,6 +40,7 @@ import { useFirestore, useUser, useDoc } from '@/firebase';
 import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { FacilityMap } from '@/components/dashboard/facility-map';
 
 type Step = 'patient' | 'history' | 'redflags' | 'assessment' | 'report';
 
@@ -248,8 +250,8 @@ function NewEncounterContent() {
       )}
 
       {step === 'report' && recommendation && (
-        <div className="space-y-4">
-          <Card className={recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-50" : "bg-green-50"}>
+        <div className="space-y-6">
+          <Card className={recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-50 border-red-200" : recommendation.urgencyLevel === 'URGENT' ? "bg-orange-50 border-orange-200" : "bg-green-50 border-green-200"}>
             <CardHeader>
               <Badge variant={recommendation.urgencyLevel === 'EMERGENCY' ? 'destructive' : 'secondary'}>{recommendation.urgencyLevel}</Badge>
               <CardTitle className="text-xl mt-2">AI Triage Result</CardTitle>
@@ -259,6 +261,17 @@ function NewEncounterContent() {
               <section><h4 className="text-[10px] font-bold uppercase text-muted-foreground">Action</h4><p className="text-sm font-bold">{recommendation.action}</p></section>
             </CardContent>
           </Card>
+
+          {recommendation.urgencyLevel !== 'STABLE' && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 px-1">
+                <MapPin className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold font-headline text-primary uppercase tracking-tight">Nearest Capable Facility (GIS)</h3>
+              </div>
+              <FacilityMap urgency={recommendation.urgencyLevel} patientLocation={patientData.location} />
+            </div>
+          )}
+
           <div className="flex flex-col gap-3">
             <Button className="w-full h-14 font-bold" onClick={() => saveRecord('approved')} disabled={isSaving}>Accept & Sync</Button>
             <Button variant="outline" className="w-full h-12" onClick={() => setShowOverrideDialog(true)}>

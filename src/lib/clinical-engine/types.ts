@@ -31,6 +31,17 @@ export interface Recommendation {
   riskScore: number; // 0-10
   clinicalReasoning: string;
   clinicianReviewRequired: boolean;
+  targetFacilityType?: 'specialist' | 'district' | 'local';
+}
+
+export interface HealthFacility {
+  id: string;
+  name: string;
+  type: 'specialist' | 'district' | 'local';
+  coordinates: { lat: number; lng: number };
+  capabilities: string[];
+  contact: string;
+  isOpen24h: boolean;
 }
 
 export interface SafetyWarning {

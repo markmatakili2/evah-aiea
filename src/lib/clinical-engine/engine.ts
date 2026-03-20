@@ -46,6 +46,7 @@ export function runClinicalLogic(input: ClinicalInput): Recommendation {
   let destination = "Local Health Post";
   let followUp = "Follow up in 2 weeks.";
   let reviewRequired = false;
+  let targetFacilityType: 'specialist' | 'district' | 'local' = 'local';
 
   if (riskScore >= 9) {
     urgency = 'EMERGENCY';
@@ -53,6 +54,7 @@ export function runClinicalLogic(input: ClinicalInput): Recommendation {
     destination = "Tertiary Hospital / Specialist Unit";
     followUp = "Immediate handover to emergency team.";
     reviewRequired = true;
+    targetFacilityType = 'specialist';
     counselingPoints.push("Stay with patient, ensure airway is clear, do not put items in mouth.");
   } else if (riskScore >= 5) {
     urgency = 'URGENT';
@@ -60,11 +62,13 @@ export function runClinicalLogic(input: ClinicalInput): Recommendation {
     destination = "District Hospital / Clinician";
     followUp = "Review in 48 hours.";
     reviewRequired = true;
+    targetFacilityType = 'district';
   } else if (input.seizureHistory.type === 'unknown' || input.seizureHistory.frequency === 'frequent') {
     urgency = 'ROUTINE';
     action = "Scheduled referral for diagnosis confirmation.";
     destination = "General Outpatient Clinic";
     followUp = "Review in 1 month.";
+    targetFacilityType = 'district';
   }
 
   // 3. Clinical Reasoning Construction
@@ -80,6 +84,7 @@ export function runClinicalLogic(input: ClinicalInput): Recommendation {
     counselingPoints,
     riskScore,
     clinicalReasoning: reasoning,
-    clinicianReviewRequired: reviewRequired
+    clinicianReviewRequired: reviewRequired,
+    targetFacilityType
   };
 }

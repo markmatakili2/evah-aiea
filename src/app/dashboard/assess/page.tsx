@@ -17,7 +17,8 @@ import {
   Edit3,
   Loader2,
   MoreVertical,
-  TriangleAlert
+  TriangleAlert,
+  MapPin
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { useFirestore, useCollection, useUser } from "@/firebase";
 import { collection, query, where, orderBy } from "firebase/firestore";
+import { FacilityMap } from "@/components/dashboard/facility-map";
 
 type Message = {
   id: string;
@@ -264,34 +266,46 @@ export default function AssessPage() {
                   </div>
 
                   {msg.type === 'analysis' && msg.recommendation && (
-                    <Card className={cn(
-                      "mt-2 w-full shadow-lg border-l-4",
-                      msg.recommendation.urgencyLevel === 'EMERGENCY' ? "border-red-600 bg-red-50" : "border-primary bg-primary/5"
-                    )}>
-                      <CardContent className="p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <Badge className={msg.recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-600 text-white" : "bg-primary text-white"}>
-                            {msg.recommendation.urgencyLevel}
-                          </Badge>
-                          <Sparkles className="h-4 w-4 text-primary opacity-50" />
-                        </div>
-                        
-                        <section>
-                          <h4 className="text-[10px] font-bold uppercase text-primary tracking-widest mb-1">Recommended Action</h4>
-                          <p className="text-xs font-bold text-slate-800">{msg.recommendation.action}</p>
-                          <p className="text-[10px] text-muted-foreground mt-1">To: {msg.recommendation.referralDestination}</p>
-                        </section>
+                    <div className="w-full mt-2 space-y-3">
+                      <Card className={cn(
+                        "w-full shadow-md border-l-4",
+                        msg.recommendation.urgencyLevel === 'EMERGENCY' ? "border-red-600 bg-red-50" : "border-primary bg-primary/5"
+                      )}>
+                        <CardContent className="p-4 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <Badge className={msg.recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-600 text-white" : "bg-primary text-white"}>
+                              {msg.recommendation.urgencyLevel}
+                            </Badge>
+                            <Sparkles className="h-4 w-4 text-primary opacity-50" />
+                          </div>
+                          
+                          <section>
+                            <h4 className="text-[10px] font-bold uppercase text-primary tracking-widest mb-1">Recommended Action</h4>
+                            <p className="text-xs font-bold text-slate-800">{msg.recommendation.action}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">To: {msg.recommendation.referralDestination}</p>
+                          </section>
 
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-primary/10">
-                          <Button size="sm" className="h-8 text-[10px] font-bold gap-1 bg-green-600 hover:bg-green-700">
-                            <CheckCircle2 className="h-3 w-3" /> Approve
-                          </Button>
-                          <Button size="sm" variant="outline" className="h-8 text-[10px] font-bold gap-1">
-                            <Edit3 className="h-3 w-3" /> Override
-                          </Button>
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-primary/10">
+                            <Button size="sm" className="h-8 text-[10px] font-bold gap-1 bg-green-600 hover:bg-green-700">
+                              <CheckCircle2 className="h-3 w-3" /> Approve
+                            </Button>
+                            <Button size="sm" variant="outline" className="h-8 text-[10px] font-bold gap-1">
+                              <Edit3 className="h-3 w-3" /> Override
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {msg.recommendation.urgencyLevel !== 'STABLE' && (
+                        <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2">
+                          <div className="flex items-center gap-2 text-primary px-1">
+                            <MapPin className="h-3 w-3" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">GIS Facility Referral</span>
+                          </div>
+                          <FacilityMap urgency={msg.recommendation.urgencyLevel} patientLocation={selectedPatient?.location} />
                         </div>
-                      </CardContent>
-                    </Card>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
