@@ -1,38 +1,149 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Utility functions
+
+    // --- Helper Functions ---
+
+    /** @description Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
+
+    /** @description Checks if the authenticated user's UID matches the provided ID. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    function getRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+
+    /** @description Checks if a document exists and if the user is the owner. Used for updates/deletes. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
     }
 
-    // Profiles
-    match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(userId);
-    }
+    // The 'isLabOwner' function was removed as it was unused and causing linting warnings.
+    // If a 'Lab Owner' role is needed for access control, it can be re-implemented
+    // and integrated into the relevant rules.
 
-    // Patients
+    // --- Collection Rules ---
+
+    /**
+     * @description Rules for the root Patient profile.
+     * @path /patients/{patientId}
+     * @allow (create) if auth.uid == patientId.
+     * @deny (read) if auth.uid != patientId.
+     * @principle Ownership and Self-Creation.
+     */
     match /patients/{patientId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if getRole() == 'supervisor';
+      allow get, list: if isOwner(patientId);
+      allow create: if isOwner(patientId) && request.resource.data.id == patientId;
+      allow update, delete: if isExistingOwner(patientId);
+
+      /**
+       * @description Private subcollection for medical test requests. Shared with allocated personnel.
+       * @path /patients/{patientId}/test_requests/{testRequestId}
+       * @allow (get) if user is the patient OR the allocated lab personnel.
+       * @principle Path-based ownership with shared collaborator access via denormalization.
+       */
+      match /test_requests/{testRequestId} {
+        allow get, list: if isOwner(patientId) || (isSignedIn() && resource.data.allocatedPersonnelId == request.auth.uid);
+        allow create: if isOwner(patientId) && request.resource.data.patientId == patientId;
+        allow update: if (isOwner(patientId) || (isSignedIn() && resource.data.allocatedPersonnelId == request.auth.uid)) && resource != null;
+        allow delete: if isExistingOwner(patientId);
+      }
+
+      /**
+       * @description Private billing and transaction history for a patient.
+       * @path /patients/{patientId}/payment_transactions/{transactionId}
+       * @allow (create) if auth.uid == patientId.
+       * @principle Restricts financial data to the individual patient.
+       */
+      match /payment_transactions/{transactionId} {
+        allow get, list: if isOwner(patientId);
+        allow create: if isOwner(patientId) && request.resource.data.patientId == patientId;
+        allow update, delete: if isExistingOwner(patientId);
+      }
+
+      /**
+       * @description Private medical results. Accessible by the patient and the personnel who performed the test.
+       * @path /patients/{patientId}/test_results/{resultId}
+       * @allow (create) if auth.uid matches the labPersonnelId in the data.
+       * @principle Cross-tree write permission for authorized personnel.
+       */
+      match /test_results/{resultId} {
+        allow get, list: if isOwner(patientId) || (isSignedIn() && resource.data.labPersonnelId == request.auth.uid);
+        allow create: if isSignedIn() && request.resource.data.labPersonnelId == request.auth.uid && request.resource.data.patientId == patientId;
+        allow update: if (isOwner(patientId) || (isSignedIn() && resource.data.labPersonnelId == request.auth.uid)) && resource != null;
+        allow delete: if false; // Medical records are typically immutable or deleted via admin.
+      }
+
+      /**
+       * @description Feedback left by patients for personnel.
+       * @path /patients/{patientId}/personnel_ratings/{ratingId}
+       * @principle Owner-only access to submitted feedback.
+       */
+      match /personnel_ratings/{ratingId} {
+        allow get, list: if isOwner(patientId);
+        allow create: if isOwner(patientId) && request.resource.data.patientId == patientId;
+        allow update, delete: if isExistingOwner(patientId);
+      }
+
+      /**
+       * @description Reports of abuse or misconduct.
+       * @path /patients/{patientId}/abuse_reports/{reportId}
+       * @principle Private reporting channel for patients.
+       */
+      match /abuse_reports/{reportId} {
+        allow get, list: if isOwner(patientId);
+        allow create: if isOwner(patientId) && request.resource.data.patientId == patientId;
+        allow update, delete: if isExistingOwner(patientId);
+      }
     }
 
-    // Encounters
-    match /patients/{patientId}/encounters/{encounterId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if getRole() == 'supervisor';
+    /**
+     * @description Public catalog of medical tests available.
+     * @path /test_types/{testTypeId}
+     * @allow (read) if any user is signed in.
+     * @principle Read-only public resource for system discovery.
+     */
+    match /test_types/{testTypeId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false; // Managed by Admin/System.
+    }
+
+    /**
+     * @description Laboratory facility information.
+     * @path /labs/{labId}
+     * @allow (update) if user's UID matches the lab's ownerId.
+     * @principle Public read with owner-only writes via denormalized ownership field.
+     */
+    match /labs/{labId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if resource != null && resource.data.ownerId == request.auth.uid;
+      allow delete: if resource != null && resource.data.ownerId == request.auth.uid;
+    }
+
+    /**
+     * @description Lab personnel profiles. Publicly viewable for discovery.
+     * @path /lab_personnel/{personnelId}
+     * @allow (create) if personnelId == auth.uid.
+     * @principle Self-management of professional profiles.
+     */
+    match /lab_personnel/{personnelId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(personnelId) && request.resource.data.id == personnelId;
+      allow update, delete: if isExistingOwner(personnelId);
+    }
+
+    /**
+     * @description Role markers for Lab Owners.
+     * @path /lab_owners/{ownerId}
+     * @principle Database-Based Access Control (DBAC) for administrative roles.
+     */
+    match /lab_owners/{ownerId} {
+      allow get: if isOwner(ownerId);
+      allow list: if false; // Role membership is private.
+      allow create: if isOwner(ownerId);
+      allow update, delete: if isExistingOwner(ownerId);
     }
   }
 }

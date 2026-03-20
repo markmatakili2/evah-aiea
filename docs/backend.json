@@ -1,72 +1,776 @@
-
 {
   "entities": {
-    "Profile": {
-      "title": "Profile",
-      "description": "User profile for CHWs, Clinicians, and Supervisors.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "firstName": { "type": "string" },
-        "lastName": { "type": "string" },
-        "role": { "type": "string", "enum": ["chw", "clinician", "supervisor"] },
-        "address": { "type": "string" },
-        "location": { "type": "string" },
-        "email": { "type": "string", "format": "email" }
-      },
-      "required": ["id", "firstName", "lastName", "role"]
-    },
     "Patient": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Patient",
-      "description": "Epilepsy patient record.",
       "type": "object",
+      "description": "Represents a patient registered on the DigiLab Connect platform.",
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "age": { "type": "number" },
-        "gender": { "type": "string" },
-        "location": { "type": "string" },
-        "contact": { "type": "string" },
-        "chwId": { "type": "string", "description": "The ID of the CHW who registered this patient." },
-        "status": { "type": "string", "enum": ["Stable", "Urgent", "Follow-up"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Patient entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The patient's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The patient's last name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The patient's email address, used for communication and login.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The patient's contact phone number."
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "description": "The patient's date of birth.",
+          "format": "date"
+        },
+        "gender": {
+          "type": "string",
+          "description": "The patient's gender (e.g., Male, Female, Other)."
+        },
+        "profileImageUrl": {
+          "type": "string",
+          "description": "URL to the patient's profile image.",
+          "format": "uri"
+        },
+        "locationAddress": {
+          "type": "string",
+          "description": "The patient's primary residential address, used for home sample collection."
+        },
+        "country": {
+          "type": "string",
+          "description": "The country where the patient resides."
+        },
+        "cityTown": {
+          "type": "string",
+          "description": "The city or town where the patient resides."
+        },
+        "allowLocationAccess": {
+          "type": "boolean",
+          "description": "Indicates if the patient has granted permission for location access (for services like finding nearby labs)."
+        },
+        "registrationDateTime": {
+          "type": "string",
+          "description": "The date and time when the patient registered on the platform.",
+          "format": "date-time"
+        }
       },
-      "required": ["id", "name", "age", "gender", "chwId"]
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "phoneNumber",
+        "dateOfBirth",
+        "gender",
+        "locationAddress",
+        "country",
+        "cityTown",
+        "registrationDateTime"
+      ]
     },
-    "Encounter": {
-      "title": "Encounter",
-      "description": "A clinical encounter record including seizure history and AI assessment.",
+    "TestType": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TestType",
       "type": "object",
+      "description": "Defines a type of medical test available through DigiLab Connect.",
       "properties": {
-        "id": { "type": "string" },
-        "patientId": { "type": "string" },
-        "chwId": { "type": "string" },
-        "date": { "type": "string", "format": "date-time" },
-        "type": { "type": "string" },
-        "summary": { "type": "string" },
-        "seizureData": { "type": "object" },
-        "redFlags": { "type": "array", "items": { "type": "string" } },
-        "recommendation": { "type": "object" },
-        "status": { "type": "string", "enum": ["pending", "approved", "overridden"] }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TestType entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the medical test (e.g., 'Complete Blood Count', 'Urine Analysis')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the test, including what it measures and its purpose."
+        },
+        "price": {
+          "type": "number",
+          "description": "The standard price for this test."
+        },
+        "minAge": {
+          "type": "number",
+          "description": "Minimum age required or recommended for this test."
+        },
+        "maxAge": {
+          "type": "number",
+          "description": "Maximum age required or recommended for this test."
+        },
+        "preparationInstructions": {
+          "type": "string",
+          "description": "Instructions for the patient to prepare for the test (e.g., fasting, medication restrictions)."
+        },
+        "availableLabIds": {
+          "type": "array",
+          "description": "References to Labs where this test can be performed. (Relationship: TestType N:N Lab)",
+          "items": {
+            "type": "string"
+          }
+        }
       },
-      "required": ["id", "patientId", "date", "status"]
+      "required": [
+        "id",
+        "name",
+        "description",
+        "price"
+      ]
+    },
+    "Lab": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Lab",
+      "type": "object",
+      "description": "Represents a laboratory facility associated with DigiLab Connect for sample analysis.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Lab entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The official name of the laboratory."
+        },
+        "address": {
+          "type": "string",
+          "description": "The physical address of the laboratory."
+        },
+        "cityTown": {
+          "type": "string",
+          "description": "The city or town where the laboratory is located."
+        },
+        "country": {
+          "type": "string",
+          "description": "The country where the laboratory is located."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The main contact phone number for the laboratory."
+        },
+        "email": {
+          "type": "string",
+          "description": "The main contact email for the laboratory.",
+          "format": "email"
+        },
+        "operatingHours": {
+          "type": "string",
+          "description": "A description of the laboratory's operating hours (e.g., 'Mon-Fri 9AM-5PM')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the lab's services or specialties."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Reference to the ID of the user who owns or manages this lab. (Relationship: LabOwner 1:N Lab)"
+        },
+        "testTypeIds": {
+          "type": "array",
+          "description": "References to TestTypes that this lab is equipped to perform. (Relationship: Lab N:N TestType)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "address",
+        "cityTown",
+        "country",
+        "phoneNumber",
+        "email"
+      ]
+    },
+    "LabPersonnel": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LabPersonnel",
+      "type": "object",
+      "description": "Represents a certified laboratory personnel capable of collecting samples and submitting results.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the LabPersonnel entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the lab personnel."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the lab personnel."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the lab personnel, used for communication and login.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The contact phone number of the lab personnel."
+        },
+        "profileImageUrl": {
+          "type": "string",
+          "description": "URL to the lab personnel's profile image.",
+          "format": "uri"
+        },
+        "certificationDetails": {
+          "type": "string",
+          "description": "Details about the personnel's certifications and licenses."
+        },
+        "isFreelancer": {
+          "type": "boolean",
+          "description": "Indicates if the personnel operates as a freelancer on the platform."
+        },
+        "associatedLabIds": {
+          "type": "array",
+          "description": "References to Labs with which this personnel is affiliated. (Relationship: LabPersonnel N:N Lab)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "registrationDateTime": {
+          "type": "string",
+          "description": "The date and time when the lab personnel registered on the platform.",
+          "format": "date-time"
+        },
+        "averageRating": {
+          "type": "number",
+          "description": "The average rating received by this personnel from patients."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the lab personnel (e.g., 'active', 'on_leave', 'inactive')."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "phoneNumber",
+        "certificationDetails",
+        "isFreelancer",
+        "registrationDateTime"
+      ]
+    },
+    "TestRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TestRequest",
+      "type": "object",
+      "description": "Represents a patient's request for a medical test, including collection details and status.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TestRequest entity."
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to the Patient who made the request. (Relationship: Patient 1:N TestRequest)"
+        },
+        "testTypeId": {
+          "type": "string",
+          "description": "Reference to the TestType requested by the patient. (Relationship: TestType 1:N TestRequest)"
+        },
+        "symptoms": {
+          "type": "string",
+          "description": "A description of the patient's symptoms relevant to the test."
+        },
+        "collectionMethod": {
+          "type": "string",
+          "description": "The chosen method for sample collection (e.g., 'home_collection', 'lab_visit')."
+        },
+        "collectionAddress": {
+          "type": "string",
+          "description": "The specific address for home sample collection, if applicable."
+        },
+        "collectionLatitude": {
+          "type": "number",
+          "description": "The latitude of the collection location for geo-tagging."
+        },
+        "collectionLongitude": {
+          "type": "number",
+          "description": "The longitude of the collection location for geo-tagging."
+        },
+        "scheduledCollectionDateTime": {
+          "type": "string",
+          "description": "The agreed-upon date and time for sample collection.",
+          "format": "date-time"
+        },
+        "preferredLabId": {
+          "type": "string",
+          "description": "Optional reference to a specific Lab preferred by the patient. (Relationship: Lab 1:N TestRequest)"
+        },
+        "requestStatus": {
+          "type": "string",
+          "description": "The current status of the test request (e.g., 'Pending', 'Allocated', 'Sample Collected', 'Analysis In Progress', 'Results Uploaded', 'Payment Pending', 'Completed', 'Cancelled')."
+        },
+        "allocatedPersonnelId": {
+          "type": "string",
+          "description": "Reference to the LabPersonnel allocated to this request. (Relationship: LabPersonnel 1:N TestRequest)"
+        },
+        "creationDateTime": {
+          "type": "string",
+          "description": "The date and time when the test request was created.",
+          "format": "date-time"
+        },
+        "lastUpdateDateTime": {
+          "type": "string",
+          "description": "The date and time when the test request was last updated.",
+          "format": "date-time"
+        },
+        "supportingFileUrls": {
+          "type": "array",
+          "description": "URLs to any supporting files uploaded with the request (e.g., doctor's prescription).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "paymentTransactionId": {
+          "type": "string",
+          "description": "Reference to the PaymentTransaction associated with this request. (Relationship: PaymentTransaction 1:1 TestRequest)"
+        }
+      },
+      "required": [
+        "id",
+        "patientId",
+        "testTypeId",
+        "symptoms",
+        "collectionMethod",
+        "scheduledCollectionDateTime",
+        "requestStatus",
+        "creationDateTime"
+      ]
+    },
+    "PaymentTransaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PaymentTransaction",
+      "type": "object",
+      "description": "Records details of a payment made for a test request.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PaymentTransaction entity."
+        },
+        "testRequestId": {
+          "type": "string",
+          "description": "Reference to the TestRequest associated with this payment. (Relationship: TestRequest 1:1 PaymentTransaction)"
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to the Patient who made the payment. (Relationship: Patient 1:N PaymentTransaction)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount paid for the test request."
+        },
+        "currency": {
+          "type": "string",
+          "description": "The currency of the payment (e.g., 'KES')."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "The method used for payment (e.g., 'Mpesa', 'Bank Transfer')."
+        },
+        "mobileNumber": {
+          "type": "string",
+          "description": "The mobile number used for mobile payments (e.g., Mpesa)."
+        },
+        "accountNumberUsed": {
+          "type": "string",
+          "description": "The account number used for alternative payment methods (e.g., bank transfer)."
+        },
+        "transactionStatus": {
+          "type": "string",
+          "description": "The current status of the payment transaction (e.g., 'Pending', 'Successful', 'Failed', 'Refunded')."
+        },
+        "transactionDateTime": {
+          "type": "string",
+          "description": "The date and time when the payment transaction occurred.",
+          "format": "date-time"
+        },
+        "externalTransactionId": {
+          "type": "string",
+          "description": "The unique transaction ID provided by the external payment gateway (e.g., Mpesa transaction code)."
+        },
+        "paymentLink": {
+          "type": "string",
+          "description": "A URL for initiating an external payment process.",
+          "format": "uri"
+        },
+        "confirmationCode": {
+          "type": "string",
+          "description": "A code provided by the user to confirm manual payments."
+        }
+      },
+      "required": [
+        "id",
+        "testRequestId",
+        "patientId",
+        "amount",
+        "currency",
+        "paymentMethod",
+        "transactionStatus",
+        "transactionDateTime"
+      ]
+    },
+    "TestResult": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TestResult",
+      "type": "object",
+      "description": "Stores the results of a medical test for a patient.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TestResult entity."
+        },
+        "testRequestId": {
+          "type": "string",
+          "description": "Reference to the TestRequest this result fulfills. (Relationship: TestRequest 1:1 TestResult)"
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to the Patient whose test results these are. (Relationship: Patient 1:N TestResult)"
+        },
+        "testTypeId": {
+          "type": "string",
+          "description": "Reference to the TestType that was performed. (Relationship: TestType 1:N TestResult)"
+        },
+        "labId": {
+          "type": "string",
+          "description": "Reference to the Lab where the analysis was conducted. (Relationship: Lab 1:N TestResult)"
+        },
+        "labPersonnelId": {
+          "type": "string",
+          "description": "Reference to the LabPersonnel who uploaded these results. (Relationship: LabPersonnel 1:N TestResult)"
+        },
+        "resultDetails": {
+          "type": "string",
+          "description": "The actual detailed results of the test, potentially in a structured (JSON string) or plain text format."
+        },
+        "resultFileUrl": {
+          "type": "string",
+          "description": "URL to the downloadable PDF or image file of the official test report.",
+          "format": "uri"
+        },
+        "submissionDateTime": {
+          "type": "string",
+          "description": "The date and time when the test results were submitted.",
+          "format": "date-time"
+        },
+        "aiInsights": {
+          "type": "string",
+          "description": "AI-generated insights or analysis based on the test results and patient history."
+        },
+        "isPrinted": {
+          "type": "boolean",
+          "description": "Indicates if the result has been printed by the patient."
+        },
+        "isDownloaded": {
+          "type": "boolean",
+          "description": "Indicates if the result has been downloaded by the patient."
+        }
+      },
+      "required": [
+        "id",
+        "testRequestId",
+        "patientId",
+        "testTypeId",
+        "labId",
+        "labPersonnelId",
+        "resultDetails",
+        "resultFileUrl",
+        "submissionDateTime"
+      ]
+    },
+    "PersonnelRating": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PersonnelRating",
+      "type": "object",
+      "description": "Records patient feedback and ratings for a lab personnel after a test request is completed.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PersonnelRating entity."
+        },
+        "testRequestId": {
+          "type": "string",
+          "description": "Reference to the TestRequest for which the rating is given. (Relationship: TestRequest 1:N PersonnelRating)"
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to the Patient who submitted the rating. (Relationship: Patient 1:N PersonnelRating)"
+        },
+        "labPersonnelId": {
+          "type": "string",
+          "description": "Reference to the LabPersonnel being rated. (Relationship: LabPersonnel 1:N PersonnelRating)"
+        },
+        "ratingScore": {
+          "type": "number",
+          "description": "The numerical rating given (e.g., 1 to 5 stars)."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Optional text comment provided by the patient."
+        },
+        "ratingDateTime": {
+          "type": "string",
+          "description": "The date and time when the rating was submitted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "testRequestId",
+        "patientId",
+        "labPersonnelId",
+        "ratingScore",
+        "ratingDateTime"
+      ]
+    },
+    "AbuseReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AbuseReport",
+      "type": "object",
+      "description": "Records reports of misconduct or abuse by patients against lab personnel.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AbuseReport entity."
+        },
+        "testRequestId": {
+          "type": "string",
+          "description": "Optional reference to the TestRequest related to the reported incident. (Relationship: TestRequest 1:N AbuseReport)"
+        },
+        "patientId": {
+          "type": "string",
+          "description": "Reference to the Patient who submitted the report. (Relationship: Patient 1:N AbuseReport)"
+        },
+        "labPersonnelId": {
+          "type": "string",
+          "description": "Reference to the LabPersonnel against whom the report is made. (Relationship: LabPersonnel 1:N AbuseReport)"
+        },
+        "reportReason": {
+          "type": "string",
+          "description": "A brief reason or category for the report (e.g., 'Delay', 'Misconduct', 'Unprofessionalism')."
+        },
+        "reportDescription": {
+          "type": "string",
+          "description": "A detailed description of the reported incident."
+        },
+        "reportDateTime": {
+          "type": "string",
+          "description": "The date and time when the report was submitted.",
+          "format": "date-time"
+        },
+        "reportStatus": {
+          "type": "string",
+          "description": "The current processing status of the report (e.g., 'Pending Review', 'Under Investigation', 'Resolved', 'Dismissed')."
+        }
+      },
+      "required": [
+        "id",
+        "patientId",
+        "labPersonnelId",
+        "reportReason",
+        "reportDescription",
+        "reportDateTime",
+        "reportStatus"
+      ]
     }
   },
   "auth": {
-    "providers": ["password"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": { "$ref": "#/backend/entities/Profile" },
-      "description": "Stores user profiles and roles."
-    },
-    "/patients/{patientId}": {
-      "schema": { "$ref": "#/backend/entities/Patient" },
-      "description": "Stores patient demographics."
-    },
-    "/patients/{patientId}/encounters/{encounterId}": {
-      "schema": { "$ref": "#/backend/entities/Encounter" },
-      "description": "Stores clinical encounters for a patient."
-    }
+    "structure": [
+      {
+        "path": "/patients/{patientId}",
+        "definition": {
+          "entityName": "Patient",
+          "schema": {
+            "$ref": "#/backend/entities/Patient"
+          },
+          "description": "Stores individual patient profiles. The document ID (`{patientId}`) MUST be the Firebase Authentication UID of the patient. This forms the root for all patient-specific data, enabling path-based authorization. Includes user profile details."
+        }
+      },
+      {
+        "path": "/test_types/{testTypeId}",
+        "definition": {
+          "entityName": "TestType",
+          "schema": {
+            "$ref": "#/backend/entities/TestType"
+          },
+          "description": "Stores definitions of all available medical tests. This collection is publicly readable to allow patients and personnel to browse test options. The document ID (`{testTypeId}`) corresponds to the unique ID of the test type.",
+          "params": [
+            {
+              "name": "testTypeId",
+              "description": "Unique identifier for the TestType document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/labs/{labId}",
+        "definition": {
+          "entityName": "Lab",
+          "schema": {
+            "$ref": "#/backend/entities/Lab"
+          },
+          "description": "Contains details of laboratory facilities. This collection is publicly readable for patients to find labs. Write access is restricted to the specific `ownerId` denormalized within the document, ensuring authorization independence for lab management. The document ID (`{labId}`) corresponds to the unique ID of the lab.",
+          "params": [
+            {
+              "name": "labId",
+              "description": "Unique identifier for the Lab document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/lab_personnel/{personnelId}",
+        "definition": {
+          "entityName": "LabPersonnel",
+          "schema": {
+            "$ref": "#/backend/entities/LabPersonnel"
+          },
+          "description": "Stores profiles for certified laboratory personnel. This collection is publicly readable for patients to view personnel details and for system allocation. The document ID (`{personnelId}`) MUST be the Firebase Authentication UID of the lab personnel, enabling self-management of their profile. Includes personnel certifications and status.",
+          "params": [
+            {
+              "name": "personnelId",
+              "description": "Unique identifier for the LabPersonnel document (Firebase Auth UID)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/lab_owners/{ownerId}",
+        "definition": {
+          "entityName": "LabOwner",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "A dedicated collection to grant 'Lab Owner' role access. The document ID (`{ownerId}`) MUST be the Firebase Authentication UID of the user, signifying their role. The document itself can be minimal, its existence grants the role. This collection ensures DBAC (Database-Based Access Control) for 'Lab Owner' privileges without custom claims.",
+          "params": [
+            {
+              "name": "ownerId",
+              "description": "Unique identifier for the Lab Owner (Firebase Auth UID)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/test_requests/{testRequestId}",
+        "definition": {
+          "entityName": "TestRequest",
+          "schema": {
+            "$ref": "#/backend/entities/TestRequest"
+          },
+          "description": "Stores individual test requests made by a patient. This subcollection ensures private access, as `{patientId}` in the path matches `request.auth.uid`. The document also includes denormalized `patientId` and `allocatedPersonnelId` for authorization independence and simplified rules for both patients and assigned personnel. The `requestStatus` field explicitly models the request lifecycle.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the Patient who owns this request (Firebase Auth UID)."
+            },
+            {
+              "name": "testRequestId",
+              "description": "Unique identifier for the TestRequest document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/payment_transactions/{transactionId}",
+        "definition": {
+          "entityName": "PaymentTransaction",
+          "schema": {
+            "$ref": "#/backend/entities/PaymentTransaction"
+          },
+          "description": "Records payment details for a patient's test request. Located as a subcollection of the patient, ensuring private access. Includes denormalized `patientId` and `testRequestId` for authorization independence and direct linking to the associated test request.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the Patient who made the payment (Firebase Auth UID)."
+            },
+            {
+              "name": "transactionId",
+              "description": "Unique identifier for the PaymentTransaction document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/test_results/{resultId}",
+        "definition": {
+          "entityName": "TestResult",
+          "schema": {
+            "$ref": "#/backend/entities/TestResult"
+          },
+          "description": "Stores the results of a medical test for a patient. This subcollection provides private access for the patient. Includes denormalized `patientId`, `testRequestId`, `labId`, and `labPersonnelId` for authorization independence, allowing both the patient and the responsible lab personnel to access relevant results. Supports AI insights, printing, and downloading features.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the Patient whose results these are (Firebase Auth UID)."
+            },
+            {
+              "name": "resultId",
+              "description": "Unique identifier for the TestResult document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/personnel_ratings/{ratingId}",
+        "definition": {
+          "entityName": "PersonnelRating",
+          "schema": {
+            "$ref": "#/backend/entities/PersonnelRating"
+          },
+          "description": "Records patient feedback and ratings for a lab personnel. This subcollection ensures private access to the rating by the submitting patient. Includes denormalized `patientId`, `labPersonnelId`, and `testRequestId` for authorization independence and clear context.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the Patient who submitted the rating (Firebase Auth UID)."
+            },
+            {
+              "name": "ratingId",
+              "description": "Unique identifier for the PersonnelRating document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/patients/{patientId}/abuse_reports/{reportId}",
+        "definition": {
+          "entityName": "AbuseReport",
+          "schema": {
+            "$ref": "#/backend/entities/AbuseReport"
+          },
+          "description": "Stores reports of misconduct or abuse by patients against lab personnel. This subcollection ensures private access to the report by the submitting patient. Includes denormalized `patientId`, `labPersonnelId`, and optional `testRequestId` for authorization independence and contextual linking. The `reportStatus` field explicitly models the report's processing state.",
+          "params": [
+            {
+              "name": "patientId",
+              "description": "Unique identifier for the Patient who submitted the report (Firebase Auth UID)."
+            },
+            {
+              "name": "reportId",
+              "description": "Unique identifier for the AbuseReport document."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure for DigiLab Connect prioritizes security, scalability, and debuggability by strictly adhering to the core design principles. The primary strategy revolves around **Authorization Independence** through extensive denormalization and **Structural Segregation** to ensure homogeneous security postures for collections.\n\n**Authorization Independence (CRITICAL):**\nThis design completely eliminates the need for `get()` calls in security rules to check authorization. For all patient-specific data (TestRequest, PaymentTransaction, TestResult, PersonnelRating, AbuseReport), the `patientId` field is denormalized directly into each document. This means a patient's access to their data can be verified simply by `request.auth.uid == resource.data.patientId`. Similarly, for `TestResult` and `PersonnelRating`, the `labPersonnelId` is denormalized, allowing `LabPersonnel` to access relevant documents where they are involved without needing to traverse parent collections or perform lookups. For `Lab` entities, the `ownerId` is present on the `lab` document itself, and a dedicated `/lab_owners/{ownerId}` collection provides a simple, direct DBAC role check based on `request.auth.uid` matching the document ID.\n\nThis denormalization is critical for several reasons:\n1.  **Atomic Operations:** Transactions and batch writes involving related documents become inherently secure and don't risk inconsistencies due to `get()` calls that might fetch stale data or fail. For instance, creating a `TestRequest` and its associated `PaymentTransaction` can be done atomically, with both documents immediately containing the necessary `patientId` for authorization.\n2.  **Simplified Rules:** Rules become concise and explicit, directly checking fields on `request.resource.data`. This drastically reduces complexity and potential for errors compared to rules that rely on hierarchical dependencies.\n3.  **Performance:** No `get()` calls in rules mean faster rule evaluation and no additional read operations for authorization checks, leading to better overall performance and reduced costs.\n\n**Structural Segregation (QAPs - Rules are not Filters):**\nCollections are designed with a homogeneous security posture, making `list` operations (QAPs - Query as Authorization Primitives) secure by default:\n*   **`/patients/{patientId}`:** This is the root for all private, patient-specific data. Subcollections like `/patients/{patientId}/test_requests`, `/patients/{patientId}/test_results`, etc., are secured by requiring `request.auth.uid` to match `{patientId}` in the path. This ensures that a patient can only `list` *their own* requests, results, etc., directly from their personalized subcollection.\n*   **`/test_types` and `/labs`:** These are top-level collections designed for public or broadly accessible data. They can be freely `list`ed by any authenticated user (patients, personnel) to discover available tests and labs. Specific actions (like creating/updating `Lab` documents) would be restricted to `LabOwner`s using the `ownerId` on the `Lab` document.\n*   **`/lab_personnel`:** This collection can be `list`ed by patients to find available personnel. Individual `LabPersonnel` can also manage their own profile, with `request.auth.uid` matching their `personnelId`.\n*   **`/lab_owners/{ownerId}`:** This acts as a DBAC role collection. Existence of a document at `/lab_owners/request.auth.uid` grants owner permissions.\n\nThis clear separation allows for simple `allow read: if request.auth.uid == userId` patterns for private data and `allow read: if request.auth != null` for public data, ensuring queries do not return unauthorized documents."
   }
 }
