@@ -15,13 +15,25 @@ import {
   CheckCircle2, 
   Sparkles,
   FileText,
-  UserCircle
+  UserCircle,
+  ShieldAlert,
+  TriangleAlert
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { mockPatients } from '@/lib/mock-data';
+import { runClinicalLogic } from '@/lib/clinical-engine/engine';
+import { Recommendation, ClinicalInput } from '@/lib/clinical-engine/types';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription, 
+  DialogFooter 
+} from '@/components/ui/dialog';
 
 type Step = 'patient' | 'history' | 'redflags' | 'assessment' | 'report';
 
@@ -34,6 +46,7 @@ function NewEncounterContent() {
   const { toast } = useToast();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [showSafetyDialog, setShowSafetyDialog] = useState(false);
 
   // Form State
   const [patientData, setPatientData] = useState({
@@ -42,6 +55,7 @@ function NewEncounterContent() {
     sex: '',
     location: '',
     contact: '',
+    isPregnant: false,
   });
 
   const [historyData, setHistoryData] = useState({
@@ -60,13 +74,7 @@ function NewEncounterContent() {
     additionalNotes: '',
   });
 
-  const [aiReport, setAiReport] = useState({
-    flagsDetected: [] as string[],
-    referral: '',
-    reasoning: '',
-    counseling: '',
-    decision: '',
-  });
+  const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
 
   useEffect(() => {
     if (patientId) {
@@ -78,6 +86,7 @@ function NewEncounterContent() {
           sex: patient.gender.toLowerCase(),
           location: patient.village,
           contact: patient.contact,
+          isPregnant: false,
         });
         if (startAt === 'redflags') {
           setStep('redflags');
@@ -113,27 +122,36 @@ function NewEncounterContent() {
 
   const runAssessment = () => {
     setStep('assessment');
-    // Simulated AI Logic
+    
+    // Construct Input for Engine
+    const input: ClinicalInput = {
+      patientProfile: {
+        age: parseInt(patientData.age) || 0,
+        sex: patientData.sex,
+        isPregnant: patientData.isPregnant,
+      },
+      seizureHistory: {
+        type: historyData.type,
+        duration: historyData.duration,
+        frequency: historyData.frequency,
+        triggers: historyData.triggers,
+      },
+      redFlags: {
+        ...redFlags,
+        isPregnant: patientData.isPregnant,
+      }
+    };
+
+    // Execute On-Device Engine
     setTimeout(() => {
-      const detected = Object.entries(redFlags)
-        .filter(([key, value]) => value === true && key !== 'additionalNotes')
-        .map(([key]) => redFlagItems.find(i => i.id === key)?.label || '');
-
-      const isUrgent = detected.length > 0;
-
-      setAiReport({
-        flagsDetected: detected,
-        referral: isUrgent ? 'URGENT REFERRAL' : 'STABLE - LOCAL FOLLOW-UP',
-        reasoning: isUrgent 
-          ? 'Patient exhibits one or more clinical red flags associated with high-risk neurological complications.'
-          : 'Clinical signs suggest controlled seizure activity. No immediate life-threatening markers detected.',
-        counseling: 'Advise family on safety (avoiding heights/fire), medication adherence, and early warning signs.',
-        decision: isUrgent 
-          ? 'Refer to nearest tertiary hospital immediately for specialist review.'
-          : 'Schedule routine follow-up in 2 weeks. Monitor medication log.',
-      });
+      const result = runClinicalLogic(input);
+      setRecommendation(result);
+      
+      if (result.urgencyLevel === 'EMERGENCY') {
+        setShowSafetyDialog(true);
+      }
       setStep('report');
-    }, 2000);
+    }, 1500);
   };
 
   const handleAccept = () => {
@@ -189,11 +207,21 @@ function NewEncounterContent() {
                   <SelectContent>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Prefer not to say</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+            {patientData.sex === 'female' && (
+              <div className="flex items-center space-x-2 p-3 bg-primary/5 rounded-lg border border-primary/10">
+                <Checkbox 
+                  id="pregnant" 
+                  checked={patientData.isPregnant} 
+                  onCheckedChange={c => setPatientData({...patientData, isPregnant: !!c})} 
+                />
+                <label htmlFor="pregnant" className="text-sm font-medium">Currently Pregnant?</label>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Location / Village</Label>
               <Input 
@@ -327,74 +355,69 @@ function NewEncounterContent() {
           </div>
           <div>
             <h3 className="text-xl font-bold font-headline text-primary">Analyzing Case Data</h3>
-            <p className="text-sm text-muted-foreground mt-1">Cross-referencing WHO Epilepsy Guidelines...</p>
+            <p className="text-sm text-muted-foreground mt-1">On-Device WHO Protocol Engine Active...</p>
           </div>
         </div>
       )}
 
-      {step === 'report' && (
+      {step === 'report' && recommendation && (
         <div className="space-y-4">
-          <Card className={aiReport.referral.includes('URGENT') ? "bg-red-50 border-none shadow-xl" : "bg-green-50 border-none shadow-xl"}>
+          <Card className={recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-50 border-none shadow-xl" : "bg-green-50 border-none shadow-xl"}>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <Badge variant={aiReport.referral.includes('URGENT') ? 'destructive' : 'secondary'} className="px-3 py-1">
-                  {aiReport.referral}
+                <Badge 
+                  variant={recommendation.urgencyLevel === 'EMERGENCY' ? 'destructive' : 'secondary'} 
+                  className="px-3 py-1 uppercase tracking-widest"
+                >
+                  {recommendation.urgencyLevel}
                 </Badge>
-                <Sparkles className="h-5 w-5 text-primary opacity-50" />
+                <ShieldAlert className={recommendation.urgencyLevel === 'EMERGENCY' ? "h-5 w-5 text-red-600" : "h-5 w-5 text-green-600"} />
               </div>
               <CardTitle className="text-2xl font-headline font-bold mt-4">Clinical Recommendation</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {aiReport.flagsDetected.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-red-600">Red Flags Detected</h4>
-                  <ul className="list-disc pl-4 space-y-1">
-                    {aiReport.flagsDetected.map((f, i) => (
-                      <li key={i} className="text-sm font-medium text-red-900">{f}</li>
-                    ))}
-                  </ul>
+              <section className="space-y-1">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Action & Destination</h4>
+                <p className="text-sm font-bold text-slate-900">{recommendation.action}</p>
+                <div className="flex items-center gap-2 mt-1 text-primary">
+                  <UserCircle className="h-4 w-4" />
+                  <span className="text-xs font-semibold">{recommendation.referralDestination}</span>
                 </div>
-              )}
+              </section>
 
-              <div className="space-y-4">
-                <section className="space-y-1">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Clinical Reasoning</h4>
-                  {isEditing ? (
-                    <Textarea 
-                      value={aiReport.reasoning} 
-                      onChange={e => setAiReport({...aiReport, reasoning: e.target.value})} 
-                      className="bg-white"
-                    />
-                  ) : (
-                    <p className="text-sm leading-relaxed">{aiReport.reasoning}</p>
-                  )}
-                </section>
+              <section className="space-y-1">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Clinical Reasoning</h4>
+                {isEditing ? (
+                  <Textarea 
+                    defaultValue={recommendation.clinicalReasoning} 
+                    className="bg-white text-sm"
+                  />
+                ) : (
+                  <p className="text-sm leading-relaxed">{recommendation.clinicalReasoning}</p>
+                )}
+              </section>
 
-                <section className="space-y-1">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Counseling Points</h4>
-                  {isEditing ? (
-                    <Textarea 
-                      value={aiReport.counseling} 
-                      onChange={e => setAiReport({...aiReport, counseling: e.target.value})} 
-                      className="bg-white"
-                    />
-                  ) : (
-                    <p className="text-sm leading-relaxed">{aiReport.counseling}</p>
-                  )}
-                </section>
+              <section className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Counseling Points</h4>
+                <ul className="space-y-2">
+                  {recommendation.counselingPoints.map((point, i) => (
+                    <li key={i} className="text-xs flex items-start gap-2 leading-relaxed">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1 shrink-0" />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </section>
 
-                <section className="space-y-1">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Clinical Decision</h4>
-                  {isEditing ? (
-                    <Textarea 
-                      value={aiReport.decision} 
-                      onChange={e => setAiReport({...aiReport, decision: e.target.value})} 
-                      className="bg-white"
-                    />
-                  ) : (
-                    <p className="text-sm font-bold leading-relaxed text-primary">{aiReport.decision}</p>
-                  )}
-                </section>
+              <div className="flex items-center justify-between p-3 bg-white/50 rounded-lg border">
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Risk Score</p>
+                  <p className="text-lg font-bold text-primary">{recommendation.riskScore}/10</p>
+                </div>
+                <div className="text-right space-y-0.5">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Follow-up</p>
+                  <p className="text-xs font-bold">{recommendation.followUpInterval}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -409,6 +432,35 @@ function NewEncounterContent() {
           </div>
         </div>
       )}
+
+      {/* Explicit Acknowledgment for Safety Warnings */}
+      <Dialog open={showSafetyDialog} onOpenChange={setShowSafetyDialog}>
+        <DialogContent className="bg-red-600 text-white border-none shadow-2xl">
+          <DialogHeader>
+            <div className="mx-auto bg-white/20 p-3 rounded-full mb-2">
+              <TriangleAlert className="h-10 w-10 text-white animate-pulse" />
+            </div>
+            <DialogTitle className="text-2xl font-bold text-center">SAFETY ALERT</DialogTitle>
+            <DialogDescription className="text-white/90 text-center text-lg leading-relaxed">
+              This patient exhibits <strong>EMERGENCY RED FLAGS</strong> aligned with WHO guidelines. 
+              Immediate specialist intervention is required to prevent status epilepticus or severe complications.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 text-center">
+            <p className="text-sm font-medium bg-black/10 p-3 rounded-lg">
+              Confirm you have initiated emergency referral procedures and provided safety counseling to the family.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button 
+              onClick={() => setShowSafetyDialog(false)} 
+              className="w-full h-14 bg-white text-red-600 hover:bg-white/90 text-lg font-bold"
+            >
+              I ACKNOWLEDGE & AGREE
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

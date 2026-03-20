@@ -18,23 +18,31 @@ import {
   Edit3,
   Loader2,
   MoreVertical,
-  UserCircle
+  TriangleAlert
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { mockPatients } from "@/lib/mock-data";
 import Link from "next/link";
+import { runClinicalLogic } from "@/lib/clinical-engine/engine";
+import { Recommendation, ClinicalInput } from "@/lib/clinical-engine/types";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription, 
+  DialogFooter 
+} from "@/components/ui/dialog";
 
 type Message = {
   id: string;
   role: 'user' | 'ai';
   content: string;
   type?: 'text' | 'audio' | 'analysis';
-  data?: any;
-  status?: 'draft' | 'pending' | 'final';
+  recommendation?: Recommendation;
 };
 
 export default function AssessPage() {
@@ -45,6 +53,7 @@ export default function AssessPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcriptionDraft, setTranscriptionDraft] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSafetyDialog, setShowSafetyDialog] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -59,12 +68,11 @@ export default function AssessPage() {
   const handleSelectPatient = (id: string) => {
     setSelectedPatientId(id);
     setShowHistory(false);
-    // Add initial context message
     setMessages([
       {
         id: '1',
         role: 'ai',
-        content: `I'm ready to assist with ${mockPatients.find(p => p.id === id)?.name}. You can describe new symptoms via voice or text, or upload clinical files.`,
+        content: `I'm ready to assist with ${mockPatients.find(p => p.id === id)?.name}. Describe symptoms via voice or text for real-time WHO protocol analysis.`,
         type: 'text'
       }
     ]);
@@ -76,15 +84,14 @@ export default function AssessPage() {
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: inputText };
     setMessages(prev => [...prev, userMsg]);
     setInputText("");
-    runAiAnalysis(inputText);
+    runOnDeviceAnalysis(inputText);
   };
 
   const startRecording = () => {
     setIsRecording(true);
-    // Simulate auto-stop after 3 seconds for demo
     setTimeout(() => {
       setIsRecording(false);
-      setTranscriptionDraft("Mgonjwa amepata kifafa mara tatu leo asubuhi. Kila mara kilidumu kwa dakika mbili. Hana homa.");
+      setTranscriptionDraft("Mgonjwa amepata kifafa mara tatu leo asubuhi. Kila mara kilidumu kwa dakika mbili. Hana homa lakini amekosa dawa kwa siku tatu.");
     }, 3000);
   };
 
@@ -94,26 +101,51 @@ export default function AssessPage() {
     setMessages(prev => [...prev, userMsg]);
     const textToAnalyze = transcriptionDraft;
     setTranscriptionDraft(null);
-    runAiAnalysis(textToAnalyze);
+    runOnDeviceAnalysis(textToAnalyze);
   };
 
-  const runAiAnalysis = (input: string) => {
+  const runOnDeviceAnalysis = (input: string) => {
     setIsProcessing(true);
+    
+    // Simulate data extraction from text for the engine
+    const isEmergency = input.toLowerCase().includes("mara tatu") || input.toLowerCase().includes("repeated");
+    const isMedFail = input.toLowerCase().includes("amekosa dawa") || input.toLowerCase().includes("missed");
+
+    const clinicalInput: ClinicalInput = {
+      patientProfile: {
+        age: selectedPatient?.age || 30,
+        sex: selectedPatient?.gender || 'other',
+      },
+      seizureHistory: {
+        type: 'generalized',
+        duration: '2 min',
+        frequency: '3/day',
+        triggers: ['missed medication'],
+      },
+      redFlags: {
+        repeated: isEmergency,
+        feverNeck: false,
+        injury: false,
+        newOnsetUnder5: false,
+        medicationFail: isMedFail,
+      }
+    };
+
     setTimeout(() => {
+      const result = runClinicalLogic(clinicalInput);
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: 'ai',
-        content: "Clinical analysis complete based on WHO protocols.",
+        content: `Clinical analysis complete using WHO on-device engine. Urgency: ${result.urgencyLevel}.`,
         type: 'analysis',
-        data: {
-          flags: ["Frequent seizures (3/day)"],
-          recommendation: "Stable - Adjust medication dose and monitor.",
-          reasoning: "Seizure frequency has increased from baseline, but no emergency red flags (fever, status epilepticus) are present.",
-          followUp: "Follow up in 48 hours. Ensure family has emergency midazolam if available.",
-        }
+        recommendation: result
       };
       setMessages(prev => [...prev, aiResponse]);
       setIsProcessing(false);
+
+      if (result.urgencyLevel === 'EMERGENCY') {
+        setShowSafetyDialog(true);
+      }
     }, 2000);
   };
 
@@ -162,7 +194,6 @@ export default function AssessPage() {
         </div>
       </div>
 
-      {/* Main Chat Interface */}
       {!selectedPatientId ? (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-4">
           <div className="bg-primary/5 p-6 rounded-full">
@@ -170,7 +201,7 @@ export default function AssessPage() {
           </div>
           <h2 className="text-xl font-headline font-bold text-primary">Clinical AI Chat</h2>
           <p className="text-sm text-muted-foreground max-w-xs">
-            Select a patient from history or start a new encounter to begin AI-guided diagnosis.
+            Select a patient to begin WHO-guided diagnosis and triage.
           </p>
           <Button onClick={() => setShowHistory(true)} variant="outline" className="gap-2">
             <History className="h-4 w-4" /> View History
@@ -178,7 +209,6 @@ export default function AssessPage() {
         </div>
       ) : (
         <>
-          {/* Chat Header */}
           <header className="p-3 border-b bg-card flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => setShowHistory(true)}>
               <ChevronLeft className="h-5 w-5" />
@@ -197,7 +227,6 @@ export default function AssessPage() {
             </Button>
           </header>
 
-          {/* Messages Area */}
           <ScrollArea ref={scrollRef} className="flex-1 p-4">
             <div className="space-y-6 pb-4">
               {messages.map((msg) => (
@@ -215,28 +244,28 @@ export default function AssessPage() {
                     {msg.content}
                   </div>
 
-                  {msg.type === 'analysis' && msg.data && (
-                    <Card className="mt-2 border-primary/20 bg-primary/5 w-full shadow-lg">
+                  {msg.type === 'analysis' && msg.recommendation && (
+                    <Card className={cn(
+                      "mt-2 w-full shadow-lg border-l-4",
+                      msg.recommendation.urgencyLevel === 'EMERGENCY' ? "border-red-600 bg-red-50" : "border-primary bg-primary/5"
+                    )}>
                       <CardContent className="p-4 space-y-4">
                         <div className="flex items-center justify-between">
-                          <Badge className="bg-primary text-accent text-[10px]">AI RECOMMENDATION</Badge>
+                          <Badge className={msg.recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-600 text-white" : "bg-primary text-white"}>
+                            {msg.recommendation.urgencyLevel}
+                          </Badge>
                           <Sparkles className="h-4 w-4 text-primary opacity-50" />
                         </div>
                         
                         <section>
-                          <h4 className="text-[10px] font-bold uppercase text-primary tracking-widest mb-1">Detected Flags</h4>
-                          <ul className="space-y-1">
-                            {msg.data.flags.map((f: string, i: number) => (
-                              <li key={i} className="text-xs flex items-center gap-2 text-red-700 font-medium">
-                                <AlertCircle className="h-3 w-3" /> {f}
-                              </li>
-                            ))}
-                          </ul>
+                          <h4 className="text-[10px] font-bold uppercase text-primary tracking-widest mb-1">Recommended Action</h4>
+                          <p className="text-xs font-bold text-slate-800">{msg.recommendation.action}</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">To: {msg.recommendation.referralDestination}</p>
                         </section>
 
                         <section>
-                          <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">Recommendation</h4>
-                          <p className="text-xs font-bold text-slate-800">{msg.data.recommendation}</p>
+                          <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">Follow-up</h4>
+                          <p className="text-xs font-medium">{msg.recommendation.followUpInterval}</p>
                         </section>
 
                         <div className="grid grid-cols-2 gap-2 pt-2 border-t border-primary/10">
@@ -256,11 +285,10 @@ export default function AssessPage() {
               {isProcessing && (
                 <div className="flex items-center gap-2 text-muted-foreground animate-pulse">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-xs font-medium">Analyzing WHO protocols...</span>
+                  <span className="text-xs font-medium">On-device Clinical Logic Active...</span>
                 </div>
               )}
 
-              {/* Recording / Draft State */}
               {transcriptionDraft && (
                 <div className="ml-auto w-[85%] space-y-2 animate-in slide-in-from-right-4">
                   <div className="bg-accent/10 border border-accent/30 p-4 rounded-2xl rounded-tr-none space-y-3">
@@ -288,7 +316,6 @@ export default function AssessPage() {
             </div>
           </ScrollArea>
 
-          {/* Chat Input Bar */}
           <div className="p-4 bg-card border-t border-muted pb-6">
             <div className="flex items-end gap-2 max-w-md mx-auto">
               <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground shrink-0">
@@ -332,16 +359,33 @@ export default function AssessPage() {
                 </Button>
               )}
             </div>
-            {isRecording && (
-              <div className="flex justify-center mt-2">
-                <span className="text-[10px] font-bold text-red-500 animate-pulse uppercase tracking-widest">
-                  Recording Audio...
-                </span>
-              </div>
-            )}
           </div>
         </>
       )}
+
+      {/* Explicit Acknowledgment for Emergency Detected in Chat */}
+      <Dialog open={showSafetyDialog} onOpenChange={setShowSafetyDialog}>
+        <DialogContent className="bg-red-600 text-white border-none shadow-2xl">
+          <DialogHeader>
+            <div className="mx-auto bg-white/20 p-3 rounded-full mb-2">
+              <TriangleAlert className="h-10 w-10 text-white animate-pulse" />
+            </div>
+            <DialogTitle className="text-2xl font-bold text-center">SAFETY ALERT</DialogTitle>
+            <DialogDescription className="text-white/90 text-center text-lg leading-relaxed">
+              Analysis detected <strong>EMERGENCY RED FLAGS</strong>. 
+              Immediate specialist intervention required.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              onClick={() => setShowSafetyDialog(false)} 
+              className="w-full h-14 bg-white text-red-600 hover:bg-white/90 text-lg font-bold"
+            >
+              I ACKNOWLEDGE
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
