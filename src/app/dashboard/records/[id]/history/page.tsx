@@ -1,3 +1,4 @@
+
 'use client';
 
 import { use, useState, useMemo } from 'react';
@@ -24,27 +25,12 @@ import { Badge } from '@/components/ui/badge';
 import { format, isAfter, subDays, isValid } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { usePrint } from '@/hooks/usePrint';
-import { useFirestore, useDoc, useCollection } from '@/firebase';
-import { doc, collection, query, orderBy } from 'firebase/firestore';
-import { PageLoader } from '@/components/ui/loader';
+import { mockPatients, mockEncounters } from '@/lib/mock-data';
 
-/**
- * Safely parses and formats a date from various formats (String, Date, or Firestore Timestamp)
- */
 const formatSafeDate = (dateValue: any, formatStr: string = 'PPP p') => {
   if (!dateValue) return 'N/A';
-  
-  let date: Date;
-  
-  // Handle Firestore Timestamp
-  if (dateValue && typeof dateValue.toDate === 'function') {
-    date = dateValue.toDate();
-  } else {
-    date = new Date(dateValue);
-  }
-
+  const date = new Date(dateValue);
   if (!isValid(date)) return 'Invalid Date';
-  
   return format(date, formatStr);
 };
 
@@ -52,34 +38,24 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
   const { id } = use(params);
   const router = useRouter();
   const { print } = usePrint();
-  const db = useFirestore();
   const [timeFilter, setTimeFilter] = useState('all');
 
-  // Real data fetching
-  const { data: patient, loading: patientLoading } = useDoc(id ? doc(db, 'patients', id) : null);
-  
-  const encountersQuery = useMemo(() => {
-    if (!db || !id) return null;
-    return query(
-      collection(db, 'patients', id, 'encounters'),
-      orderBy('date', 'desc')
-    );
-  }, [db, id]);
-
-  const { data: encounters, loading: encountersLoading } = useCollection(encountersQuery);
+  // Pure Frontend: Fetch from local mock data
+  const patient = mockPatients.find(p => p.id === id);
+  const patientEncounters = mockEncounters.filter(e => e.patientId === id);
 
   const filteredEncounters = useMemo(() => {
-    if (!encounters) return [];
-    if (timeFilter === 'all') return encounters;
+    if (!patientEncounters) return [];
+    if (timeFilter === 'all') return patientEncounters;
     const now = new Date();
     const days = parseInt(timeFilter);
     const cutoff = subDays(now, days);
     
-    return encounters.filter(e => {
-      const date = e.date?.toDate ? e.date.toDate() : new Date(e.date);
+    return patientEncounters.filter(e => {
+      const date = new Date(e.date);
       return isValid(date) && isAfter(date, cutoff);
     });
-  }, [encounters, timeFilter]);
+  }, [patientEncounters, timeFilter]);
 
   const handleDownload = () => {
     if (!patient) return;
@@ -145,7 +121,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
                   )}
                   <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
                     <h4 className="text-[10px] font-bold uppercase text-primary mb-1">Recommended Action</h4>
-                    <p className="text-sm font-medium text-slate-800">{e.recommendation?.action || 'No recommendation logged'}</p>
+                    <p className="text-sm font-medium text-slate-800">{(e.recommendation as any)?.action || 'No recommendation logged'}</p>
                   </div>
                 </div>
               </div>
@@ -165,7 +141,6 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
     print(reportContent);
   };
 
-  if (patientLoading || encountersLoading) return <PageLoader />;
   if (!patient) return <div className="p-10 text-center">Patient not found</div>;
 
   return (
@@ -244,7 +219,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
                     <CheckCircle2 className="h-3 w-3" />
                     <h4 className="text-[10px] font-bold uppercase tracking-widest">Recommended Action</h4>
                   </div>
-                  <p className="text-sm font-bold text-slate-800">{encounter.recommendation?.action || 'Stable'}</p>
+                  <p className="text-sm font-bold text-slate-800">{(encounter.recommendation as any)?.action || 'Stable'}</p>
                 </section>
               </CardContent>
             </Card>

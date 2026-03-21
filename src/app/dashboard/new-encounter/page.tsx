@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,8 +12,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
   ChevronRight, 
   ChevronLeft, 
-  AlertCircle, 
-  CheckCircle2, 
   Sparkles,
   UserCircle,
   ShieldAlert,
@@ -25,10 +24,11 @@ import {
   Stethoscope,
   Info,
   ShieldCheck,
-  ClipboardCheck
+  ClipboardCheck,
+  CheckCircle2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { runClinicalLogic } from '@/lib/clinical-engine/engine';
@@ -41,18 +41,11 @@ import {
   DialogDescription, 
   DialogFooter 
 } from '@/components/ui/dialog';
-import { useFirestore, useUser, useDoc } from '@/firebase';
-import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { FacilityMap } from '@/components/dashboard/facility-map';
 
 type Step = 'consent' | 'patient' | 'history' | 'causes' | 'redflags' | 'assessment' | 'report';
 
 function NewEncounterContent() {
-  const searchParams = useSearchParams();
-  const patientId = searchParams.get('patientId');
-  
-  const { user } = useUser();
-  const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -63,9 +56,7 @@ function NewEncounterContent() {
   const [hasConsent, setHasConsent] = useState(false);
   const [overrideData, setOverrideData] = useState({ reason: '', notes: '' });
 
-  const { data: existingPatient } = useDoc(patientId ? doc(db, 'patients', patientId) : null);
-
-  // WHO Structured State
+  // Pure Frontend State
   const [patientData, setPatientData] = useState({
     name: '',
     dob: '',
@@ -105,20 +96,6 @@ function NewEncounterContent() {
 
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
 
-  useEffect(() => {
-    if (existingPatient) {
-      setPatientData({
-        name: existingPatient.name,
-        dob: existingPatient.dob || '',
-        sex: existingPatient.gender?.toLowerCase() || '',
-        location: existingPatient.location || '',
-        contact: existingPatient.contact || '',
-        isPregnant: false,
-        weight: existingPatient.weight || ''
-      });
-    }
-  }, [existingPatient]);
-
   const runAssessment = () => {
     setStep('assessment');
     
@@ -127,7 +104,7 @@ function NewEncounterContent() {
 
     const input: ClinicalInput = {
       patientProfile: { age, sex: patientData.sex, isPregnant: patientData.isPregnant, weightKg: Number(patientData.weight) },
-      seizureHistory: { ...historyData, semiology: historyData.semiology },
+      seizureHistory: { ...historyData, semiology: historyData.semiology, triggers: historyData.triggers, comorbidities: historyData.comorbidities },
       underlyingCauses: causesData,
       redFlags: redFlags
     };
@@ -141,21 +118,15 @@ function NewEncounterContent() {
   };
 
   const saveRecord = (status: 'approved' | 'overridden') => {
-    const isDemo = localStorage.getItem('demo_session') === 'true';
     setIsSaving(true);
-
-    if (isDemo) {
-      setTimeout(() => {
-        toast({ 
-          title: "Decision Authority Logged", 
-          description: status === 'overridden' ? "Clinical override captured for safety audit." : "Recommendation accepted by clinician." 
-        });
-        router.push('/dashboard');
-        setIsSaving(false);
-      }, 1000);
-      return;
-    }
-    // Real Firebase logic omitted for brevity, following pattern in history
+    setTimeout(() => {
+      toast({ 
+        title: "Decision Authority Logged", 
+        description: status === 'overridden' ? "Clinical override captured for safety audit." : "Recommendation accepted by clinician." 
+      });
+      router.push('/dashboard');
+      setIsSaving(false);
+    }, 1000);
   };
 
   const toggleItem = (list: string[], item: string, setter: any) => {

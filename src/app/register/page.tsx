@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -22,15 +23,10 @@ import {
 import { Logo } from '@/components/logo';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useFirestore } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function RegisterPage() {
-  const auth = useAuth();
-  const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -48,7 +44,6 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth || !db) return;
 
     if (formData.password !== formData.confirmPassword) {
       toast({ variant: 'destructive', title: 'Error', description: 'Passwords do not match.' });
@@ -56,32 +51,14 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      const user = userCredential.user;
-
-      await updateProfile(user, { displayName: `${formData.firstName} ${formData.lastName}` });
-
-      const profileData = {
-        id: user.uid,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        role: formData.role,
-        createdAt: serverTimestamp(),
-      };
-
-      await setDoc(doc(db, 'users', user.uid), profileData);
-
-      toast({ title: 'Welcome!', description: 'Account created successfully.' });
-      router.push('/dashboard');
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Registration Failed', description: error.message });
-    } finally {
+    // Pure Frontend Simulation
+    setTimeout(() => {
       setLoading(false);
-    }
+      localStorage.setItem('demo_session', 'true');
+      localStorage.setItem('demo_role', formData.role);
+      toast({ title: 'Welcome!', description: 'Account created successfully (Local Session).' });
+      router.push('/dashboard');
+    }, 1500);
   };
 
   return (
@@ -110,14 +87,6 @@ export default function RegisterPage() {
               <div className="space-y-2">
                 <Label>Email Address</Label>
                 <Input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="jane@example.ai" required />
-              </div>
-              <div className="space-y-2">
-                <Label>Phone Number</Label>
-                <Input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+254..." required />
-              </div>
-              <div className="space-y-2">
-                <Label>Work Address / Clinic</Label>
-                <Input value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Sector name" required />
               </div>
               <div className="space-y-2">
                 <Label>Your Role</Label>

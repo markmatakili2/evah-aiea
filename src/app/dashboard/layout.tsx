@@ -7,7 +7,6 @@ import { PageLoader } from '@/components/ui/loader';
 import { Bell } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { mockUserProfile } from '@/lib/mock-data';
 
 export default function DashboardLayout({
   children,
@@ -19,9 +18,9 @@ export default function DashboardLayout({
   const [role, setRole] = useState('chw');
 
   useEffect(() => {
-    // DEMO MODE: Check local storage instead of Firebase
-    const isDemo = localStorage.getItem('demo_session') === 'true';
-    if (!isDemo) {
+    // Pure Frontend Logic: Check localStorage
+    const isSessionActive = localStorage.getItem('demo_session') === 'true';
+    if (!isSessionActive) {
       router.push('/login');
     } else {
       setRole(localStorage.getItem('demo_role') || 'chw');

@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -36,8 +37,6 @@ import {
   DialogDescription, 
   DialogFooter 
 } from "@/components/ui/dialog";
-import { useFirestore, useCollection, useUser } from "@/firebase";
-import { collection, query, where, orderBy } from "firebase/firestore";
 import { FacilityMap } from "@/components/dashboard/facility-map";
 import { mockPatients } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
@@ -52,8 +51,6 @@ type Message = {
 };
 
 export default function AssessPage() {
-  const { user } = useUser();
-  const db = useFirestore();
   const { toast } = useToast();
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
@@ -65,23 +62,8 @@ export default function AssessPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
 
-  // Check for Demo Mode
-  const isDemo = typeof window !== 'undefined' && localStorage.getItem('demo_session') === 'true';
-
-  // Fetch real patients from DB if not in demo
-  const patientsQuery = useMemo(() => {
-    if (!db || !user || isDemo) return null;
-    return query(
-      collection(db, 'patients'),
-      where('chwId', '==', user.uid),
-      orderBy('updatedAt', 'desc')
-    );
-  }, [db, user, isDemo]);
-
-  const { data: firebasePatients } = useCollection(patientsQuery);
-  
-  // Use mock data if in demo mode
-  const patients = isDemo ? mockPatients : (firebasePatients || []);
+  // Pure Frontend: Use local mock patients
+  const patients = mockPatients;
   const selectedPatient = patients?.find(p => p.id === selectedPatientId);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -116,7 +98,6 @@ export default function AssessPage() {
 
   const startRecording = () => {
     setIsRecording(true);
-    // Simulate recording duration
     setTimeout(() => {
       setIsRecording(false);
       setTranscriptionDraft("Mgonjwa amepata kifafa mara tatu leo asubuhi. Kila mara kilidumu kwa dakika mbili. Hana homa lakini amekosa dawa kwa siku tatu.");
@@ -163,7 +144,8 @@ export default function AssessPage() {
         sex: (selectedPatient?.gender || 'other').toLowerCase(),
       },
       seizureHistory: {
-        type: 'generalized',
+        type: 'convulsive',
+        semiology: ['Motor Jerking'],
         duration: '2 min',
         frequency: '3/day',
         triggers: ['missed medication'],
@@ -207,7 +189,7 @@ export default function AssessPage() {
   const handleAction = (type: 'approve' | 'override') => {
     toast({
       title: type === 'approve' ? "Recommendation Accepted" : "Clinical Override Logged",
-      description: "Data synced to EVAH management system.",
+      description: "Action saved to local registry.",
     });
   };
 
@@ -221,7 +203,7 @@ export default function AssessPage() {
         <div className="flex flex-col h-full">
           <div className="p-4 border-b flex items-center justify-between bg-primary text-primary-foreground">
             <h2 className="font-headline font-bold flex items-center gap-2">
-              <History className="h-5 w-5" /> Registered Registry
+              <History className="h-5 w-5" /> Patient Registry
             </h2>
             <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)}>
               <X className="h-5 w-5" />
@@ -238,28 +220,22 @@ export default function AssessPage() {
 
           <ScrollArea className="flex-1 px-4">
             <div className="space-y-2 pb-4">
-              {patients && patients.length > 0 ? (
-                patients.map(patient => (
-                  <button
-                    key={patient.id}
-                    onClick={() => handleSelectPatient(patient.id)}
-                    className="w-full text-left p-4 rounded-xl border hover:bg-muted transition-colors group"
-                  >
-                    <div className="flex justify-between items-start">
-                      <span className="font-bold text-primary group-hover:text-primary/80">{patient.name}</span>
-                      <Badge variant="outline" className={cn(
-                        "text-[10px] uppercase",
-                        patient.status === 'Urgent' ? "border-red-200 text-red-600 bg-red-50" : ""
-                      )}>{patient.status}</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">{patient.location} • {patient.gender}</p>
-                  </button>
-                ))
-              ) : (
-                <div className="text-center py-10 text-muted-foreground text-sm">
-                  {isProcessing ? "Loading Registry..." : "No registered patients found."}
-                </div>
-              )}
+              {patients.map(patient => (
+                <button
+                  key={patient.id}
+                  onClick={() => handleSelectPatient(patient.id)}
+                  className="w-full text-left p-4 rounded-xl border hover:bg-muted transition-colors group"
+                >
+                  <div className="flex justify-between items-start">
+                    <span className="font-bold text-primary group-hover:text-primary/80">{patient.name}</span>
+                    <Badge variant="outline" className={cn(
+                      "text-[10px] uppercase",
+                      patient.status === 'Urgent' ? "border-red-200 text-red-600 bg-red-50" : ""
+                    )}>{patient.status}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{patient.location} • {patient.gender}</p>
+                </button>
+              ))}
             </div>
           </ScrollArea>
         </div>

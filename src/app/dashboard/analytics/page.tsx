@@ -1,45 +1,37 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useFirestore, useCollection, useUser, useDoc } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ShieldAlert, TrendingUp, AlertTriangle, ShieldCheck, ClipboardList, BarChart3 } from 'lucide-react';
-import { doc } from 'firebase/firestore';
 import { PageLoader } from '@/components/ui/loader';
+import { mockPatients } from '@/lib/mock-data';
 
 export default function SafetyDashboard() {
-  const { user } = useUser();
-  const db = useFirestore();
-  const { data: profile } = useDoc(user ? doc(db, 'users', user.uid) : null);
-  
-  const [demoRole, setDemoRole] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    setDemoRole(localStorage.getItem('demo_role'));
+    setRole(localStorage.getItem('demo_role'));
   }, []);
 
-  const patientsQuery = query(collection(db, 'patients'));
-  const { data: patients, loading: patientsLoading } = useCollection(patientsQuery);
+  if (!isClient) return <PageLoader />;
 
-  if (!isClient || patientsLoading) return <PageLoader />;
-
-  const isSupervisor = demoRole === 'supervisor' || profile?.role === 'supervisor';
+  const isSupervisor = role === 'supervisor';
 
   if (!isSupervisor) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <ShieldAlert className="h-16 w-16 text-muted-foreground mb-4" />
         <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-muted-foreground">This dashboard is restricted to supervisors. (Current Session Role: {demoRole || 'CHW'})</p>
+        <p className="text-muted-foreground">This dashboard is restricted to supervisors. (Current Session Role: {role || 'CHW'})</p>
       </div>
     );
   }
 
-  const urgentCount = patients?.filter(p => p.status === 'Urgent').length || 0;
+  const urgentCount = mockPatients.filter(p => p.status === 'Urgent').length || 0;
 
   return (
     <div className="space-y-6 pb-20">
@@ -119,7 +111,7 @@ export default function SafetyDashboard() {
 
       <div className="bg-muted/30 p-4 rounded-xl border border-dashed text-center">
         <ClipboardList className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-        <p className="text-xs font-medium text-muted-foreground">MEL Audit logs are synced every 24h to EVAH central dashboard via FHIR/REST protocols.</p>
+        <p className="text-xs font-medium text-muted-foreground">MEL Audit logs are synced to regional health management office via secured PHC protocols.</p>
       </div>
     </div>
   );

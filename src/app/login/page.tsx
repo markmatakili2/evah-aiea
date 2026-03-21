@@ -29,12 +29,14 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // DEMO MODE: Bypassing Firebase Auth
+    
+    // Pure Frontend Simulation
     setTimeout(() => {
       setLoading(false);
       localStorage.setItem('demo_session', 'true');
-      localStorage.setItem('demo_role', email.split('@')[0] || 'chw');
-      toast({ title: 'Demo Login Success', description: 'Logged in to prototype environment.' });
+      const role = email.split('@')[0] || 'chw';
+      localStorage.setItem('demo_role', role);
+      toast({ title: 'Login Success', description: `Logged in as ${role.toUpperCase()}` });
       router.push('/dashboard');
     }, 1000);
   };
@@ -73,9 +75,7 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link href="#" className="text-sm text-primary/60 hover:text-primary font-semibold">
-                    Forgot?
-                  </Link>
+                  <span className="text-sm text-primary/60 font-semibold">Forgot?</span>
                 </div>
                 <Input 
                   id="password" 
@@ -104,7 +104,6 @@ export default function LoginPage() {
                   <Shield className="h-4 w-4 text-purple-600" /> Supervisor
                 </Button>
               </div>
-              <p className="text-[10px] text-center text-muted-foreground mt-2">Pass: any password</p>
             </div>
           </CardContent>
           <CardFooter className="px-0 flex flex-col gap-6 mt-6">
