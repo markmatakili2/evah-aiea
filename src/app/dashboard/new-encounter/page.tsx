@@ -152,7 +152,7 @@ function NewEncounterContent() {
     <div className="max-w-md mx-auto space-y-6 pb-20">
       <div className="flex flex-col gap-2 sticky top-0 bg-background pt-2 z-10">
         <div className="flex justify-between items-center px-1">
-          <h1 className="text-xl font-headline font-bold text-primary italic">mhGAP Decision Support</h1>
+          <h1 className="text-xl font-headline font-bold text-primary italic">Clinical Engine Support</h1>
           <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">Safety Protected</Badge>
         </div>
         <Progress value={stepProgress[step]} className="h-1.5" />
@@ -192,10 +192,16 @@ function NewEncounterContent() {
         <Card className="border-none shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><UserCircle className="h-5 w-5" /> Patient Context</CardTitle>
-            <CardDescription>Counter myths: Epilepsy is a medical condition, not a curse.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2"><Label>Full Name</Label><Input value={patientData.name} onChange={e => setPatientData({...patientData, name: e.target.value})} placeholder="Patient's name" /></div>
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input value={patientData.name} onChange={e => setPatientData({...patientData, name: e.target.value})} placeholder="Patient's name" />
+            </div>
+            <div className="space-y-2">
+              <Label>Patient Contact</Label>
+              <Input value={patientData.contact} onChange={e => setPatientData({...patientData, contact: e.target.value})} placeholder="e.g. +254 700 000 000" />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={patientData.dob} onChange={e => setPatientData({...patientData, dob: e.target.value})} /></div>
               <div className="space-y-2"><Label>Sex</Label>
@@ -205,10 +211,12 @@ function NewEncounterContent() {
                 </Select>
               </div>
             </div>
-            <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg border border-dashed">
-              <Checkbox id="pregnant" checked={patientData.isPregnant} onCheckedChange={c => setPatientData({...patientData, isPregnant: !!c})} />
-              <Label htmlFor="pregnant" className="text-xs font-bold leading-relaxed">Currently Pregnant? (High Risk)</Label>
-            </div>
+            {patientData.sex === 'female' && (
+              <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg border border-dashed">
+                <Checkbox id="pregnant" checked={patientData.isPregnant} onCheckedChange={c => setPatientData({...patientData, isPregnant: !!c})} />
+                <Label htmlFor="pregnant" className="text-xs font-bold leading-relaxed">Currently Pregnant? (High Risk)</Label>
+              </div>
+            )}
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => setStep('consent')}><ChevronLeft className="h-4 w-4" /> Back</Button>
               <Button className="flex-1 shadow-md" onClick={() => setStep('history')}>Next <ChevronRight className="h-4 w-4" /></Button>
@@ -221,13 +229,13 @@ function NewEncounterContent() {
         <Card className="border-none shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><Activity className="h-5 w-5" /> Structured History</CardTitle>
-            <CardDescription>Semiology & classification per WHO mhGAP.</CardDescription>
+            <CardDescription>Semiology & classification per WHO guidelines.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Seizure Type Classification</Label>
               <Select value={historyData.type} onValueChange={v => setHistoryData({...historyData, type: v})}>
-                <SelectTrigger><SelectValue placeholder="Select mhGAP category" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="convulsive">Convulsive (Generalized)</SelectItem>
                   <SelectItem value="non-convulsive">Non-convulsive (Focal/Absence)</SelectItem>
@@ -293,7 +301,7 @@ function NewEncounterContent() {
               { id: 'prolongedSeizure', label: 'Ongoing seizure > 5 mins (STATUS)' },
               { id: 'repeated', label: 'Repeated seizures without recovery' },
               { id: 'feverNeck', label: 'Fever & Neck Stiffness (Meningitis)' },
-              { id: 'medicationFail', label: 'Failing first-line PHC medicines' }
+              { id: 'medicationFail', label: 'Failing first-line medicines' }
             ].map(flag => (
               <div key={flag.id} className="flex items-center space-x-3 p-3 bg-red-50/20 rounded-lg border border-red-100">
                 <Checkbox id={flag.id} checked={redFlags[flag.id as keyof typeof redFlags] === true} onCheckedChange={c => setRedFlags({...redFlags, [flag.id]: !!c})} />
@@ -311,7 +319,7 @@ function NewEncounterContent() {
       {step === 'assessment' && (
         <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <h3 className="text-xl font-bold font-headline text-primary italic">Applying mhGAP Logic</h3>
+          <h3 className="text-xl font-bold font-headline text-primary italic">Applying the Clinical Engine Assistant</h3>
           <p className="text-sm text-muted-foreground">Decision authority remains with the healthcare worker.</p>
         </div>
       )}
@@ -382,7 +390,7 @@ function NewEncounterContent() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Decision authority Override</DialogTitle>
-            <DialogDescription>All overrides are logged for safety audit and mhGAP quality assurance feedback loops.</DialogDescription>
+            <DialogDescription>All overrides are logged for safety audit and quality assurance feedback loops.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2"><Label>Reason for Discordance</Label>
