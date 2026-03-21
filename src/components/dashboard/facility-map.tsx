@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Navigation, Phone, ShieldCheck, Clock, Building2 } from 'lucide-react';
+import { MapPin, Navigation, Phone, ShieldCheck, Clock, ExternalLink } from 'lucide-react';
 import { mockHealthFacilities } from '@/lib/mock-data';
 import type { HealthFacility, UrgencyLevel } from '@/lib/clinical-engine/types';
 import { Badge } from '@/components/ui/badge';
@@ -20,10 +20,8 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // GIS Logic: Match required care level to nearest available facility type
+    // Logic: Match required care level to nearest capable facility
     const targetType = urgency === 'EMERGENCY' ? 'specialist' : urgency === 'URGENT' ? 'district' : 'local';
-    
-    // In a real app, we would use haversine formula here with real coordinates
     const filtered = mockHealthFacilities.filter(f => f.type === targetType || (urgency === 'EMERGENCY' && f.type === 'specialist'));
     
     setTimeout(() => {
@@ -32,11 +30,17 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
     }, 800);
   }, [urgency]);
 
+  const openGoogleMaps = () => {
+    if (!nearest) return;
+    const query = encodeURIComponent(nearest.name);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-muted/20 rounded-xl border border-dashed">
         <Navigation className="h-8 w-8 animate-bounce text-primary/40" />
-        <p className="text-sm font-medium text-muted-foreground">Identifying nearest capable facility...</p>
+        <p className="text-sm font-medium text-muted-foreground">Locating nearest capable facility...</p>
       </div>
     );
   }
@@ -46,66 +50,66 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
   return (
     <Card className="overflow-hidden border-primary/20 shadow-lg animate-in zoom-in-95 duration-300">
       <div className="relative aspect-video w-full bg-slate-200">
-        {/* Mock GIS Map View */}
+        {/* Mock Google Map Style View */}
         <Image 
-          src="https://picsum.photos/seed/location-map/800/450" 
-          alt="GIS Map" 
+          src="https://picsum.photos/seed/nairobi-map/800/450" 
+          alt="Referral Map" 
           fill 
-          className="object-cover opacity-80" 
-          data-ai-hint="satellite map"
+          className="object-cover opacity-90" 
+          data-ai-hint="google map"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
           <div className="flex flex-col text-white">
-            <Badge className="w-fit mb-1 bg-white/20 backdrop-blur-md text-white border-white/30">
-              {urgency} Care Route
+            <Badge className="w-fit mb-1 bg-white/20 backdrop-blur-md text-white border-white/30 text-[10px] font-bold">
+              {urgency} REFERRAL PATHWAY
             </Badge>
-            <h3 className="text-lg font-bold">{nearest.name}</h3>
-            <p className="text-xs opacity-90 flex items-center gap-1">
-              <MapPin className="h-3 w-3" /> 12.4 km from {patientLocation || 'Current Location'}
+            <h3 className="text-sm font-bold leading-tight max-w-[200px]">{nearest.name}</h3>
+            <p className="text-[10px] opacity-90 flex items-center gap-1 mt-1">
+              <MapPin className="h-2.5 w-2.5" /> Thika Rd, Nairobi
             </p>
           </div>
-          <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-white shadow-xl ring-4 ring-white/20">
-            <Navigation className="h-6 w-6" />
-          </div>
+          <Button size="icon" className="h-10 w-10 rounded-full bg-primary text-white shadow-xl ring-4 ring-white/20" onClick={openGoogleMaps}>
+            <ExternalLink className="h-5 w-5" />
+          </Button>
         </div>
       </div>
 
       <CardContent className="p-4 space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1 p-2 bg-muted/30 rounded-lg">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase">Estimated Transit</span>
+            <span className="text-[9px] font-bold text-muted-foreground uppercase">Est. Transit</span>
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" />
-              <span className="text-sm font-bold">24 Mins</span>
+              <Clock className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-bold">18 Mins</span>
             </div>
           </div>
           <div className="flex flex-col gap-1 p-2 bg-muted/30 rounded-lg">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase">Status</span>
+            <span className="text-[9px] font-bold text-muted-foreground uppercase">Status</span>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-bold text-green-700">Open & Ready</span>
+              <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
+              <span className="text-xs font-bold text-green-700">Open & Ready</span>
             </div>
           </div>
         </div>
 
         <div>
-          <h4 className="text-[10px] font-bold text-muted-foreground uppercase mb-2">Required Capabilities Verified</h4>
+          <h4 className="text-[9px] font-bold text-muted-foreground uppercase mb-2">Facility Capabilities</h4>
           <div className="flex flex-wrap gap-1">
-            {nearest.capabilities.map(cap => (
-              <Badge key={cap} variant="secondary" className="text-[9px] h-5 bg-primary/5 text-primary border-primary/10">
+            {nearest.capabilities.slice(0, 3).map(cap => (
+              <Badge key={cap} variant="secondary" className="text-[8px] h-4 bg-primary/5 text-primary border-primary/10">
                 {cap}
               </Badge>
             ))}
           </div>
         </div>
 
-        <div className="flex gap-2 pt-2">
-          <Button className="flex-1 gap-2" size="sm">
-            <Navigation className="h-4 w-4" /> Start Guidance
+        <div className="flex gap-2 pt-1">
+          <Button className="flex-1 gap-2 text-xs font-bold h-10 bg-primary" onClick={openGoogleMaps}>
+            <Navigation className="h-3.5 w-3.5" /> Open in Google Maps
           </Button>
-          <Button variant="outline" size="sm" className="shrink-0" asChild>
+          <Button variant="outline" className="shrink-0 h-10 w-10 p-0" asChild>
             <a href={`tel:${nearest.contact}`}><Phone className="h-4 w-4" /></a>
           </Button>
         </div>

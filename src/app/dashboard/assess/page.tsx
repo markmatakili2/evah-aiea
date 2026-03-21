@@ -252,7 +252,7 @@ export default function AssessPage() {
                       </Card>
                       {msg.recommendation.urgencyLevel !== 'STABLE' && (
                         <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2">
-                          <div className="flex items-center gap-2 text-primary px-1"><MapPin className="h-3 w-3" /><span className="text-[10px] font-bold uppercase tracking-widest">GIS REFERRAL ROUTE</span></div>
+                          <div className="flex items-center gap-2 text-primary px-1"><MapPin className="h-3 w-3" /><span className="text-[10px] font-bold uppercase tracking-widest">Recommended Referral</span></div>
                           <FacilityMap urgency={msg.recommendation.urgencyLevel} patientLocation={selectedPatient?.location} />
                         </div>
                       )}

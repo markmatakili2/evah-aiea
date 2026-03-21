@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, Suspense } from 'react';
@@ -369,7 +368,7 @@ function NewEncounterContent() {
             <div className="space-y-3">
               <div className="flex items-center gap-2 px-1">
                 <MapPin className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-bold font-headline text-primary uppercase tracking-tight italic">Recommended Referral (GIS)</h3>
+                <h3 className="text-sm font-bold font-headline text-primary uppercase tracking-tight italic">Recommended Referral</h3>
               </div>
               <FacilityMap urgency={recommendation.urgencyLevel} patientLocation={patientData.location} />
             </div>

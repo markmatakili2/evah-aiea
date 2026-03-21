@@ -91,11 +91,11 @@ export const mockCHWs = [
 export const mockHealthFacilities: HealthFacility[] = [
   {
     id: 'f1',
-    name: 'National Referral Hospital',
+    name: 'Kenyatta University Teaching, Referral and Research Hospital (KUTRRH)',
     type: 'specialist',
-    coordinates: { lat: -1.2921, lng: 36.8219 },
-    capabilities: ['ICU', 'Neurology Specialist', 'EEG', '24/7 Emergency'],
-    contact: '+254 20 2726300',
+    coordinates: { lat: -1.1747, lng: 36.9264 },
+    capabilities: ['Tertiary Epilepsy Care', 'Neurology Specialist', 'EEG/Video-EEG', '24/7 Emergency'],
+    contact: '+254 800 721 038',
     isOpen24h: true
   },
   {
