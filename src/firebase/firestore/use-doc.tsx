@@ -1,44 +1,44 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { onSnapshot, type DocumentReference } from 'firebase/firestore';
-import { mockPatients, mockUserProfile } from '@/lib/mock-data';
+import { useEffect, useState } from 'react';
+import { DocumentReference, onSnapshot, DocumentData } from 'firebase/firestore';
+import { mockUserProfile, mockPatients } from '@/lib/mock-data';
 
-export function useDoc(ref: DocumentReference | null) {
-  const [data, setData] = useState<any>(null);
+export function useDoc<T = DocumentData>(docRef: DocumentReference<T> | null) {
+  const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const isDemo = typeof window !== 'undefined' && localStorage.getItem('demo_session') === 'true';
 
-    if (isDemo && ref) {
-      // Extract the path to decide which mock data to return
-      const path = ref.path;
+    if (isDemo && docRef) {
+      const path = docRef.path;
       
-      if (path.startsWith('patients/')) {
+      // Handle User Profile
+      if (path.startsWith('users/')) {
+        setData(mockUserProfile as unknown as T);
+      } 
+      // Handle Specific Patient
+      else if (path.startsWith('patients/')) {
         const id = path.split('/')[1];
         const patient = mockPatients.find(p => p.id === id);
-        setData(patient || null);
-      } else if (path.startsWith('users/')) {
-        setData(mockUserProfile);
+        setData((patient || null) as unknown as T);
       }
       
       setLoading(false);
       return;
     }
 
-    if (!ref) {
+    if (!docRef) {
       setLoading(false);
       return;
     }
 
-    setLoading(true);
-    const unsubscribe = onSnapshot(
-      ref,
+    const unsubscribe = onSnapshot(docRef, 
       (doc) => {
-        setData(doc.exists() ? { id: doc.id, ...doc.data() } : null);
+        setData(doc.exists() ? doc.data() : null);
         setLoading(false);
       },
       (err) => {
@@ -47,8 +47,8 @@ export function useDoc(ref: DocumentReference | null) {
       }
     );
 
-    return () => unsubscribe();
-  }, [ref]);
+    return unsubscribe;
+  }, [docRef?.path]);
 
   return { data, loading, error };
 }

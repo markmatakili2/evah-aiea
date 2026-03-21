@@ -1,72 +1,66 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
-import {
-  onSnapshot,
-  Query,
-  DocumentData,
-  QuerySnapshot,
-} from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { mockEncounters } from '@/lib/mock-data';
+import { useEffect, useState } from 'react';
+import { Query, onSnapshot, DocumentData, collection, query, where } from 'firebase/firestore';
+import { mockPatients, mockEncounters, mockClinicians, mockCHWs } from '@/lib/mock-data';
 
-/**
- * A custom hook to listen to a Firestore collection or query in real-time.
- * 
- * Supports "Demo Mode" by returning mock data if Firestore is not available
- * or if the demo_session flag is set in localStorage.
- */
-export function useCollection<T = DocumentData>(query: Query<T> | null) {
+export function useCollection<T = DocumentData>(queryRef: Query<T> | null) {
   const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<FirestorePermissionError | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Check for Demo Mode
     const isDemo = typeof window !== 'undefined' && localStorage.getItem('demo_session') === 'true';
 
-    if (isDemo) {
-      // Simulate network delay
-      const timer = setTimeout(() => {
-        // If the query is for encounters, we try to filter by patient if possible
-        // Otherwise return all encounters for the demo
-        setData(mockEncounters as unknown as T[]);
+    if (isDemo && queryRef) {
+      // In a real Query, we can't easily parse the path from the queryRef object
+      // but for this prototype, we'll use a simplified check.
+      // We assume the caller passes a ref that matches our mock types.
+      
+      // Simulating a small delay
+      const timeout = setTimeout(() => {
+        // This is a heuristic for the demo - we check the variable name or context
+        // In this specific app, we primarily query patients, encounters, clinicians, and chws.
+        
+        // We can't see the path easily in a Query object, so we look at the session context
+        const role = localStorage.getItem('demo_role');
+        
+        // Return based on likely request
+        // (In a more robust demo, we'd pass a 'collectionName' string to the hook)
+        if (window.location.pathname.includes('/records')) {
+           setData(mockPatients as unknown as T[]);
+        } else if (window.location.pathname.includes('/history')) {
+           setData(mockEncounters as unknown as T[]);
+        } else {
+           setData(mockPatients as unknown as T[]);
+        }
+        
         setLoading(false);
       }, 500);
-      return () => clearTimeout(timer);
+
+      return () => clearTimeout(timeout);
     }
 
-    if (!query) {
-      setData(null);
+    if (!queryRef) {
       setLoading(false);
       return;
     }
 
-    const unsubscribe = onSnapshot(
-      query,
-      (snapshot: QuerySnapshot<T>) => {
-        const documents = snapshot.docs.map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-        }));
-        setData(documents);
+    const unsubscribe = onSnapshot(queryRef, 
+      (snapshot) => {
+        const results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as unknown as T));
+        setData(results);
         setLoading(false);
       },
-      async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: query.toString(),
-          operation: 'list',
-        });
-
-        errorEmitter.emit('permission-error', permissionError);
-        setError(permissionError);
+      (err) => {
+        setError(err);
         setLoading(false);
       }
     );
 
-    return () => unsubscribe();
-  }, [query]);
+    return unsubscribe;
+  }, [queryRef]);
 
   return { data, loading, error };
 }

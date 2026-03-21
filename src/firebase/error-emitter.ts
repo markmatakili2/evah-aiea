@@ -1,24 +1,23 @@
-'use client';
 
-import { EventEmitter } from 'events';
-import { FirestorePermissionError } from './errors';
+type ErrorHandler = (error: any) => void;
 
-/**
- * Global event emitter for Firebase errors.
- * Used to surface security rule violations to the developer UI.
- */
-class FirebaseErrorEmitter extends EventEmitter {
-  emit(event: 'permission-error', error: FirestorePermissionError): boolean {
-    return super.emit(event, error);
+class ErrorEmitter {
+  private listeners: Record<string, ErrorHandler[]> = {};
+
+  on(event: string, handler: ErrorHandler) {
+    if (!this.listeners[event]) this.listeners[event] = [];
+    this.listeners[event].push(handler);
   }
 
-  on(event: 'permission-error', listener: (error: FirestorePermissionError) => void): this {
-    return super.on(event, listener);
+  off(event: string, handler: ErrorHandler) {
+    if (!this.listeners[event]) return;
+    this.listeners[event] = this.listeners[event].filter(h => h !== handler);
   }
 
-  off(event: 'permission-error', listener: (error: FirestorePermissionError) => void): this {
-    return super.off(event, listener);
+  emit(event: string, data: any) {
+    if (!this.listeners[event]) return;
+    this.listeners[event].forEach(handler => handler(data));
   }
 }
 
-export const errorEmitter = new FirebaseErrorEmitter();
+export const errorEmitter = new ErrorEmitter();
