@@ -1,33 +1,17 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { FirebaseProvider } from './provider';
-import { initializeFirebase } from './index';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { auth, db } from './config';
 
-export function FirebaseClientProvider({ children }: { children: React.ReactNode }) {
-  const [services, setServices] = useState<{
-    firebaseApp: any;
-    firestore: any;
-    auth: any;
-  }>({
-    firebaseApp: null,
-    firestore: null,
-    auth: null,
-  });
+const FirebaseContext = createContext({ auth, db });
 
-  useEffect(() => {
-    const { firebaseApp, firestore, auth } = initializeFirebase();
-    setServices({ firebaseApp, firestore, auth });
-  }, []);
+export const useFirebase = () => useContext(FirebaseContext);
 
+export function FirebaseClientProvider({ children }: { children: ReactNode }) {
   return (
-    <FirebaseProvider
-      firebaseApp={services.firebaseApp}
-      firestore={services.firestore}
-      auth={services.auth}
-    >
+    <FirebaseContext.Provider value={{ auth, db }}>
       {children}
-    </FirebaseProvider>
+    </FirebaseContext.Provider>
   );
 }

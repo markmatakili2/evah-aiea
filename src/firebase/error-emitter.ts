@@ -1,21 +1,21 @@
+
+import { EventEmitter } from 'events';
 import { FirestorePermissionError } from './errors';
 
-type Listener = (error: FirestorePermissionError) => void;
+type FirebaseEvents = {
+  'permission-error': (error: FirestorePermissionError) => void;
+};
 
-class ErrorEmitter {
-  private listeners: Set<Listener> = new Set();
-
-  on(event: 'permission-error', listener: Listener) {
-    this.listeners.add(listener);
+class TypedEventEmitter extends EventEmitter {
+  on<K extends keyof FirebaseEvents>(event: K, listener: FirebaseEvents[K]): this {
+    return super.on(event, listener);
   }
-
-  off(event: 'permission-error', listener: Listener) {
-    this.listeners.delete(listener);
+  off<K extends keyof FirebaseEvents>(event: K, listener: FirebaseEvents[K]): this {
+    return super.off(event, listener);
   }
-
-  emit(event: 'permission-error', error: FirestorePermissionError) {
-    this.listeners.forEach(listener => listener(error));
+  emit<K extends keyof FirebaseEvents>(event: K, ...args: Parameters<FirebaseEvents[K]>): boolean {
+    return super.emit(event, ...args);
   }
 }
 
-export const errorEmitter = new ErrorEmitter();
+export const errorEmitter = new TypedEventEmitter();
