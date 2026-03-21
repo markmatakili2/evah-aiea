@@ -78,7 +78,7 @@ export default function AccountPage() {
 
         <div className="text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Prototype Version 1.0.5-mock</p>
-          <p className="text-[10px] text-muted-foreground mt-1">© 2024 AI Epilepsy Assistant</p>
+          <p className="text-[10px] text-muted-foreground mt-1">© 2026 AI Epilepsy Assistant</p>
         </div>
       </div>
     </div>

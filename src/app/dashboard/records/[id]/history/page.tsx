@@ -1,4 +1,3 @@
-
 'use client';
 
 import { use, useState, useMemo } from 'react';
@@ -133,7 +132,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
 
         <footer className="mt-20 pt-6 border-t text-center text-[10px] text-slate-400">
           <p>This report is generated for authorized healthcare workers only. Handle with extreme confidentiality.</p>
-          <p className="mt-1">© 2024 AI Epilepsy Assistant | Powered by WHO Clinical Protocols</p>
+          <p className="mt-1">© 2026 AI Epilepsy Assistant | Powered by WHO Clinical Protocols</p>
         </footer>
       </div>
     );
