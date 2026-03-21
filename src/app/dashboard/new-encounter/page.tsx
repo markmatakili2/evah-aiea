@@ -24,7 +24,8 @@ import {
   Activity,
   Stethoscope,
   Info,
-  ShieldCheck
+  ShieldCheck,
+  ClipboardCheck
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -42,11 +43,9 @@ import {
 } from '@/components/ui/dialog';
 import { useFirestore, useUser, useDoc } from '@/firebase';
 import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { FacilityMap } from '@/components/dashboard/facility-map';
 
-type Step = 'patient' | 'history' | 'causes' | 'redflags' | 'assessment' | 'report';
+type Step = 'consent' | 'patient' | 'history' | 'causes' | 'redflags' | 'assessment' | 'report';
 
 function NewEncounterContent() {
   const searchParams = useSearchParams();
@@ -57,10 +56,11 @@ function NewEncounterContent() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [step, setStep] = useState<Step>('patient');
+  const [step, setStep] = useState<Step>('consent');
   const [isSaving, setIsSaving] = useState(false);
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
   const [showOverrideDialog, setShowOverrideDialog] = useState(false);
+  const [hasConsent, setHasConsent] = useState(false);
   const [overrideData, setOverrideData] = useState({ reason: '', notes: '' });
 
   const { data: existingPatient } = useDoc(patientId ? doc(db, 'patients', patientId) : null);
@@ -146,7 +146,10 @@ function NewEncounterContent() {
 
     if (isDemo) {
       setTimeout(() => {
-        toast({ title: "WHO Record Logged (Demo)", description: status === 'overridden' ? "Safety override captured for audit." : "Clinical record synced." });
+        toast({ 
+          title: "Decision Authority Logged", 
+          description: status === 'overridden' ? "Clinical override captured for safety audit." : "Recommendation accepted by clinician." 
+        });
         router.push('/dashboard');
         setIsSaving(false);
       }, 1000);
@@ -165,10 +168,11 @@ function NewEncounterContent() {
   };
 
   const stepProgress = {
-    patient: 15,
-    history: 35,
-    causes: 55,
-    redflags: 75,
+    consent: 5,
+    patient: 20,
+    history: 40,
+    causes: 60,
+    redflags: 80,
     assessment: 90,
     report: 100
   };
@@ -177,11 +181,41 @@ function NewEncounterContent() {
     <div className="max-w-md mx-auto space-y-6 pb-20">
       <div className="flex flex-col gap-2 sticky top-0 bg-background pt-2 z-10">
         <div className="flex justify-between items-center px-1">
-          <h1 className="text-xl font-headline font-bold text-primary italic">mhGAP CDSS</h1>
-          <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">WHO Epilepsy Protocol</Badge>
+          <h1 className="text-xl font-headline font-bold text-primary italic">mhGAP Decision Support</h1>
+          <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">Safety Protected</Badge>
         </div>
         <Progress value={stepProgress[step]} className="h-1.5" />
       </div>
+
+      {step === 'consent' && (
+        <Card className="border-none shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic">
+              <ClipboardCheck className="h-5 w-5" /> Informed Consent
+            </CardTitle>
+            <CardDescription>Privacy & Ethics Governance (MoH Compliance)</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-muted/30 p-4 rounded-xl text-sm leading-relaxed text-slate-700">
+              <p className="font-bold mb-2">Notice to Patient/Caregiver:</p>
+              "We use a digital tool to help guide management. Your medical information is encrypted and stored securely per national policy. Only authorized healthcare workers can see this data. Do you agree to proceed?"
+            </div>
+            <div className="flex items-center space-x-3 p-4 bg-primary/5 rounded-lg border border-primary/10">
+              <Checkbox id="consent" checked={hasConsent} onCheckedChange={c => setHasConsent(!!c)} />
+              <Label htmlFor="consent" className="text-xs font-bold leading-tight">
+                Consent obtained from patient or legal guardian.
+              </Label>
+            </div>
+            <Button 
+              className="w-full h-14 shadow-lg" 
+              disabled={!hasConsent} 
+              onClick={() => setStep('patient')}
+            >
+              Start Clinical Assessment
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {step === 'patient' && (
         <Card className="border-none shadow-sm">
@@ -204,7 +238,10 @@ function NewEncounterContent() {
               <Checkbox id="pregnant" checked={patientData.isPregnant} onCheckedChange={c => setPatientData({...patientData, isPregnant: !!c})} />
               <Label htmlFor="pregnant" className="text-xs font-bold leading-relaxed">Currently Pregnant? (High Risk)</Label>
             </div>
-            <Button className="w-full h-12 shadow-md" onClick={() => setStep('history')}>Next: Seizure History <ChevronRight className="h-4 w-4" /></Button>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setStep('consent')}><ChevronLeft className="h-4 w-4" /> Back</Button>
+              <Button className="flex-1 shadow-md" onClick={() => setStep('history')}>Next <ChevronRight className="h-4 w-4" /></Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -244,7 +281,7 @@ function NewEncounterContent() {
 
             <div className="flex gap-2 pt-4">
               <Button variant="outline" className="flex-1" onClick={() => setStep('patient')}><ChevronLeft className="h-4 w-4" /> Back</Button>
-              <Button className="flex-1 shadow-md" onClick={() => setStep('causes')}>Next: Underlying Causes <ChevronRight className="h-4 w-4" /></Button>
+              <Button className="flex-1 shadow-md" onClick={() => setStep('causes')}>Next <ChevronRight className="h-4 w-4" /></Button>
             </div>
           </CardContent>
         </Card>
@@ -271,7 +308,7 @@ function NewEncounterContent() {
             ))}
             <div className="flex gap-2 pt-4">
               <Button variant="outline" className="flex-1" onClick={() => setStep('history')}><ChevronLeft className="h-4 w-4" /> Back</Button>
-              <Button className="flex-1 shadow-md" onClick={() => setStep('redflags')}>Next: Red Flags <ChevronRight className="h-4 w-4" /></Button>
+              <Button className="flex-1 shadow-md" onClick={() => setStep('redflags')}>Next <ChevronRight className="h-4 w-4" /></Button>
             </div>
           </CardContent>
         </Card>
@@ -304,7 +341,7 @@ function NewEncounterContent() {
         <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
           <h3 className="text-xl font-bold font-headline text-primary italic">Applying mhGAP Logic</h3>
-          <p className="text-sm text-muted-foreground">distinguishing epileptic from non-epileptic events...</p>
+          <p className="text-sm text-muted-foreground">Decision authority remains with the healthcare worker.</p>
         </div>
       )}
 
@@ -316,10 +353,11 @@ function NewEncounterContent() {
                 <Badge variant={recommendation.urgencyLevel === 'EMERGENCY' ? 'destructive' : 'secondary'}>{recommendation.urgencyLevel}</Badge>
                 <Sparkles className="h-4 w-4 text-primary/40" />
               </div>
-              <CardTitle className="text-xl mt-2 font-headline italic">mhGAP Clinical Triage</CardTitle>
+              <CardTitle className="text-xl mt-2 font-headline italic">Clinical Suggestion</CardTitle>
+              <CardDescription>Review and finalize using final decision authority.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <section><h4 className="text-[10px] font-bold uppercase text-muted-foreground">Action</h4><p className="text-sm font-bold text-primary leading-tight">{recommendation.action}</p></section>
+              <section><h4 className="text-[10px] font-bold uppercase text-muted-foreground">Proposed Action</h4><p className="text-sm font-bold text-primary leading-tight">{recommendation.action}</p></section>
               
               <section className="bg-white/50 p-3 rounded-lg border border-dashed border-primary/20">
                 <h4 className="text-[10px] font-bold uppercase text-primary flex items-center gap-1 mb-2"><Info className="h-3 w-3" /> Anti-Stigma Counseling</h4>
@@ -341,7 +379,7 @@ function NewEncounterContent() {
 
               {recommendation.medicationGuidance && (
                 <section className="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
-                  <h4 className="text-[10px] font-bold uppercase text-blue-700 mb-1">Medication Note</h4>
+                  <h4 className="text-[10px] font-bold uppercase text-blue-700 mb-1">Pharmacologic Principles</h4>
                   <p className="text-xs italic text-blue-900">{recommendation.medicationGuidance}</p>
                 </section>
               )}
@@ -360,7 +398,7 @@ function NewEncounterContent() {
 
           <div className="flex flex-col gap-3">
             <Button className="w-full h-14 font-bold shadow-lg bg-primary" onClick={() => saveRecord('approved')} disabled={isSaving}>
-              {isSaving ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle2 className="mr-2" />} Finalize Clinical Record
+              {isSaving ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle2 className="mr-2" />} Approve Recommendation
             </Button>
             <Button variant="outline" className="w-full h-12" onClick={() => setShowOverrideDialog(true)}>
               <Edit3 className="h-4 w-4 mr-2" /> Clinical Override
@@ -371,29 +409,36 @@ function NewEncounterContent() {
 
       <Dialog open={showOverrideDialog} onOpenChange={setShowOverrideDialog}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Clinical Override Reason</DialogTitle><DialogDescription>All overrides are logged for safety audit and mhGAP feedback loop.</DialogDescription></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Decision authority Override</DialogTitle>
+            <DialogDescription>All overrides are logged for safety audit and mhGAP quality assurance feedback loops.</DialogDescription>
+          </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2"><Label>Reason</Label>
+            <div className="space-y-2"><Label>Reason for Discordance</Label>
               <Select onValueChange={v => setOverrideData({...overrideData, reason: v})}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="context">AI missed clinical context</SelectItem>
-                  <SelectItem value="protocol">Local protocol variation</SelectItem>
-                  <SelectItem value="judgment">Expert clinical judgment</SelectItem>
+                  <SelectItem value="context">AI missed clinical context/history</SelectItem>
+                  <SelectItem value="protocol">Local MoH protocol variation</SelectItem>
+                  <SelectItem value="judgment">Expert clinical judgment (Human-in-loop)</SelectItem>
+                  <SelectItem value="stigma">Patient/Caregiver reluctance</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2"><Label>Detailed Notes</Label><Textarea value={overrideData.notes} onChange={e => setOverrideData({...overrideData, notes: e.target.value})} placeholder="Provide context..." /></div>
+            <div className="space-y-2"><Label>Clinical Notes</Label><Textarea value={overrideData.notes} onChange={e => setOverrideData({...overrideData, notes: e.target.value})} placeholder="Provide justification for override..." /></div>
           </div>
-          <DialogFooter><Button variant="destructive" className="w-full h-12 font-bold" disabled={!overrideData.reason || isSaving} onClick={() => saveRecord('overridden')}>Confirm Override</Button></DialogFooter>
+          <DialogFooter><Button variant="destructive" className="w-full h-12 font-bold" disabled={!overrideData.reason || isSaving} onClick={() => saveRecord('overridden')}>Confirm Clinical Override</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showSafetyDialog} onOpenChange={setShowSafetyDialog}>
         <DialogContent className="bg-red-600 text-white border-none shadow-2xl">
-          <DialogHeader><div className="mx-auto bg-white/20 p-3 rounded-full mb-2"><TriangleAlert className="h-10 w-10 text-white animate-pulse" /></div><DialogTitle className="text-2xl font-bold text-center">STATUS EPILEPTICUS RISK</DialogTitle></DialogHeader>
-          <p className="text-center text-lg leading-relaxed">WHO Emergency Protocol Triggered. Immediate specialist intervention and facility referral required.</p>
-          <DialogFooter><Button onClick={() => setShowSafetyDialog(false)} className="w-full h-14 bg-white text-red-600 font-bold hover:bg-white/90">I ACKNOWLEDGE</Button></DialogFooter>
+          <DialogHeader><div className="mx-auto bg-white/20 p-3 rounded-full mb-2"><TriangleAlert className="h-10 w-10 text-white animate-pulse" /></div><DialogTitle className="text-2xl font-bold text-center">EMERGENCY PROTOCOL</DialogTitle></DialogHeader>
+          <p className="text-center text-lg leading-relaxed">
+            <strong>STATUS EPILEPTICUS RISK</strong>. 
+            Immediate specialist intervention and facility referral required. Proceed with high-tier hospital transport immediately.
+          </p>
+          <DialogFooter><Button onClick={() => setShowSafetyDialog(false)} className="w-full h-14 bg-white text-red-600 font-bold hover:bg-white/90">I ACKNOWLEDGE EMERGENCY</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

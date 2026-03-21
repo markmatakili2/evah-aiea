@@ -99,7 +99,7 @@ export default function AssessPage() {
       {
         id: '1',
         role: 'ai',
-        content: `I'm ready to assist with ${patients?.find(p => p.id === id)?.name}. Describe symptoms via voice or text, or upload medical reports for WHO-aligned protocol analysis.`,
+        content: `I'm ready to assist with ${patients?.find(p => p.id === id)?.name}. Clinical decision authority remains with you. Describe symptoms or upload reports for WHO-aligned suggestive analysis.`,
         type: 'text'
       }
     ]);
@@ -134,27 +134,26 @@ export default function AssessPage() {
 
   const handleFileUpload = () => {
     toast({
-      title: "File Attachment",
-      description: "Selecting medical record for attachment...",
+      title: "Governance Check",
+      description: "Selecting minimal PII medical record for clinical context.",
     });
     
     setTimeout(() => {
       const userMsg: Message = { 
         id: Date.now().toString(), 
         role: 'user', 
-        content: "Attached medical report from previous clinic visit.", 
+        content: "Attached clinical summary from previous visit.", 
         type: 'file',
-        fileName: "CLINIC_REPORT_OCT.pdf"
+        fileName: "MED_SUMMARY_OCT.pdf"
       };
       setMessages(prev => [...prev, userMsg]);
-      runOnDeviceAnalysis("Reviewing attached report for clinical context.");
+      runOnDeviceAnalysis("Reviewing attached summary for clinical context.");
     }, 1000);
   };
 
   const runOnDeviceAnalysis = (input: string) => {
     setIsProcessing(true);
     
-    // Simple mock logic for urgency detection in demo
     const isEmergency = input.toLowerCase().includes("mara tatu") || input.toLowerCase().includes("repeated") || input.toLowerCase().includes("emergency");
     const isMedFail = input.toLowerCase().includes("amekosa dawa") || input.toLowerCase().includes("missed") || input.toLowerCase().includes("fail");
 
@@ -168,6 +167,14 @@ export default function AssessPage() {
         duration: '2 min',
         frequency: '3/day',
         triggers: ['missed medication'],
+        comorbidities: []
+      },
+      underlyingCauses: {
+        fever: false,
+        headTrauma: false,
+        perinatalInsult: false,
+        metabolicSuspicion: false,
+        suddenOnsetNeurological: false
       },
       redFlags: {
         repeated: isEmergency,
@@ -175,6 +182,7 @@ export default function AssessPage() {
         injury: false,
         newOnsetUnder5: false,
         medicationFail: isMedFail,
+        prolongedSeizure: isEmergency
       }
     };
 
@@ -183,7 +191,7 @@ export default function AssessPage() {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: 'ai',
-        content: `Clinical analysis complete using WHO on-device engine. Urgency: ${result.urgencyLevel}.`,
+        content: `Suggestion based on mhGAP protocols. Urgency: ${result.urgencyLevel}. Final decision authority remains with you.`,
         type: 'analysis',
         recommendation: result
       };
@@ -196,6 +204,13 @@ export default function AssessPage() {
     }, 2000);
   };
 
+  const handleAction = (type: 'approve' | 'override') => {
+    toast({
+      title: type === 'approve' ? "Recommendation Accepted" : "Clinical Override Logged",
+      description: "Data synced to EVAH management system.",
+    });
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-130px)] bg-background relative overflow-hidden">
       {/* Sidebar Overlay for History */}
@@ -206,7 +221,7 @@ export default function AssessPage() {
         <div className="flex flex-col h-full">
           <div className="p-4 border-b flex items-center justify-between bg-primary text-primary-foreground">
             <h2 className="font-headline font-bold flex items-center gap-2">
-              <History className="h-5 w-5" /> Select Patient
+              <History className="h-5 w-5" /> Registered Registry
             </h2>
             <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)}>
               <X className="h-5 w-5" />
@@ -216,7 +231,7 @@ export default function AssessPage() {
           <div className="p-4">
             <Button asChild className="w-full justify-start gap-2 h-12" variant="outline">
               <Link href="/dashboard/new-encounter">
-                <Plus className="h-5 w-5 text-primary" /> Start New Encounter
+                <Plus className="h-5 w-5 text-primary" /> New Guided Encounter
               </Link>
             </Button>
           </div>
@@ -255,9 +270,9 @@ export default function AssessPage() {
           <div className="bg-primary/5 p-6 rounded-full">
             <MessageSquare className="h-12 w-12 text-primary/40" />
           </div>
-          <h2 className="text-xl font-headline font-bold text-primary">Clinical AI Chat</h2>
+          <h2 className="text-xl font-headline font-bold text-primary">Clinical Suggester</h2>
           <p className="text-sm text-muted-foreground max-w-xs">
-            Select a patient from your registry to begin WHO-guided diagnosis and triage.
+            Decision authority remains with you. Select a patient to begin mhGAP suggestive analysis.
           </p>
           <Button onClick={() => setShowHistory(true)} variant="outline" className="gap-2">
             <History className="h-4 w-4" /> Open Registry
@@ -275,7 +290,7 @@ export default function AssessPage() {
                 <Badge variant="secondary" className="h-4 text-[9px]">{selectedPatient?.status}</Badge>
               </div>
               <p className="text-[10px] text-muted-foreground truncate">
-                {selectedPatient?.location} • AI Assisted • On-Device Engine
+                {selectedPatient?.location} • AI Assisted • SUGGESTIONS ONLY
               </p>
             </div>
             <Button variant="ghost" size="icon">
@@ -301,7 +316,7 @@ export default function AssessPage() {
                       <div className="flex items-center gap-3 mb-2 p-2 bg-white/10 rounded-lg">
                         <FileText className="h-8 w-8 text-accent" />
                         <div className="flex flex-col">
-                          <span className="text-[10px] font-bold uppercase tracking-tight">Attached Document</span>
+                          <span className="text-[10px] font-bold uppercase tracking-tight">Governance Check: Document</span>
                           <span className="text-xs font-mono">{msg.fileName}</span>
                         </div>
                       </div>
@@ -324,16 +339,16 @@ export default function AssessPage() {
                           </div>
                           
                           <section>
-                            <h4 className="text-[10px] font-bold uppercase text-primary tracking-widest mb-1">Recommended Action</h4>
+                            <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">Suggestive Action</h4>
                             <p className="text-xs font-bold text-slate-800">{msg.recommendation.action}</p>
                             <p className="text-[10px] text-muted-foreground mt-1">To: {msg.recommendation.referralDestination}</p>
                           </section>
 
                           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-primary/10">
-                            <Button size="sm" className="h-8 text-[10px] font-bold gap-1 bg-green-600 hover:bg-green-700">
+                            <Button size="sm" onClick={() => handleAction('approve')} className="h-8 text-[10px] font-bold gap-1 bg-green-600 hover:bg-green-700">
                               <CheckCircle2 className="h-3 w-3" /> Approve
                             </Button>
-                            <Button size="sm" variant="outline" className="h-8 text-[10px] font-bold gap-1">
+                            <Button size="sm" onClick={() => handleAction('override')} variant="outline" className="h-8 text-[10px] font-bold gap-1">
                               <Edit3 className="h-3 w-3" /> Override
                             </Button>
                           </div>
@@ -344,7 +359,7 @@ export default function AssessPage() {
                         <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2">
                           <div className="flex items-center gap-2 text-primary px-1">
                             <MapPin className="h-3 w-3" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">GIS Facility Referral</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest">GIS REFERRAL ROUTE</span>
                           </div>
                           <FacilityMap urgency={msg.recommendation.urgencyLevel} patientLocation={selectedPatient?.location} />
                         </div>
@@ -357,7 +372,7 @@ export default function AssessPage() {
               {isProcessing && (
                 <div className="flex items-center gap-2 text-muted-foreground animate-pulse">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-xs font-medium">On-device Clinical Logic Active...</span>
+                  <span className="text-xs font-medium">Applying WHO Suggestive Logic...</span>
                 </div>
               )}
 
@@ -366,7 +381,7 @@ export default function AssessPage() {
                   <div className="bg-accent/10 border border-accent/30 p-4 rounded-2xl rounded-tr-none space-y-3">
                     <div className="flex items-center justify-between border-b border-accent/20 pb-2 mb-2">
                       <span className="text-[10px] font-bold text-primary uppercase flex items-center gap-1">
-                        <Mic className="h-3 w-3" /> Verify Transcription
+                        <Mic className="h-3 w-3" /> Clinical Transcription
                       </span>
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setTranscriptionDraft(null)}>
                         <X className="h-4 w-4" />
@@ -379,7 +394,7 @@ export default function AssessPage() {
                     />
                     <div className="flex gap-2">
                       <Button onClick={handleFinalizeTranscription} className="flex-1 h-9 text-xs font-bold bg-primary text-white">
-                        Confirm & Analyze
+                        Analyze Suggestions
                       </Button>
                     </div>
                   </div>
@@ -401,7 +416,7 @@ export default function AssessPage() {
               
               <div className="flex-1 relative">
                 <Textarea
-                  placeholder="Type symptoms or notes..."
+                  placeholder="Type clinical observations..."
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   className="min-h-[40px] max-h-[120px] pr-10 resize-none py-2 rounded-2xl bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary"
@@ -450,7 +465,7 @@ export default function AssessPage() {
             <DialogTitle className="text-2xl font-bold text-center">SAFETY ALERT</DialogTitle>
             <DialogDescription className="text-white/90 text-center text-lg leading-relaxed">
               Analysis detected <strong>EMERGENCY RED FLAGS</strong>. 
-              Immediate specialist intervention required.
+              Immediate specialist intervention required. Decision authority remains with clinician.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -458,7 +473,7 @@ export default function AssessPage() {
               onClick={() => setShowSafetyDialog(false)} 
               className="w-full h-14 bg-white text-red-600 hover:bg-white/90 text-lg font-bold"
             >
-              I ACKNOWLEDGE
+              I ACKNOWLEDGE EMERGENCY
             </Button>
           </DialogFooter>
         </DialogContent>

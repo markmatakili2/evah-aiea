@@ -5,7 +5,7 @@ import { useFirestore, useCollection, useUser, useDoc } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShieldAlert, TrendingUp, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, TrendingUp, AlertTriangle, ShieldCheck, ClipboardList, BarChart3 } from 'lucide-react';
 import { doc } from 'firebase/firestore';
 import { PageLoader } from '@/components/ui/loader';
 
@@ -19,17 +19,14 @@ export default function SafetyDashboard() {
 
   useEffect(() => {
     setIsClient(true);
-    // In Demo Mode, the role is stored in localStorage by the login page
     setDemoRole(localStorage.getItem('demo_role'));
   }, []);
 
-  // Supervisor only sees aggregate data
   const patientsQuery = query(collection(db, 'patients'));
   const { data: patients, loading: patientsLoading } = useCollection(patientsQuery);
 
   if (!isClient || patientsLoading) return <PageLoader />;
 
-  // Allow access if either the DB profile OR the current Demo Role is supervisor
   const isSupervisor = demoRole === 'supervisor' || profile?.role === 'supervisor';
 
   if (!isSupervisor) {
@@ -45,17 +42,17 @@ export default function SafetyDashboard() {
   const urgentCount = patients?.filter(p => p.status === 'Urgent').length || 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-headline font-bold text-primary">Safety & Discordance</h1>
-        <p className="text-sm text-muted-foreground">Monitoring AI vs Clinical Judgment</p>
+        <h1 className="text-2xl font-headline font-bold text-primary tracking-tight italic">Safety & MEL Dashboard</h1>
+        <p className="text-sm text-muted-foreground">Monitoring AI Discordance & Quality Metrics</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Card className="bg-red-50 border-red-100">
           <CardHeader className="p-4 pb-0"><AlertTriangle className="h-5 w-5 text-red-600" /></CardHeader>
           <CardContent className="p-4 pt-2">
-            <div className="text-2xl font-bold text-red-600">12%</div>
+            <div className="text-2xl font-bold text-red-600">12.4%</div>
             <p className="text-[10px] uppercase font-bold text-muted-foreground">Override Rate</p>
           </CardContent>
         </Card>
@@ -63,19 +60,19 @@ export default function SafetyDashboard() {
           <CardHeader className="p-4 pb-0"><TrendingUp className="h-5 w-5 text-primary" /></CardHeader>
           <CardContent className="p-4 pt-2">
             <div className="text-2xl font-bold text-primary">{urgentCount}</div>
-            <p className="text-[10px] uppercase font-bold text-muted-foreground">High Risk Cases</p>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Red Flag Triggers</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card className="border-none shadow-md">
         <CardHeader>
-          <CardTitle className="text-lg">Recent Discordance Analysis</CardTitle>
-          <CardDescription>Top reasons for clinical overrides</CardDescription>
+          <CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5 text-primary" /> Discordance Analysis</CardTitle>
+          <CardDescription>Top reasons for clinical authority overrides</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
           <div className="space-y-2">
-            <div className="flex justify-between items-center text-sm">
+            <div className="flex justify-between items-center text-sm font-medium">
               <span>Patient Context missed by AI</span>
               <Badge variant="outline">45%</Badge>
             </div>
@@ -84,20 +81,45 @@ export default function SafetyDashboard() {
             </div>
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between items-center text-sm">
-              <span>Local Protocol Variance</span>
+            <div className="flex justify-between items-center text-sm font-medium">
+              <span>MoH Protocol Variance</span>
               <Badge variant="outline">30%</Badge>
             </div>
             <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-              <div className="bg-primary h-full w-[30%]" />
+              <div className="bg-accent h-full w-[30%]" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm font-medium">
+              <span>Expert Clinical Judgment</span>
+              <Badge variant="outline">25%</Badge>
+            </div>
+            <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+              <div className="bg-blue-500 h-full w-[25%]" />
             </div>
           </div>
         </CardContent>
       </Card>
 
+      <Card className="bg-slate-900 text-slate-100 border-none">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-accent" /> System Compliance</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-4">
+          <div className="text-center p-3 border border-slate-700 rounded-lg">
+            <div className="text-xl font-bold text-accent">98.2%</div>
+            <p className="text-[9px] uppercase font-bold text-slate-400">Consent Obtained</p>
+          </div>
+          <div className="text-center p-3 border border-slate-700 rounded-lg">
+            <div className="text-xl font-bold text-accent">14m</div>
+            <p className="text-[9px] uppercase font-bold text-slate-400">Avg. Consult Time</p>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="bg-muted/30 p-4 rounded-xl border border-dashed text-center">
-        <ShieldAlert className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-        <p className="text-xs font-medium text-muted-foreground">Audit logs are synced every 24h to the central safety dashboard.</p>
+        <ClipboardList className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+        <p className="text-xs font-medium text-muted-foreground">MEL Audit logs are synced every 24h to EVAH central dashboard via FHIR/REST protocols.</p>
       </div>
     </div>
   );

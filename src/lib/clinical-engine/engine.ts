@@ -2,23 +2,27 @@ import { ClinicalInput, Recommendation, UrgencyLevel } from './types';
 
 /**
  * @fileOverview WHO mhGAP-aligned clinical logic engine for epilepsy management at the PHC level.
+ * Aligned with Kenyan national protocols and EVAH CDSS safety guidelines.
  */
 
 export function runClinicalLogic(input: ClinicalInput): Recommendation {
   let riskScore = 0;
   const detectedFlags: string[] = [];
   
+  // Suggestion Framing Messages
+  const framing = "SUGGESTION: Based on mhGAP protocols, the following management is proposed for your final decision.";
+
   const antiStigmaMessages: string[] = [
     "Epilepsy is a medical condition of the brain, not a curse or a result of spirits.",
     "Epilepsy is NOT contagious. You cannot catch it by touch or saliva.",
-    "People with epilepsy can lead productive lives, go to school, and work."
+    "Promote dignity: People with epilepsy can lead productive lives and participate in school/work."
   ];
 
   const safetyAdvice: string[] = [
     "Avoid cooking over open fires alone.",
     "Do not swim or bathe in deep water alone.",
     "Avoid working at heights or with heavy machinery.",
-    "In case of a seizure: Turn the person on their side, cushion the head, do NOT put anything in the mouth."
+    "Seizure First Aid: Turn on side, cushion head, do NOT put items in mouth."
   ];
 
   const counselingPoints: string[] = [
@@ -27,71 +31,70 @@ export function runClinicalLogic(input: ClinicalInput): Recommendation {
     "Ensure adequate sleep and avoid excessive alcohol."
   ];
 
-  // 1. EMERGENCY EVALUATION (mhGAP Step 1)
+  // 1. EMERGENCY EVALUATION (mhGAP Step 1 - Safety Primary)
   if (input.redFlags.prolongedSeizure || input.redFlags.repeated) {
     riskScore += 10;
-    detectedFlags.push("Status Epilepticus Risk (Prolonged or Repeated Seizures)");
+    detectedFlags.push("Status Epilepticus Risk (Prolonged/Repeated)");
   }
   if (input.redFlags.isPregnant || input.patientProfile.isPregnant) {
     riskScore += 9;
-    detectedFlags.push("Pregnancy with Seizures (Eclampsia/Neurological Risk)");
+    detectedFlags.push("Pregnancy with Seizures (High Tier Eclampsia Risk)");
   }
   if (input.redFlags.feverNeck || input.underlyingCauses.suddenOnsetNeurological) {
     riskScore += 9;
-    detectedFlags.push("Suspected CNS Infection or Acute Neurological Event");
+    detectedFlags.push("Suspected CNS Infection (Meningitis/Encephalitis)");
   }
   if (input.redFlags.injury) {
     riskScore += 7;
-    detectedFlags.push("Severe seizure-related injury");
+    detectedFlags.push("Severe seizure-related trauma");
   }
 
-  // 2. UNDERLYING CAUSES & COMORBIDITIES
+  // 2. UNDERLYING CAUSES & SPECIAL POPULATIONS (Pediatrics)
+  if (input.redFlags.newOnsetUnder5) {
+    riskScore += 6;
+    detectedFlags.push("Pediatric New-Onset (Under 5 years)");
+  }
   if (input.underlyingCauses.headTrauma || input.underlyingCauses.perinatalInsult) {
     riskScore += 4;
-    counselingPoints.push("History of brain insult noted; requires specialist structural evaluation.");
+    counselingPoints.push("Structural evaluate suggested due to trauma/birth history.");
   }
 
-  // 3. MEDICATION GUIDANCE (mhGAP Pharmacologic Principles)
+  // 3. PHARMACOLOGIC PRINCIPLES (Suggestive dose/titration)
   let medGuidance = "";
   if (input.currentManagement) {
     if (input.currentManagement.adherence === 'poor') {
-      medGuidance = "PRIORITY: Adherence counseling required before adjusting dosage.";
+      medGuidance = "PRIORITY: Adherence counseling required before any dosage escalation.";
     } else if (input.currentManagement.sideEffects.length > 0) {
-      medGuidance = `Monitor side effects: ${input.currentManagement.sideEffects.join(", ")}. Consult clinician if worsening.`;
+      medGuidance = `Monitor side effects: ${input.currentManagement.sideEffects.join(", ")}. Dose adjustment or modification may be required.`;
     }
   } else if (riskScore < 5 && input.seizureHistory.frequency !== 'none') {
-    medGuidance = "Consider starting first-line anti-seizure medication (e.g., Carbamazepine or Valproate) per local PHC protocol.";
+    medGuidance = "Consider starting first-line anti-seizure medication (e.g., Carbamazepine or Sodium Valproate) per National Essential Medicines List.";
   }
 
-  // 4. DETERMINING URGENCY
+  // 4. DETERMINING URGENCY & TARGET FACILITY (GIS Guidance)
   let urgency: UrgencyLevel = 'STABLE';
-  let action = "Continue local management and monitoring.";
+  let action = "Continue local management and monthly monitoring.";
   let destination = "Local Health Post";
   let followUp = "Follow up in 2-4 weeks.";
   let targetFacilityType: 'specialist' | 'district' | 'local' = 'local';
 
   if (riskScore >= 9) {
     urgency = 'EMERGENCY';
-    action = "IMMEDIATE EMERGENCY REFERRAL";
-    destination = "Tertiary Hospital / Specialist Unit";
-    followUp = "Immediate handover to emergency team.";
+    action = "IMMEDIATE EMERGENCY ESCALATION REQUIRED";
+    destination = "Tertiary Specialist Unit / Hospital";
+    followUp = "Immediate handover to specialized care.";
     targetFacilityType = 'specialist';
   } else if (riskScore >= 5 || input.redFlags.medicationFail) {
     urgency = 'URGENT';
     action = "Refer for Clinician Review within 24-48 hours.";
     destination = "District Hospital / Clinician";
-    followUp = "Review in 48 hours.";
-    targetFacilityType = 'district';
-  } else if (input.underlyingCauses.metabolicSuspicion || input.redFlags.newOnsetUnder5) {
-    urgency = 'URGENT';
-    action = "Refer for diagnostic workup (Labs/Pediatric review).";
-    destination = "District Hospital";
+    followUp = "Urgent diagnostic review.";
     targetFacilityType = 'district';
   }
 
   const reasoning = detectedFlags.length > 0 
-    ? `WHO mhGAP Protocols Triggered: ${detectedFlags.join(", ")}. High risk indicators identified.`
-    : `Clinical signs suggest chronic management phase. Focus on adherence and anti-stigma counseling.`;
+    ? `Governance Log: WHO mhGAP Protocols Triggered due to: ${detectedFlags.join(", ")}.`
+    : `Clinical signs suggest chronic stabilization phase. Focus on psychosocial support.`;
 
   return {
     urgencyLevel: urgency,
