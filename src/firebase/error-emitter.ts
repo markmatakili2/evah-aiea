@@ -1,22 +1,20 @@
+import { FirestorePermissionError } from './errors';
 
-type ErrorHandler = (error: any) => void;
+type Listener = (error: FirestorePermissionError) => void;
 
 class ErrorEmitter {
-  private listeners: Record<string, ErrorHandler[]> = {};
+  private listeners: Set<Listener> = new Set();
 
-  on(event: string, handler: ErrorHandler) {
-    if (!this.listeners[event]) this.listeners[event] = [];
-    this.listeners[event].push(handler);
+  on(event: 'permission-error', listener: Listener) {
+    this.listeners.add(listener);
   }
 
-  off(event: string, handler: ErrorHandler) {
-    if (!this.listeners[event]) return;
-    this.listeners[event] = this.listeners[event].filter(h => h !== handler);
+  off(event: 'permission-error', listener: Listener) {
+    this.listeners.delete(listener);
   }
 
-  emit(event: string, data: any) {
-    if (!this.listeners[event]) return;
-    this.listeners[event].forEach(handler => handler(data));
+  emit(event: 'permission-error', error: FirestorePermissionError) {
+    this.listeners.forEach(listener => listener(error));
   }
 }
 

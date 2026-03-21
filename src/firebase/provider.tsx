@@ -1,42 +1,33 @@
-
 'use client';
 
-import { createContext, useContext, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 
-// Empty config for demo purposes - replace with real keys if connecting to backend
 const firebaseConfig = {
-  apiKey: "demo-key",
-  authDomain: "demo.firebaseapp.com",
-  projectId: "demo-project",
-  storageBucket: "demo.appspot.com",
-  messagingSenderId: "0000000000",
-  appId: "1:0000000000:web:demo"
+  apiKey: "mock-api-key",
+  authDomain: "demo-aiea.firebaseapp.com",
+  projectId: "demo-aiea",
+  storageBucket: "demo-aiea.firebasestorage.app",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
 };
 
 interface FirebaseContextType {
-  app: FirebaseApp | null;
-  auth: Auth | null;
-  db: Firestore | null;
+  app: FirebaseApp;
+  auth: Auth;
+  db: Firestore;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | null>(null);
 
-export function FirebaseClientProvider({ children }: { children: ReactNode }) {
+export function FirebaseClientProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(() => {
-    // In a pure mock/demo environment, we don't strictly need to initialize
-    // but we do it gracefully to satisfy hooks.
-    try {
-      const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-      return { app, auth, db };
-    } catch (e) {
-      console.warn("Firebase initialization skipped or failed. Running in pure mock mode.");
-      return { app: null, auth: null, db: null };
-    }
+    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    return { app, auth, db };
   }, []);
 
   return (
@@ -49,15 +40,16 @@ export function FirebaseClientProvider({ children }: { children: ReactNode }) {
 export function useFirebase() {
   const context = useContext(FirebaseContext);
   if (!context) {
-    throw new Error('useFirebase must be used within a FirebaseProvider');
+    // Return null instead of throwing to prevent crashes in non-wrapped sub-trees during build
+    return null;
   }
   return context;
 }
 
 export function useAuth() {
-  return useFirebase().auth;
+  return useFirebase()?.auth || null;
 }
 
 export function useFirestore() {
-  return useFirebase().db;
+  return useFirebase()?.db || null;
 }

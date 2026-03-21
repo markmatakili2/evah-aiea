@@ -1,56 +1,44 @@
-
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Query, onSnapshot, DocumentData, collection, query, where } from 'firebase/firestore';
-import { mockPatients, mockEncounters, mockClinicians, mockCHWs } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
+import { Query, onSnapshot } from 'firebase/firestore';
+import { mockPatients, mockEncounters } from '@/lib/mock-data';
 
-export function useCollection<T = DocumentData>(queryRef: Query<T> | null) {
-  const [data, setData] = useState<T[] | null>(null);
+export function useCollection(q: Query | null) {
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<any>(null);
 
   useEffect(() => {
     const isDemo = typeof window !== 'undefined' && localStorage.getItem('demo_session') === 'true';
 
-    if (isDemo && queryRef) {
-      // In a real Query, we can't easily parse the path from the queryRef object
-      // but for this prototype, we'll use a simplified check.
-      // We assume the caller passes a ref that matches our mock types.
+    if (isDemo && q) {
+      // Mock collection mapping
+      const path = (q as any)._query?.path?.segments?.join('/') || '';
       
-      // Simulating a small delay
-      const timeout = setTimeout(() => {
-        // This is a heuristic for the demo - we check the variable name or context
-        // In this specific app, we primarily query patients, encounters, clinicians, and chws.
-        
-        // We can't see the path easily in a Query object, so we look at the session context
-        const role = localStorage.getItem('demo_role');
-        
-        // Return based on likely request
-        // (In a more robust demo, we'd pass a 'collectionName' string to the hook)
-        if (window.location.pathname.includes('/records')) {
-           setData(mockPatients as unknown as T[]);
-        } else if (window.location.pathname.includes('/history')) {
-           setData(mockEncounters as unknown as T[]);
-        } else {
-           setData(mockPatients as unknown as T[]);
-        }
-        
-        setLoading(false);
-      }, 500);
-
-      return () => clearTimeout(timeout);
-    }
-
-    if (!queryRef) {
+      if (path === 'patients') {
+        setData(mockPatients);
+      } else if (path.includes('/encounters')) {
+        const segments = (q as any)._query?.path?.segments || [];
+        const pId = segments[1];
+        setData(mockEncounters.filter(e => e.patientId === pId));
+      } else {
+        setData([]);
+      }
+      
       setLoading(false);
       return;
     }
 
-    const unsubscribe = onSnapshot(queryRef, 
+    if (!q) {
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onSnapshot(q, 
       (snapshot) => {
-        const results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as unknown as T));
-        setData(results);
+        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setData(docs);
         setLoading(false);
       },
       (err) => {
@@ -60,7 +48,7 @@ export function useCollection<T = DocumentData>(queryRef: Query<T> | null) {
     );
 
     return unsubscribe;
-  }, [queryRef]);
+  }, [q]);
 
   return { data, loading, error };
 }

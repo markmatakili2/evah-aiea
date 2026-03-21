@@ -1,32 +1,22 @@
-
 'use client';
 
-import { useEffect, useState } from 'react';
-import { DocumentReference, onSnapshot, DocumentData } from 'firebase/firestore';
-import { mockUserProfile, mockPatients } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
+import { DocumentReference, onSnapshot } from 'firebase/firestore';
+import { mockUserProfile } from '@/lib/mock-data';
 
-export function useDoc<T = DocumentData>(docRef: DocumentReference<T> | null) {
-  const [data, setData] = useState<T | null>(null);
+export function useDoc(docRef: DocumentReference | null) {
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<any>(null);
 
   useEffect(() => {
     const isDemo = typeof window !== 'undefined' && localStorage.getItem('demo_session') === 'true';
-
+    
     if (isDemo && docRef) {
-      const path = docRef.path;
-      
-      // Handle User Profile
-      if (path.startsWith('users/')) {
-        setData(mockUserProfile as unknown as T);
-      } 
-      // Handle Specific Patient
-      else if (path.startsWith('patients/')) {
-        const id = path.split('/')[1];
-        const patient = mockPatients.find(p => p.id === id);
-        setData((patient || null) as unknown as T);
+      // Logic to return mock profile if path matches users
+      if (docRef.path.startsWith('users/')) {
+        setData(mockUserProfile);
       }
-      
       setLoading(false);
       return;
     }
@@ -38,7 +28,7 @@ export function useDoc<T = DocumentData>(docRef: DocumentReference<T> | null) {
 
     const unsubscribe = onSnapshot(docRef, 
       (doc) => {
-        setData(doc.exists() ? doc.data() : null);
+        setData(doc.exists() ? { id: doc.id, ...doc.data() } : null);
         setLoading(false);
       },
       (err) => {
@@ -48,7 +38,7 @@ export function useDoc<T = DocumentData>(docRef: DocumentReference<T> | null) {
     );
 
     return unsubscribe;
-  }, [docRef?.path]);
+  }, [docRef]);
 
   return { data, loading, error };
 }
