@@ -1,4 +1,3 @@
-
 'use client';
 
 import { MobileNav } from "@/components/mobile-nav";
@@ -16,14 +15,15 @@ export default function DashboardLayout({
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState('chw');
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
-    // Pure Frontend Logic: Check localStorage
     const isSessionActive = localStorage.getItem('demo_session') === 'true';
     if (!isSessionActive) {
       router.push('/login');
     } else {
       setRole(localStorage.getItem('demo_role') || 'chw');
+      setIsDemo(localStorage.getItem('is_demo') === 'true');
       setLoading(false);
     }
   }, [router]);
@@ -42,7 +42,7 @@ export default function DashboardLayout({
           <div className="flex flex-col">
             <span className="font-headline font-bold text-primary leading-tight text-sm">Epilepsy Assistant</span>
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-              {role.toUpperCase()} Mode
+              {role.toUpperCase()} {isDemo ? 'Mode' : 'Profile'}
             </span>
           </div>
         </div>

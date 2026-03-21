@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,25 +16,32 @@ export default function RecordsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [role, setRole] = useState<string>('chw');
   const [activeTab, setActiveTab] = useState("patients");
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
     const savedRole = localStorage.getItem('demo_role');
+    const demoFlag = localStorage.getItem('is_demo') === 'true';
     if (savedRole) setRole(savedRole);
+    setIsDemo(demoFlag);
   }, []);
 
   const isSupervisor = role === 'supervisor';
 
-  const filteredPatients = mockPatients.filter(p => 
+  const patients = isDemo ? mockPatients : [];
+  const clinicians = isDemo ? mockClinicians : [];
+  const chws = isDemo ? mockCHWs : [];
+
+  const filteredPatients = patients.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredClinicians = mockClinicians.filter(c => 
+  const filteredClinicians = clinicians.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     c.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredCHWs = mockCHWs.filter(w => 
+  const filteredCHWs = chws.filter(w => 
     w.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     w.sector.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -68,54 +74,66 @@ export default function RecordsPage() {
           </TabsList>
 
           <TabsContent value="patients" className="space-y-3 mt-4">
-            {filteredPatients.map(patient => (
-              <PatientCard key={patient.id} patient={patient} isSupervisor={true} />
-            ))}
+            {filteredPatients.length > 0 ? (
+              filteredPatients.map(patient => (
+                <PatientCard key={patient.id} patient={patient} isSupervisor={true} />
+              ))
+            ) : (
+              <div className="py-20 text-center text-muted-foreground italic">No patient records available.</div>
+            )}
           </TabsContent>
 
           <TabsContent value="clinicians" className="space-y-3 mt-4">
-            {filteredClinicians.map(clinician => (
-              <Card key={clinician.id} className="border-none shadow-sm bg-card">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                    <Shield className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{clinician.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{clinician.role} • {clinician.hospital}</p>
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="text-[10px] bg-muted px-2 py-0.5 rounded font-mono">ID: {clinician.license}</span>
-                      <div className="flex gap-2">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        <Phone className="h-3 w-3 text-muted-foreground" />
+            {filteredClinicians.length > 0 ? (
+              filteredClinicians.map(clinician => (
+                <Card key={clinician.id} className="border-none shadow-sm bg-card">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                      <Shield className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground truncate">{clinician.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">{clinician.role} • {clinician.hospital}</p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="text-[10px] bg-muted px-2 py-0.5 rounded font-mono">ID: {clinician.license}</span>
+                        <div className="flex gap-2">
+                          <Mail className="h-3 w-3 text-muted-foreground" />
+                          <Phone className="h-3 w-3 text-muted-foreground" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
-                </CardContent>
-              </Card>
-            ))}
+                    <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="py-20 text-center text-muted-foreground italic">No clinicians registered in this region.</div>
+            )}
           </TabsContent>
 
           <TabsContent value="chws" className="space-y-3 mt-4">
-            {filteredCHWs.map(chw => (
-              <Card key={chw.id} className="border-none shadow-sm bg-card">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                    <UserCircle className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{chw.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">Sector: {chw.sector}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="secondary" className="text-[9px] h-5">{chw.activePatients} Patients</Badge>
-                      <Badge variant="outline" className="text-[9px] h-5 border-green-200 text-green-700 bg-green-50">{chw.performance}</Badge>
+            {filteredCHWs.length > 0 ? (
+              filteredCHWs.map(chw => (
+                <Card key={chw.id} className="border-none shadow-sm bg-card">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                      <UserCircle className="h-6 w-6" />
                     </div>
-                  </div>
-                  <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground truncate">{chw.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">Sector: {chw.sector}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="secondary" className="text-[9px] h-5">{chw.activePatients} Patients</Badge>
+                        <Badge variant="outline" className="text-[9px] h-5 border-green-200 text-green-700 bg-green-50">{chw.performance}</Badge>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="py-20 text-center text-muted-foreground italic">No CHWs active in this region.</div>
+            )}
           </TabsContent>
         </Tabs>
       ) : (

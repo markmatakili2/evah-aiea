@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -30,11 +29,12 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     
-    // Pure Frontend Simulation
+    // Manual Login: Marks session as NOT demo
     setTimeout(() => {
       setLoading(false);
       localStorage.setItem('demo_session', 'true');
-      const role = email.split('@')[0] || 'chw';
+      localStorage.setItem('is_demo', 'false'); // Non-demo session
+      const role = email.includes('supervisor') ? 'supervisor' : email.includes('clinician') ? 'clinician' : 'chw';
       localStorage.setItem('demo_role', role);
       toast({ title: 'Login Success', description: `Logged in as ${role.toUpperCase()}` });
       router.push('/dashboard');
@@ -42,9 +42,12 @@ export default function LoginPage() {
   };
 
   const handleDemoLogin = (role: string) => {
-    setEmail(`${role}@demo.ai`);
-    setPassword('password123');
-    toast({ title: 'Demo Creds Loaded', description: `Ready to login as ${role.toUpperCase()}` });
+    // Demo Login: Marks session as demo
+    localStorage.setItem('demo_session', 'true');
+    localStorage.setItem('is_demo', 'true'); // Demo session enabled
+    localStorage.setItem('demo_role', role);
+    toast({ title: 'Demo Mode Activated', description: `Accessing clinical prototype as ${role.toUpperCase()}` });
+    router.push('/dashboard');
   };
 
   return (
@@ -75,7 +78,7 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <span className="text-sm text-primary/60 font-semibold">Forgot?</span>
+                  <span className="text-sm text-primary/60 font-semibold cursor-pointer">Forgot?</span>
                 </div>
                 <Input 
                   id="password" 
@@ -92,7 +95,7 @@ export default function LoginPage() {
             </form>
 
             <div className="pt-6 border-t mt-6">
-              <p className="text-xs font-bold uppercase text-muted-foreground mb-3 text-center tracking-widest">Demo Accounts</p>
+              <p className="text-xs font-bold uppercase text-muted-foreground mb-3 text-center tracking-widest">Prototype Demo Accounts</p>
               <div className="grid grid-cols-3 gap-2">
                 <Button variant="outline" size="sm" className="text-[10px] h-14 flex flex-col gap-1" onClick={() => handleDemoLogin('chw')}>
                   <UserCheck className="h-4 w-4 text-blue-600" /> CHW

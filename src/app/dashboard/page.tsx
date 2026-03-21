@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from "react";
@@ -30,15 +29,24 @@ import { mockPatients, mockUserProfile } from "@/lib/mock-data";
 
 export default function Dashboard() {
   const [role, setRole] = useState<string>('chw');
+  const [patients, setPatients] = useState<any[]>([]);
+  const [isDemo, setIsDemo] = useState(false);
   
   useEffect(() => {
-    // Read the active demo role from the session
     const savedRole = localStorage.getItem('demo_role');
+    const demoFlag = localStorage.getItem('is_demo') === 'true';
     if (savedRole) setRole(savedRole);
+    setIsDemo(demoFlag);
+    
+    // Only show mock data if in demo mode
+    if (demoFlag) {
+      setPatients(mockPatients);
+    } else {
+      setPatients([]);
+    }
   }, []);
 
   const isSupervisor = role === 'supervisor';
-  const patients = mockPatients;
   const urgentCount = patients.filter(p => p.status === 'Urgent').length;
 
   return (
@@ -52,7 +60,6 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4">
         {isSupervisor ? (
           <>
@@ -61,7 +68,7 @@ export default function Dashboard() {
                 <Users className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent className="p-4 pt-2">
-                <div className="text-3xl font-bold text-primary">1,240</div>
+                <div className="text-3xl font-bold text-primary">{isDemo ? '1,240' : '0'}</div>
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Total Patients in Region</p>
               </CardContent>
             </Card>
@@ -70,7 +77,7 @@ export default function Dashboard() {
                 <ClipboardList className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent className="p-4 pt-2">
-                <div className="text-2xl font-bold text-primary">45</div>
+                <div className="text-2xl font-bold text-primary">{isDemo ? '45' : '0'}</div>
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">CHWs Active</p>
               </CardContent>
             </Card>
@@ -79,7 +86,7 @@ export default function Dashboard() {
                 <Shield className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent className="p-4 pt-2">
-                <div className="text-2xl font-bold text-primary">12</div>
+                <div className="text-2xl font-bold text-primary">{isDemo ? '12' : '0'}</div>
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Clinicians</p>
               </CardContent>
             </Card>
@@ -88,7 +95,7 @@ export default function Dashboard() {
                 <MapPin className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent className="p-4 pt-2">
-                <div className="text-2xl font-bold text-primary">8</div>
+                <div className="text-2xl font-bold text-primary">{isDemo ? '8' : '0'}</div>
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Active Clinics</p>
               </CardContent>
             </Card>
@@ -126,7 +133,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Conditional Call to Action */}
       {!isSupervisor && (
         <Button asChild size="lg" className="w-full h-16 text-lg font-headline gap-3 shadow-lg shadow-primary/20">
           <Link href="/dashboard/new-encounter">
@@ -136,7 +142,6 @@ export default function Dashboard() {
         </Button>
       )}
 
-      {/* List Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-headline font-bold text-primary">
@@ -148,56 +153,68 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-3 pb-10">
-          {patients.map((patient) => (
-            <Card key={patient.id} className="border-none shadow-sm bg-card/50">
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground uppercase">
-                  {patient.name.charAt(0)}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">{patient.name}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-muted-foreground">{patient.age}Y • {patient.gender}</span>
-                    <Badge 
-                      variant="secondary" 
-                      className={cn(
-                        "text-[10px] h-5 px-2",
-                        patient.status === 'Urgent' && "bg-red-100 text-red-700",
-                        patient.status === 'Stable' && "bg-green-100 text-green-700",
-                        patient.status === 'Follow-up' && "bg-blue-100 text-blue-700",
-                      )}
-                    >
-                      {patient.status}
-                    </Badge>
+          {patients.length > 0 ? (
+            patients.map((patient) => (
+              <Card key={patient.id} className="border-none shadow-sm bg-card/50">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground uppercase">
+                    {patient.name.charAt(0)}
                   </div>
-                </div>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground">
-                      <MoreVertical className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {!isSupervisor && (
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground">{patient.name}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-muted-foreground">{patient.age}Y • {patient.gender}</span>
+                      <Badge 
+                        variant="secondary" 
+                        className={cn(
+                          "text-[10px] h-5 px-2",
+                          patient.status === 'Urgent' && "bg-red-100 text-red-700",
+                          patient.status === 'Stable' && "bg-green-100 text-green-700",
+                          patient.status === 'Follow-up' && "bg-blue-100 text-blue-700",
+                        )}
+                      >
+                        {patient.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-muted-foreground">
+                        <MoreVertical className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {!isSupervisor && (
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
+                            <UserPlus className="mr-2 h-4 w-4" /> Start Encounter
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
-                          <UserPlus className="mr-2 h-4 w-4" /> Start Encounter
+                        <Link href={`/dashboard/records/${patient.id}/history`}>
+                          <History className="mr-2 h-4 w-4" /> View History
                         </Link>
                       </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/records/${patient.id}/history`}>
-                        <History className="mr-2 h-4 w-4" /> View History
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </CardContent>
-            </Card>
-          ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="py-10 text-center border-2 border-dashed rounded-xl bg-muted/10">
+              <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground font-medium">No patients found in your registry.</p>
+              {!isSupervisor && (
+                <Button asChild variant="link" size="sm" className="mt-1">
+                  <Link href="/dashboard/new-encounter">Register your first patient</Link>
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
