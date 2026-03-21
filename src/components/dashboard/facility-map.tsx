@@ -52,7 +52,7 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
       <div className="relative aspect-video w-full bg-slate-200 cursor-pointer" onClick={openGoogleMaps}>
         {/* IMAGE SOURCE IS SPECIFIED BELOW ON LINE 63 */}
         <Image 
-          src="https://picsum.photos/seed/kutrrh-map-overlay/800/450" 
+          src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=800&h=450" 
           alt="KUTRRH Referral Map" 
           fill 
           className="object-cover" 
