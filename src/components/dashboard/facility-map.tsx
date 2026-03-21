@@ -50,25 +50,17 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
   return (
     <Card className="overflow-hidden border-primary/20 shadow-lg animate-in zoom-in-95 duration-300">
       <div className="relative aspect-video w-full bg-slate-200 cursor-pointer" onClick={openGoogleMaps}>
-        {/* Mock Google Map Style View */}
+        {/* Mock Google Map Style View for KUTRRH */}
         <Image 
-          src="https://picsum.photos/seed/nairobi-map-satellite/800/450" 
-          alt="Referral Map" 
+          src="https://picsum.photos/seed/kutrrh-map-overlay/800/450" 
+          alt="KUTRRH Referral Map" 
           fill 
-          className="object-cover opacity-90" 
+          className="object-cover" 
           data-ai-hint="google map"
         />
         
-        {/* Visual Map Pin Overlay */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex flex-col items-center">
-          <div className="relative group">
-            <MapPin className="h-10 w-10 text-red-600 fill-red-600 drop-shadow-xl animate-bounce" />
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-1.5 bg-black/30 rounded-full blur-[2px]" />
-          </div>
-        </div>
-
         {/* UI Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
           <div className="flex flex-col text-white">
@@ -99,7 +91,7 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
             <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Facility Status</span>
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
-              <span className="text-xs font-bold text-green-700">Open & Ready</span>
+              <span className="text-xs font-bold">Open & Ready</span>
             </div>
           </div>
         </div>
