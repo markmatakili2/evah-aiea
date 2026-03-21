@@ -49,28 +49,38 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
 
   return (
     <Card className="overflow-hidden border-primary/20 shadow-lg animate-in zoom-in-95 duration-300">
-      <div className="relative aspect-video w-full bg-slate-200">
+      <div className="relative aspect-video w-full bg-slate-200 cursor-pointer" onClick={openGoogleMaps}>
         {/* Mock Google Map Style View */}
         <Image 
-          src="https://picsum.photos/seed/nairobi-map/800/450" 
+          src="https://picsum.photos/seed/nairobi-map-satellite/800/450" 
           alt="Referral Map" 
           fill 
           className="object-cover opacity-90" 
           data-ai-hint="google map"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        
+        {/* Visual Map Pin Overlay */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex flex-col items-center">
+          <div className="relative group">
+            <MapPin className="h-10 w-10 text-red-600 fill-red-600 drop-shadow-xl animate-bounce" />
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-1.5 bg-black/30 rounded-full blur-[2px]" />
+          </div>
+        </div>
+
+        {/* UI Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
         
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
           <div className="flex flex-col text-white">
-            <Badge className="w-fit mb-1 bg-white/20 backdrop-blur-md text-white border-white/30 text-[10px] font-bold">
+            <Badge className="w-fit mb-1 bg-white/20 backdrop-blur-md text-white border-white/30 text-[10px] font-bold uppercase tracking-wider">
               {urgency} REFERRAL PATHWAY
             </Badge>
-            <h3 className="text-sm font-bold leading-tight max-w-[200px]">{nearest.name}</h3>
-            <p className="text-[10px] opacity-90 flex items-center gap-1 mt-1">
-              <MapPin className="h-2.5 w-2.5" /> Thika Rd, Nairobi
+            <h3 className="text-sm font-bold leading-tight max-w-[220px] drop-shadow-md">{nearest.name}</h3>
+            <p className="text-[10px] opacity-90 flex items-center gap-1 mt-1 drop-shadow-sm">
+              <MapPin className="h-2.5 w-2.5" /> Thika Rd, Nairobi, Kenya
             </p>
           </div>
-          <Button size="icon" className="h-10 w-10 rounded-full bg-primary text-white shadow-xl ring-4 ring-white/20" onClick={openGoogleMaps}>
+          <Button size="icon" className="h-10 w-10 rounded-full bg-primary text-white shadow-2xl ring-4 ring-white/30" onClick={(e) => { e.stopPropagation(); openGoogleMaps(); }}>
             <ExternalLink className="h-5 w-5" />
           </Button>
         </div>
@@ -79,14 +89,14 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
       <CardContent className="p-4 space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1 p-2 bg-muted/30 rounded-lg">
-            <span className="text-[9px] font-bold text-muted-foreground uppercase">Est. Transit</span>
+            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Est. Transit Time</span>
             <div className="flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 text-primary" />
               <span className="text-xs font-bold">18 Mins</span>
             </div>
           </div>
           <div className="flex flex-col gap-1 p-2 bg-muted/30 rounded-lg">
-            <span className="text-[9px] font-bold text-muted-foreground uppercase">Status</span>
+            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Facility Status</span>
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
               <span className="text-xs font-bold text-green-700">Open & Ready</span>
@@ -95,10 +105,10 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
         </div>
 
         <div>
-          <h4 className="text-[9px] font-bold text-muted-foreground uppercase mb-2">Facility Capabilities</h4>
+          <h4 className="text-[9px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">Specialized Capabilities</h4>
           <div className="flex flex-wrap gap-1">
-            {nearest.capabilities.slice(0, 3).map(cap => (
-              <Badge key={cap} variant="secondary" className="text-[8px] h-4 bg-primary/5 text-primary border-primary/10">
+            {nearest.capabilities.map(cap => (
+              <Badge key={cap} variant="secondary" className="text-[8px] h-4 bg-primary/5 text-primary border-primary/10 px-1.5 py-0">
                 {cap}
               </Badge>
             ))}
@@ -106,11 +116,11 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
         </div>
 
         <div className="flex gap-2 pt-1">
-          <Button className="flex-1 gap-2 text-xs font-bold h-10 bg-primary" onClick={openGoogleMaps}>
-            <Navigation className="h-3.5 w-3.5" /> Open in Google Maps
+          <Button className="flex-1 gap-2 text-xs font-bold h-11 bg-primary shadow-md" onClick={openGoogleMaps}>
+            <Navigation className="h-4 w-4" /> Open in Google Maps
           </Button>
-          <Button variant="outline" className="shrink-0 h-10 w-10 p-0" asChild>
-            <a href={`tel:${nearest.contact}`}><Phone className="h-4 w-4" /></a>
+          <Button variant="outline" className="shrink-0 h-11 w-11 p-0 border-muted-foreground/20 hover:bg-muted" asChild>
+            <a href={`tel:${nearest.contact}`}><Phone className="h-5 w-5 text-primary" /></a>
           </Button>
         </div>
       </CardContent>
