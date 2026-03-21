@@ -50,7 +50,7 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
   return (
     <Card className="overflow-hidden border-primary/20 shadow-lg animate-in zoom-in-95 duration-300">
       <div className="relative aspect-video w-full bg-slate-200 cursor-pointer" onClick={openGoogleMaps}>
-        {/* Mock Google Map Style View for KUTRRH */}
+        {/* IMAGE SOURCE IS SPECIFIED BELOW ON LINE 63 */}
         <Image 
           src="https://picsum.photos/seed/kutrrh-map-overlay/800/450" 
           alt="KUTRRH Referral Map" 
