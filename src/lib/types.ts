@@ -7,11 +7,11 @@ export type Patient = {
   name: string;
   age: number;
   gender: string;
-  village: string;
+  location: string;
   contact: string;
   status: 'Stable' | 'Urgent' | 'Follow-up';
-  lastEncounter?: string;
-  referralId?: string;
+  updatedAt?: string;
+  chwId?: string;
 };
 
 export type Encounter = {
@@ -20,8 +20,12 @@ export type Encounter = {
   date: string; // ISO format
   summary: string;
   redFlags: string[];
-  recommendation: string;
+  recommendation: {
+    action: string;
+    urgencyLevel?: string;
+  };
   type: 'Initial' | 'Routine' | 'Emergency';
+  discordanceNote?: string;
 };
 
 export type UserProfile = {
@@ -48,44 +52,3 @@ export type Notification = {
     timestamp: string;
     read: boolean;
 };
-
-// Legacy types to support existing build routes
-export type TestRequestStatus = "Pending" | "Allocated" | "Sample Collected" | "In Analysis" | "Completed" | "Cancelled";
-
-export interface ProgressStep {
-  status: TestRequestStatus;
-  date: string;
-  details: string;
-}
-
-export interface Test {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  prices: { labId: string; price: number }[];
-}
-
-export interface Lab {
-  id: string;
-  name: string;
-  address: string;
-}
-
-export interface TestResult {
-  id: string;
-  requestId: string;
-  testName: string;
-  date: string;
-  personnelName: string;
-  results: Record<string, { value: string; range: string; flag: "Normal" | "High" | "Low" }>;
-  rating?: number;
-}
-
-export interface Withdrawal {
-  id: string;
-  date: string;
-  amount: number;
-  method: string;
-  status: 'Pending' | 'Completed' | 'Rejected';
-}

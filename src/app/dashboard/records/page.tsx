@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, MoreVertical, History, UserPlus, AlertCircle, Users, Shield, UserCircle, Mail, Phone } from "lucide-react";
+import { Search, Filter, MoreHorizontal, History, UserPlus, AlertCircle, Users, Shield, UserCircle, Mail, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ export default function RecordsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-headline font-bold text-primary tracking-tight">Regional Records</h1>
+        <h1 className="text-2xl font-headline font-bold text-primary tracking-tight italic">Regional Registry</h1>
         <Button variant="outline" size="icon" className="h-10 w-10">
           <Filter className="h-4 w-4" />
         </Button>
@@ -59,7 +59,7 @@ export default function RecordsPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input 
           placeholder={`Search ${activeTab}...`} 
-          className="pl-10 h-12 bg-muted/30 border-none focus-visible:ring-primary" 
+          className="pl-10 h-12 bg-muted/30 border-none focus-visible:ring-primary rounded-xl" 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -86,7 +86,7 @@ export default function RecordsPage() {
           <TabsContent value="clinicians" className="space-y-3 mt-4">
             {filteredClinicians.length > 0 ? (
               filteredClinicians.map(clinician => (
-                <Card key={clinician.id} className="border-none shadow-sm bg-card">
+                <Card key={clinician.id} className="border-none shadow-sm bg-card/50">
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                       <Shield className="h-6 w-6" />
@@ -94,13 +94,6 @@ export default function RecordsPage() {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-foreground truncate">{clinician.name}</h3>
                       <p className="text-xs text-muted-foreground mt-0.5">{clinician.role} • {clinician.hospital}</p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="text-[10px] bg-muted px-2 py-0.5 rounded font-mono">ID: {clinician.license}</span>
-                        <div className="flex gap-2">
-                          <Mail className="h-3 w-3 text-muted-foreground" />
-                          <Phone className="h-3 w-3 text-muted-foreground" />
-                        </div>
-                      </div>
                     </div>
                     <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
                   </CardContent>
@@ -114,7 +107,7 @@ export default function RecordsPage() {
           <TabsContent value="chws" className="space-y-3 mt-4">
             {filteredCHWs.length > 0 ? (
               filteredCHWs.map(chw => (
-                <Card key={chw.id} className="border-none shadow-sm bg-card">
+                <Card key={chw.id} className="border-none shadow-sm bg-card/50">
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                       <UserCircle className="h-6 w-6" />
@@ -122,10 +115,6 @@ export default function RecordsPage() {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-foreground truncate">{chw.name}</h3>
                       <p className="text-xs text-muted-foreground mt-0.5">Sector: {chw.sector}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="secondary" className="text-[9px] h-5">{chw.activePatients} Patients</Badge>
-                        <Badge variant="outline" className="text-[9px] h-5 border-green-200 text-green-700 bg-green-50">{chw.performance}</Badge>
-                      </div>
                     </div>
                     <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
                   </CardContent>
@@ -143,8 +132,9 @@ export default function RecordsPage() {
               <PatientCard key={patient.id} patient={patient} isSupervisor={false} />
             ))
           ) : (
-            <div className="py-20 text-center text-muted-foreground">
-              {searchTerm ? "No patients found matching your search." : "No patients registered yet."}
+            <div className="py-20 text-center text-muted-foreground bg-muted/10 rounded-2xl border-2 border-dashed">
+              <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm font-medium">No patients registered in your local registry.</p>
             </div>
           )}
         </div>
@@ -155,14 +145,14 @@ export default function RecordsPage() {
 
 function PatientCard({ patient, isSupervisor }: { patient: any, isSupervisor: boolean }) {
   return (
-    <Card className="border-none shadow-sm bg-card hover:shadow-md transition-shadow">
+    <Card className="border-none shadow-sm bg-card/50 hover:shadow-md transition-shadow">
       <CardContent className="p-4 flex items-center gap-4">
         <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary">
           {patient.name?.charAt(0) || 'P'}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-foreground truncate">{patient.name}</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">{patient.location} • {patient.contact}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{patient.location}</p>
           <div className="flex items-center gap-2 mt-2">
             <Badge 
               variant="outline" 
@@ -175,7 +165,6 @@ function PatientCard({ patient, isSupervisor }: { patient: any, isSupervisor: bo
             >
               {patient.status}
             </Badge>
-            <span className="text-[10px] text-muted-foreground">ID: {patient.id}</span>
           </div>
         </div>
         
@@ -192,7 +181,7 @@ function PatientCard({ patient, isSupervisor }: { patient: any, isSupervisor: bo
               <>
                 <DropdownMenuItem asChild>
                   <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
-                    <UserPlus className="mr-2 h-4 w-4" /> Start Encounter
+                    <UserPlus className="mr-2 h-4 w-4" /> New Assessment
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -204,7 +193,7 @@ function PatientCard({ patient, isSupervisor }: { patient: any, isSupervisor: bo
             )}
             <DropdownMenuItem asChild>
               <Link href={`/dashboard/records/${patient.id}/history`}>
-                <History className="mr-2 h-4 w-4" /> View History
+                <History className="mr-2 h-4 w-4" /> Full Clinical History
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

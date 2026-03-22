@@ -1,9 +1,10 @@
 import { AlertCircle, Calendar, ClipboardCheck } from 'lucide-react';
-import type { Notification, Test, Lab, TestResult, Withdrawal } from './types';
+import type { Notification, Patient, UserProfile } from './types';
 import type { HealthFacility } from './clinical-engine/types';
 
 /**
  * @fileOverview WHO mhGAP-aligned mock data for the AI Epilepsy Assistant prototype.
+ * Cleaned of all DigiLab diagnostic testing data.
  */
 
 export const mockNotifications: Notification[] = [
@@ -12,7 +13,7 @@ export const mockNotifications: Notification[] = [
     { id: '3', icon: Calendar, text: "Monthly sync completed successfully", href: "/dashboard", timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), read: true },
 ];
 
-export const mockUserProfile = {
+export const mockUserProfile: UserProfile = {
     firstName: "Demo",
     surname: "Health Worker",
     name: "Demo Health Worker",
@@ -32,7 +33,7 @@ export const mockUserProfile = {
     imageHint: "profile person"
 };
 
-export const mockPatients = [
+export const mockPatients: Patient[] = [
   { id: 'p1', name: 'Zahara Hassan', age: 24, gender: 'Female', location: 'Kijiji Village', status: 'Urgent', contact: '+254 711 000 111', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
   { id: 'p2', name: 'John Kamau', age: 45, gender: 'Male', location: 'Mlimani Sector', status: 'Stable', contact: '+254 722 000 222', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
   { id: 'p3', name: 'Amina Juma', age: 12, gender: 'Female', location: 'Pwani Area', status: 'Follow-up', contact: '+254 733 000 333', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
@@ -46,7 +47,7 @@ export const mockEncounters = [
     date: new Date(Date.now() - 86400000 * 2).toISOString(),
     summary: 'Emergency presentation: Prolonged convulsive seizure lasting 7 minutes. Status Epilepticus protocol initiated. Patient was stabilized and referral to tertiary hospital recommended.',
     redFlags: ['Prolonged Seizure (> 5 min)', 'Repeated Seizures without recovery'],
-    recommendation: { action: 'IMMEDIATE EMERGENCY REFERRAL' },
+    recommendation: { action: 'IMMEDIATE EMERGENCY REFERRAL', urgencyLevel: 'EMERGENCY' },
     type: 'Emergency'
   },
   {
@@ -55,26 +56,8 @@ export const mockEncounters = [
     date: new Date(Date.now() - 86400000 * 15).toISOString(),
     summary: 'Routine review. Patient reporting good adherence to medication. Seizure frequency decreased to 1 per month.',
     redFlags: [],
-    recommendation: { action: 'Continue current management and adherence counseling.' },
+    recommendation: { action: 'Continue current management and adherence counseling.', urgencyLevel: 'STABLE' },
     type: 'Routine'
-  },
-  {
-    id: 'e3',
-    patientId: 'p3',
-    date: new Date(Date.now() - 86400000 * 5).toISOString(),
-    summary: 'Pediatric assessment. New onset seizures in child under 5. Fever noted (38.5C). CNS infection suspected.',
-    redFlags: ['Fever & Neck Stiffness', 'New onset under 5 years'],
-    recommendation: { action: 'Urgent referral for pediatric specialist review and lumbar puncture.' },
-    type: 'Emergency'
-  },
-  {
-    id: 'e4',
-    patientId: 'p2',
-    date: new Date(Date.now() - 86400000 * 30).toISOString(),
-    summary: 'Initial assessment. History of head trauma 2 years ago. Seizures are focal with secondary generalization.',
-    redFlags: [],
-    recommendation: { action: 'Start first-line antiseizure medication (Carbamazepine). Schedule 2-week follow-up.' },
-    type: 'Initial'
   }
 ];
 
@@ -106,21 +89,5 @@ export const mockHealthFacilities: HealthFacility[] = [
     capabilities: ['General Ward', 'CT Scan', 'Pharmacy', 'Emergency'],
     contact: '+254 20 1234567',
     isOpen24h: true
-  },
-  {
-    id: 'f3',
-    name: 'Kijiji Community Health Center',
-    type: 'local',
-    coordinates: { lat: -1.3100, lng: 36.8600 },
-    capabilities: ['First Aid', 'Basic Meds', 'Observation'],
-    contact: '+254 20 7654321',
-    isOpen24h: false
   }
 ];
-
-export const mockTests: Test[] = [];
-export const mockLabs: Lab[] = [];
-export const mockTestRequests: any[] = [];
-export const mockTestResults: TestResult[] = [];
-export const mockWithdrawals: Withdrawal[] = [];
-export const mockReferredUsers: any[] = [];

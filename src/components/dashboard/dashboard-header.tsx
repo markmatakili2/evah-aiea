@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from "next/link";
@@ -7,7 +6,6 @@ import {
   Home,
   Search,
   Settings,
-  Package,
   History,
   LogOut,
   User,
@@ -15,7 +13,7 @@ import {
   Bell,
   Menu,
   Activity,
-  Users
+  ClipboardList
 } from "lucide-react";
 
 import {
@@ -38,18 +36,15 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "../theme-toggle";
 import Image from "next/image";
 import { mockNotifications, mockUserProfile } from "@/lib/mock-data";
-import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-
+import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/dashboard/requests", icon: Package, label: "My Requests" },
-  { href: "/dashboard/analytics", icon: Activity, label: "Analytics" },
-  { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
+  { href: "/dashboard", icon: Home, label: "Home" },
+  { href: "/dashboard/assess", icon: ClipboardList, label: "Assess" },
+  { href: "/dashboard/analytics", icon: Activity, label: "Data" },
   { href: "/dashboard/history", icon: History, label: "History" },
-  { href: "/dashboard/notifications", icon: Bell, label: "Notifications" },
-  { href: "/dashboard/referrals", icon: Users, label: "Referrals" },
+  { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
   { href: "/dashboard/profile", icon: User, label: "Profile" },
 ];
 
@@ -96,18 +91,14 @@ export function DashboardHeader() {
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search tests..."
+          placeholder="Search patients..."
           className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
         />
       </div>
        <ThemeToggle />
        <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative"
-          >
+          <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
@@ -117,7 +108,7 @@ export function DashboardHeader() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
-          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+          <DropdownMenuLabel>Alerts</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {mockNotifications.slice(0, 3).map((notification) => (
             <DropdownMenuItem key={notification.id} asChild>
@@ -134,19 +125,13 @@ export function DashboardHeader() {
           ))}
            <DropdownMenuSeparator />
            <DropdownMenuItem asChild className="justify-center text-sm text-muted-foreground hover:text-primary">
-                <Link href="/dashboard/notifications">
-                    View all notifications
-                </Link>
+                <Link href="/dashboard/notifications">View all alerts</Link>
            </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="overflow-hidden rounded-full"
-          >
+          <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
             <Image
               src={mockUserProfile.imageUrl}
               width={36}
@@ -166,13 +151,9 @@ export function DashboardHeader() {
                 Profile
               </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem disabled>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-              <Link href="/">
+              <Link href="/login">
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </Link>

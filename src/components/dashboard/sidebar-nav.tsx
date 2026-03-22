@@ -1,18 +1,17 @@
-
 'use client';
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home,
-  Package,
+  ClipboardList,
   History,
   User,
-  Beaker,
+  Brain,
   MessageSquare,
   Bell,
   Activity,
-  Users,
+  List
 } from "lucide-react";
 import {
   Tooltip,
@@ -21,16 +20,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Logo } from "../logo";
 
 const navItems = [
-  { href: "/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/dashboard/requests", icon: Package, label: "My Requests" },
-  { href: "/dashboard/analytics", icon: Activity, label: "Analytics" },
-  { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
+  { href: "/dashboard", icon: Home, label: "Home" },
+  { href: "/dashboard/assess", icon: ClipboardList, label: "Assess" },
+  { href: "/dashboard/records", icon: List, label: "Records" },
+  { href: "/dashboard/analytics", icon: Activity, label: "Data" },
   { href: "/dashboard/history", icon: History, label: "History" },
-  { href: "/dashboard/notifications", icon: Bell, label: "Notifications" },
-  { href: "/dashboard/referrals", icon: Users, label: "Referrals" },
+  { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
   { href: "/dashboard/profile", icon: User, label: "Profile" },
 ];
 
@@ -44,8 +41,8 @@ export function SidebarNav() {
           href="/"
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
-          <Beaker className="h-4 w-4 transition-all group-hover:scale-110" />
-          <span className="sr-only">DigiLab</span>
+          <Brain className="h-4 w-4 transition-all group-hover:scale-110" />
+          <span className="sr-only">AIEA</span>
         </Link>
         <TooltipProvider>
           {navItems.map((item) => (
