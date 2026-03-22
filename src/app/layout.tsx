@@ -37,6 +37,30 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=PT+Sans:wght@400;700&display=swap"
           rel="stylesheet"
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const suppressExtensionErrors = (e) => {
+                  const isExtensionError = 
+                    (e.message && (e.message.includes('MetaMask') || e.message.includes('extension'))) ||
+                    (e.filename && e.filename.includes('chrome-extension')) ||
+                    (e.reason && e.reason.stack && e.reason.stack.includes('chrome-extension'));
+                  
+                  if (isExtensionError) {
+                    e.stopImmediatePropagation();
+                    if (e.preventDefault) e.preventDefault();
+                    return true;
+                  }
+                  return false;
+                };
+
+                window.addEventListener('error', suppressExtensionErrors, true);
+                window.addEventListener('unhandledrejection', suppressExtensionErrors, true);
+              })();
+            `,
+          }}
+        />
       </head>
       <body
         className={cn(
