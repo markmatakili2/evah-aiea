@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,7 +24,14 @@ import {
   Info,
   ShieldCheck,
   ClipboardCheck,
-  CheckCircle2
+  CheckCircle2,
+  Download,
+  Share2,
+  X,
+  FileText,
+  User,
+  Phone,
+  Home
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -41,12 +48,15 @@ import {
   DialogFooter 
 } from '@/components/ui/dialog';
 import { FacilityMap } from '@/components/dashboard/facility-map';
+import { usePrint } from '@/hooks/usePrint';
+import { format } from 'date-fns';
 
-type Step = 'consent' | 'patient' | 'history' | 'causes' | 'redflags' | 'assessment' | 'report';
+type Step = 'consent' | 'patient' | 'history' | 'causes' | 'redflags' | 'assessment' | 'report' | 'final';
 
 function NewEncounterContent() {
   const router = useRouter();
   const { toast } = useToast();
+  const { print } = usePrint();
 
   const [step, setStep] = useState<Step>('consent');
   const [isSaving, setIsSaving] = useState(false);
@@ -54,8 +64,9 @@ function NewEncounterContent() {
   const [showOverrideDialog, setShowOverrideDialog] = useState(false);
   const [hasConsent, setHasConsent] = useState(false);
   const [overrideData, setOverrideData] = useState({ reason: '', notes: '' });
+  const [isApproved, setIsApproved] = useState(false);
 
-  // Pure Frontend State
+  // Patient Data State
   const [patientData, setPatientData] = useState({
     name: '',
     dob: '',
@@ -95,11 +106,16 @@ function NewEncounterContent() {
 
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
 
+  const calculatedAge = useMemo(() => {
+    if (!patientData.dob) return 'N/A';
+    const birthYear = new Date(patientData.dob).getFullYear();
+    return isNaN(birthYear) ? 'N/A' : new Date().getFullYear() - birthYear;
+  }, [patientData.dob]);
+
   const runAssessment = () => {
     setStep('assessment');
     
-    const birthYear = new Date(patientData.dob).getFullYear();
-    const age = isNaN(birthYear) ? 30 : new Date().getFullYear() - birthYear;
+    const age = typeof calculatedAge === 'number' ? calculatedAge : 30;
 
     const input: ClinicalInput = {
       patientProfile: { age, sex: patientData.sex, isPregnant: patientData.isPregnant, weightKg: Number(patientData.weight) },
@@ -116,16 +132,36 @@ function NewEncounterContent() {
     }, 1500);
   };
 
-  const saveRecord = (status: 'approved' | 'overridden') => {
-    setIsSaving(true);
-    setTimeout(() => {
-      toast({ 
-        title: "Decision Authority Logged", 
-        description: status === 'overridden' ? "Clinical override captured for safety audit." : "Recommendation accepted by clinician." 
-      });
-      router.push('/dashboard');
-      setIsSaving(false);
-    }, 1000);
+  const handleApprove = () => {
+    setIsApproved(true);
+    setStep('final');
+    toast({ title: "Recommendation Approved", description: "Generating clinical report document." });
+  };
+
+  const handleOverrideComplete = () => {
+    setShowOverrideDialog(false);
+    setIsApproved(true); // Approval after override
+    setStep('final');
+    toast({ title: "Override Logged", description: "Final clinical report generated with discordance notes." });
+  };
+
+  const handleDownload = () => {
+    const reportHtml = document.getElementById('clinical-report-content');
+    if (reportHtml) {
+      print(<div dangerouslySetInnerHTML={{ __html: reportHtml.innerHTML }} />);
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: `Clinical Report - ${patientData.name}`,
+        text: `Clinical assessment for ${patientData.name} performed on ${format(new Date(), 'PPP')}.`,
+        url: window.location.href
+      }).catch(console.error);
+    } else {
+      toast({ title: "Sharing Not Supported", description: "Sharing is not available on this browser. Use Download instead." });
+    }
   };
 
   const toggleItem = (list: string[], item: string, setter: any) => {
@@ -144,18 +180,21 @@ function NewEncounterContent() {
     causes: 60,
     redflags: 80,
     assessment: 90,
-    report: 100
+    report: 95,
+    final: 100
   };
 
   return (
     <div className="max-w-md mx-auto space-y-6 pb-20">
-      <div className="flex flex-col gap-2 sticky top-0 bg-background pt-2 z-10">
-        <div className="flex justify-between items-center px-1">
-          <h1 className="text-xl font-headline font-bold text-primary italic">Clinical Engine Support</h1>
-          <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">Safety Protected</Badge>
+      {step !== 'final' && (
+        <div className="flex flex-col gap-2 sticky top-0 bg-background pt-2 z-10">
+          <div className="flex justify-between items-center px-1">
+            <h1 className="text-xl font-headline font-bold text-primary italic">Clinical Engine Support</h1>
+            <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">Safety Protected</Badge>
+          </div>
+          <Progress value={stepProgress[step]} className="h-1.5" />
         </div>
-        <Progress value={stepProgress[step]} className="h-1.5" />
-      </div>
+      )}
 
       {step === 'consent' && (
         <Card className="border-none shadow-sm">
@@ -200,6 +239,10 @@ function NewEncounterContent() {
             <div className="space-y-2">
               <Label>Patient Contact</Label>
               <Input value={patientData.contact} onChange={e => setPatientData({...patientData, contact: e.target.value})} placeholder="e.g. +254 700 000 000" />
+            </div>
+            <div className="space-y-2">
+              <Label>Location / Address</Label>
+              <Input value={patientData.location} onChange={e => setPatientData({...patientData, location: e.target.value})} placeholder="Village, Town, or Landmark" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={patientData.dob} onChange={e => setPatientData({...patientData, dob: e.target.value})} /></div>
@@ -325,58 +368,62 @@ function NewEncounterContent() {
 
       {step === 'report' && recommendation && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <Card className={recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-50 border-red-200" : "bg-primary/5 border-primary/10"}>
-            <CardHeader className="pb-2">
+          <Card className="border-none shadow-lg overflow-hidden">
+            <CardHeader className="bg-primary text-primary-foreground">
               <div className="flex justify-between items-center">
-                <Badge variant={recommendation.urgencyLevel === 'EMERGENCY' ? 'destructive' : 'secondary'}>{recommendation.urgencyLevel}</Badge>
-                <Sparkles className="h-4 w-4 text-primary/40" />
+                <CardTitle className="text-xl font-headline italic">Suggested Management</CardTitle>
+                <Badge variant={recommendation.urgencyLevel === 'EMERGENCY' ? 'destructive' : 'secondary'} className="uppercase font-bold tracking-widest text-[10px]">
+                  {recommendation.urgencyLevel}
+                </Badge>
               </div>
-              <CardTitle className="text-xl mt-2 font-headline italic">Clinical Suggestion</CardTitle>
-              <CardDescription>Review and finalize using final decision authority.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <section><h4 className="text-[10px] font-bold uppercase text-muted-foreground">Proposed Action</h4><p className="text-sm font-bold text-primary leading-tight">{recommendation.action}</p></section>
-              
-              <section className="bg-white/50 p-3 rounded-lg border border-dashed border-primary/20">
-                <h4 className="text-[10px] font-bold uppercase text-primary flex items-center gap-1 mb-2"><Info className="h-3 w-3" /> Anti-Stigma Counseling</h4>
-                <ul className="space-y-1.5">
-                  {recommendation.antiStigmaMessages.map((m, i) => (
-                    <li key={i} className="text-xs font-medium text-slate-700 flex items-start gap-2"><div className="h-1 w-1 bg-primary rounded-full mt-1.5" /> {m}</li>
-                  ))}
-                </ul>
-              </section>
+            <CardContent className="p-0 divide-y">
+              {/* Patient Quick Info */}
+              <div className="p-4 bg-muted/20 grid grid-cols-2 gap-4">
+                <div><Label className="text-[10px] uppercase text-muted-foreground">Patient</Label><p className="text-sm font-bold">{patientData.name}</p></div>
+                <div><Label className="text-[10px] uppercase text-muted-foreground">Age / Sex</Label><p className="text-sm font-bold">{calculatedAge}Y • {patientData.sex}</p></div>
+              </div>
 
-              <section className="bg-orange-50/50 p-3 rounded-lg border border-orange-100">
-                <h4 className="text-[10px] font-bold uppercase text-orange-700 flex items-center gap-1 mb-2"><ShieldCheck className="h-3 w-3" /> Safety Advice</h4>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {recommendation.safetyAdvice.slice(0, 3).map((s, i) => (
-                    <p key={i} className="text-xs font-medium text-orange-950 flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-orange-400" /> {s}</p>
-                  ))}
-                </div>
-              </section>
-
-              {recommendation.medicationGuidance && (
-                <section className="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
-                  <h4 className="text-[10px] font-bold uppercase text-blue-700 mb-1">Pharmacologic Principles</h4>
-                  <p className="text-xs italic text-blue-900">{recommendation.medicationGuidance}</p>
+              <div className="p-4 space-y-4">
+                <section>
+                  <h4 className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Proposed Action</h4>
+                  <p className="text-sm font-bold text-primary leading-tight">{recommendation.action}</p>
                 </section>
+                
+                <section className="bg-primary/5 p-3 rounded-lg border border-dashed border-primary/20">
+                  <h4 className="text-[10px] font-bold uppercase text-primary flex items-center gap-1 mb-2"><Info className="h-3 w-3" /> Anti-Stigma Counseling</h4>
+                  <ul className="space-y-1.5">
+                    {recommendation.antiStigmaMessages.map((m, i) => (
+                      <li key={i} className="text-xs font-medium text-slate-700 flex items-start gap-2"><div className="h-1 w-1 bg-primary rounded-full mt-1.5" /> {m}</li>
+                    ))}
+                  </ul>
+                </section>
+
+                <section className="bg-orange-50/50 p-3 rounded-lg border border-orange-100">
+                  <h4 className="text-[10px] font-bold uppercase text-orange-700 flex items-center gap-1 mb-2"><ShieldCheck className="h-3 w-3" /> Safety Advice</h4>
+                  <ul className="space-y-1">
+                    {recommendation.safetyAdvice.slice(0, 3).map((s, i) => (
+                      <li key={i} className="text-xs font-medium text-orange-950 flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-orange-400" /> {s}</li>
+                    ))}
+                  </ul>
+                </section>
+              </div>
+
+              {recommendation.urgencyLevel !== 'STABLE' && (
+                <div className="p-4 bg-muted/5">
+                  <div className="flex items-center gap-2 mb-3 text-primary">
+                    <MapPin className="h-4 w-4" />
+                    <h3 className="text-[10px] font-bold uppercase tracking-tight italic">Recommended Referral Pathway</h3>
+                  </div>
+                  <FacilityMap urgency={recommendation.urgencyLevel} patientLocation={patientData.location} />
+                </div>
               )}
             </CardContent>
           </Card>
 
-          {recommendation.urgencyLevel !== 'STABLE' && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 px-1">
-                <MapPin className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-bold font-headline text-primary uppercase tracking-tight italic">Recommended Referral</h3>
-              </div>
-              <FacilityMap urgency={recommendation.urgencyLevel} patientLocation={patientData.location} />
-            </div>
-          )}
-
           <div className="flex flex-col gap-3">
-            <Button className="w-full h-14 font-bold shadow-lg bg-primary" onClick={() => saveRecord('approved')} disabled={isSaving}>
-              {isSaving ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle2 className="mr-2" />} Approve Recommendation
+            <Button className="w-full h-14 font-bold shadow-lg bg-primary text-white" onClick={handleApprove}>
+              <CheckCircle2 className="mr-2" /> Approve Recommendation
             </Button>
             <Button variant="outline" className="w-full h-12" onClick={() => setShowOverrideDialog(true)}>
               <Edit3 className="h-4 w-4 mr-2" /> Clinical Override
@@ -385,16 +432,103 @@ function NewEncounterContent() {
         </div>
       )}
 
+      {step === 'final' && recommendation && (
+        <div className="space-y-6 animate-in zoom-in-95 duration-500 pb-20">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-2xl font-headline font-bold text-primary italic">Clinical Summary</h2>
+            <Badge className="bg-green-600">FINAL APPROVED</Badge>
+          </div>
+
+          <div id="clinical-report-content" className="bg-white border rounded-2xl shadow-xl overflow-hidden text-slate-900">
+            {/* Header */}
+            <div className="bg-primary p-6 text-white text-center">
+              <h1 className="text-xl font-headline font-bold uppercase tracking-widest">Clinical Encounter Report</h1>
+              <p className="text-[10px] opacity-80 mt-1 uppercase tracking-tighter font-bold">Epilepsy Assistant • Confidential Medical Record</p>
+            </div>
+
+            <div className="p-6 space-y-8">
+              {/* Patient Info Table */}
+              <section>
+                <h3 className="text-xs font-bold uppercase text-primary border-b pb-1 mb-3">Patient Demographics</h3>
+                <div className="grid grid-cols-2 gap-y-3 text-sm">
+                  <div className="flex flex-col"><span className="text-[9px] text-muted-foreground uppercase font-bold">Full Name</span><span className="font-bold">{patientData.name}</span></div>
+                  <div className="flex flex-col"><span className="text-[9px] text-muted-foreground uppercase font-bold">Contact</span><span className="font-bold">{patientData.contact}</span></div>
+                  <div className="flex flex-col"><span className="text-[9px] text-muted-foreground uppercase font-bold">Age / Sex</span><span className="font-bold">{calculatedAge}Y • {patientData.sex}</span></div>
+                  <div className="flex flex-col"><span className="text-[9px] text-muted-foreground uppercase font-bold">Address/Location</span><span className="font-bold">{patientData.location}</span></div>
+                </div>
+              </section>
+
+              {/* Assessment Flag */}
+              <section className={recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-50 p-4 rounded-xl border-2 border-red-200" : "bg-primary/5 p-4 rounded-xl border-2 border-primary/10"}>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-bold uppercase text-primary">Clinical Suggestion</h3>
+                  <Badge variant={recommendation.urgencyLevel === 'EMERGENCY' ? 'destructive' : 'secondary'} className="font-bold uppercase h-5 text-[9px] tracking-widest">
+                    {recommendation.urgencyLevel} RISK
+                  </Badge>
+                </div>
+                <p className="text-sm font-bold text-slate-800 leading-tight">{recommendation.action}</p>
+                {isApproved && overrideData.reason && (
+                  <div className="mt-3 pt-3 border-t border-red-200">
+                    <p className="text-[10px] font-bold text-red-600 uppercase mb-1">Clinician Discordance Note:</p>
+                    <p className="text-xs italic text-red-900">"{overrideData.notes}"</p>
+                  </div>
+                )}
+              </section>
+
+              {/* Actionable Details */}
+              <section className="space-y-4">
+                <div>
+                  <h4 className="text-[10px] font-bold uppercase text-primary mb-2 flex items-center gap-1"><Info className="h-3 w-3" /> Counselling Points</h4>
+                  <ul className="space-y-1.5 pl-4 list-disc marker:text-primary">
+                    {recommendation.antiStigmaMessages.map((m, i) => <li key={i} className="text-xs font-medium text-slate-700 leading-snug">{m}</li>)}
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="text-[10px] font-bold uppercase text-orange-700 mb-2 flex items-center gap-1"><ShieldCheck className="h-3 w-3" /> Safety Advice</h4>
+                  <ul className="space-y-1.5 pl-4 list-disc marker:text-orange-400">
+                    {recommendation.safetyAdvice.map((s, i) => <li key={i} className="text-xs font-medium text-slate-700 leading-snug">{s}</li>)}
+                  </ul>
+                </div>
+              </section>
+
+              {/* Referral Pathway */}
+              <section className="bg-muted/30 p-4 rounded-xl">
+                <h4 className="text-[10px] font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1"><MapPin className="h-3 w-3" /> Recommended Referral</h4>
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-bold text-primary">{recommendation.referralDestination}</p>
+                  <p className="text-[10px] text-muted-foreground">Path: Kenyatta University Teaching, Referral and Research Hospital (KUTRRH)</p>
+                </div>
+              </section>
+
+              {/* Signature Area */}
+              <footer className="mt-8 pt-6 border-t border-dashed text-center">
+                <p className="text-[10px] text-muted-foreground">Certified by AI Clinical Engine Assistant</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest mt-1">Date: {format(new Date(), 'PPPP p')}</p>
+              </footer>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-4">
+            <Button className="h-12 font-bold bg-primary text-white" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download</Button>
+            <Button variant="outline" className="h-12 font-bold" onClick={handleShare}><Share2 className="mr-2 h-4 w-4" /> Share</Button>
+            <Button variant="ghost" className="col-span-2 h-12 text-muted-foreground font-bold" onClick={() => router.push('/dashboard')}><X className="mr-2 h-4 w-4" /> Dismiss</Button>
+          </div>
+        </div>
+      )}
+
+      {/* Override Dialog */}
       <Dialog open={showOverrideDialog} onOpenChange={setShowOverrideDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-sm rounded-3xl">
           <DialogHeader>
-            <DialogTitle>Decision authority Override</DialogTitle>
-            <DialogDescription>All overrides are logged for safety audit and quality assurance feedback loops.</DialogDescription>
+            <DialogTitle className="font-headline italic text-primary">Clinical Decision Override</DialogTitle>
+            <DialogDescription>Documenting clinical discordance for quality and safety audit loops.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2"><Label>Reason for Discordance</Label>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest">Reason for Discordance</Label>
               <Select onValueChange={v => setOverrideData({...overrideData, reason: v})}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="context">AI missed clinical context/history</SelectItem>
                   <SelectItem value="protocol">Local MoH protocol variation</SelectItem>
@@ -403,12 +537,25 @@ function NewEncounterContent() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2"><Label>Clinical Notes</Label><Textarea value={overrideData.notes} onChange={e => setOverrideData({...overrideData, notes: e.target.value})} placeholder="Provide justification for override..." /></div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest">Clinical Justification Notes</Label>
+              <Textarea 
+                value={overrideData.notes} 
+                onChange={e => setOverrideData({...overrideData, notes: e.target.value})} 
+                placeholder="Describe your reasoning..." 
+                className="rounded-xl min-h-[100px] border-muted"
+              />
+            </div>
           </div>
-          <DialogFooter><Button variant="destructive" className="w-full h-12 font-bold" disabled={!overrideData.reason || isSaving} onClick={() => saveRecord('overridden')}>Confirm Clinical Override</Button></DialogFooter>
+          <DialogFooter>
+            <Button variant="destructive" className="w-full h-14 font-bold rounded-2xl shadow-lg" disabled={!overrideData.reason} onClick={handleOverrideComplete}>
+              Confirm Clinical Override
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Safety Alert Dialog */}
       <Dialog open={showSafetyDialog} onOpenChange={setShowSafetyDialog}>
         <DialogContent className="bg-red-600 text-white border-none shadow-2xl">
           <DialogHeader><div className="mx-auto bg-white/20 p-3 rounded-full mb-2"><TriangleAlert className="h-10 w-10 text-white animate-pulse" /></div><DialogTitle className="text-2xl font-bold text-center">EMERGENCY PROTOCOL</DialogTitle></DialogHeader>
