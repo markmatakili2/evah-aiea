@@ -140,7 +140,7 @@ function NewEncounterContent() {
 
   const handleOverrideComplete = () => {
     setShowOverrideDialog(false);
-    setIsApproved(true); // Approval after override
+    setIsApproved(true);
     setStep('final');
     toast({ title: "Override Logged", description: "Final clinical report generated with discordance notes." });
   };
@@ -148,7 +148,7 @@ function NewEncounterContent() {
   const handleDownload = () => {
     const reportHtml = document.getElementById('clinical-report-content');
     if (reportHtml) {
-      print(<div dangerouslySetInnerHTML={{ __html: reportHtml.innerHTML }} />);
+      print(<div className="report-print-container" dangerouslySetInnerHTML={{ __html: reportHtml.innerHTML }} />);
     }
   };
 
@@ -435,83 +435,79 @@ function NewEncounterContent() {
       {step === 'final' && recommendation && (
         <div className="space-y-6 animate-in zoom-in-95 duration-500 pb-20">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl font-headline font-bold text-primary italic">Clinical Summary</h2>
-            <Badge className="bg-green-600">FINAL APPROVED</Badge>
+            <h2 className="text-2xl font-headline font-bold text-primary italic">Final Report</h2>
+            <Badge className="bg-green-600">CERTIFIED</Badge>
           </div>
 
-          <div id="clinical-report-content" className="bg-white border rounded-2xl shadow-xl overflow-hidden text-slate-900">
-            {/* Header */}
-            <div className="bg-primary p-6 text-white text-center">
-              <h1 className="text-xl font-headline font-bold uppercase tracking-widest">Clinical Encounter Report</h1>
-              <p className="text-[10px] opacity-80 mt-1 uppercase tracking-tighter font-bold">Epilepsy Assistant • Confidential Medical Record</p>
+          {/* SIMPLIFIED WORD-DOC STYLE REPORT PREVIEW */}
+          <div id="clinical-report-content" className="bg-white p-8 border shadow-sm min-h-[600px] text-slate-900 font-serif leading-normal">
+            <div className="text-center border-b pb-6 mb-8">
+              <h1 className="text-2xl font-bold uppercase tracking-tight">Clinical Encounter Report</h1>
+              <p className="text-sm font-bold text-muted-foreground mt-1 uppercase">AI Epilepsy Assistant • Confidential Patient Record</p>
+              <p className="text-xs mt-2">Date: {format(new Date(), 'PPPP p')}</p>
             </div>
 
-            <div className="p-6 space-y-8">
-              {/* Patient Info Table */}
+            <div className="space-y-8">
               <section>
-                <h3 className="text-xs font-bold uppercase text-primary border-b pb-1 mb-3">Patient Demographics</h3>
-                <div className="grid grid-cols-2 gap-y-3 text-sm">
-                  <div className="flex flex-col"><span className="text-[9px] text-muted-foreground uppercase font-bold">Full Name</span><span className="font-bold">{patientData.name}</span></div>
-                  <div className="flex flex-col"><span className="text-[9px] text-muted-foreground uppercase font-bold">Contact</span><span className="font-bold">{patientData.contact}</span></div>
-                  <div className="flex flex-col"><span className="text-[9px] text-muted-foreground uppercase font-bold">Age / Sex</span><span className="font-bold">{calculatedAge}Y • {patientData.sex}</span></div>
-                  <div className="flex flex-col"><span className="text-[9px] text-muted-foreground uppercase font-bold">Address/Location</span><span className="font-bold">{patientData.location}</span></div>
+                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">1. Patient Demographics</h2>
+                <div className="grid grid-cols-2 gap-y-2 text-sm">
+                  <p><strong>Full Name:</strong> {patientData.name}</p>
+                  <p><strong>Contact:</strong> {patientData.contact}</p>
+                  <p><strong>Age / Sex:</strong> {calculatedAge}Y • {patientData.sex}</p>
+                  <p><strong>Address/Location:</strong> {patientData.location}</p>
                 </div>
               </section>
 
-              {/* Assessment Flag */}
-              <section className={recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-50 p-4 rounded-xl border-2 border-red-200" : "bg-primary/5 p-4 rounded-xl border-2 border-primary/10"}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-bold uppercase text-primary">Clinical Suggestion</h3>
-                  <Badge variant={recommendation.urgencyLevel === 'EMERGENCY' ? 'destructive' : 'secondary'} className="font-bold uppercase h-5 text-[9px] tracking-widest">
-                    {recommendation.urgencyLevel} RISK
-                  </Badge>
+              <section>
+                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">2. Clinical Suggestion</h2>
+                <div className="space-y-3">
+                  <p className="text-sm"><strong>Flag:</strong> {recommendation.urgencyLevel} RISK</p>
+                  <p className="text-sm"><strong>Suggested Action:</strong> {recommendation.action}</p>
+                  {isApproved && overrideData.reason && (
+                    <div className="mt-4 p-4 border border-slate-200 bg-slate-50 italic text-sm">
+                      <p className="font-bold not-italic underline mb-1 uppercase text-xs">Clinician Discordance Note:</p>
+                      "{overrideData.notes}"
+                    </div>
+                  )}
                 </div>
-                <p className="text-sm font-bold text-slate-800 leading-tight">{recommendation.action}</p>
-                {isApproved && overrideData.reason && (
-                  <div className="mt-3 pt-3 border-t border-red-200">
-                    <p className="text-[10px] font-bold text-red-600 uppercase mb-1">Clinician Discordance Note:</p>
-                    <p className="text-xs italic text-red-900">"{overrideData.notes}"</p>
+              </section>
+
+              <section>
+                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">3. Management Details</h2>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-bold underline mb-2">Counselling Points</h3>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      {recommendation.antiStigmaMessages.map((m, i) => <li key={i}>{m}</li>)}
+                    </ul>
                   </div>
-                )}
-              </section>
-
-              {/* Actionable Details */}
-              <section className="space-y-4">
-                <div>
-                  <h4 className="text-[10px] font-bold uppercase text-primary mb-2 flex items-center gap-1"><Info className="h-3 w-3" /> Counselling Points</h4>
-                  <ul className="space-y-1.5 pl-4 list-disc marker:text-primary">
-                    {recommendation.antiStigmaMessages.map((m, i) => <li key={i} className="text-xs font-medium text-slate-700 leading-snug">{m}</li>)}
-                  </ul>
-                </div>
-                
-                <div>
-                  <h4 className="text-[10px] font-bold uppercase text-orange-700 mb-2 flex items-center gap-1"><ShieldCheck className="h-3 w-3" /> Safety Advice</h4>
-                  <ul className="space-y-1.5 pl-4 list-disc marker:text-orange-400">
-                    {recommendation.safetyAdvice.map((s, i) => <li key={i} className="text-xs font-medium text-slate-700 leading-snug">{s}</li>)}
-                  </ul>
+                  <div>
+                    <h3 className="text-sm font-bold underline mb-2">Safety Advice</h3>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      {recommendation.safetyAdvice.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                  </div>
                 </div>
               </section>
 
-              {/* Referral Pathway */}
-              <section className="bg-muted/30 p-4 rounded-xl">
-                <h4 className="text-[10px] font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1"><MapPin className="h-3 w-3" /> Recommended Referral</h4>
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-bold text-primary">{recommendation.referralDestination}</p>
-                  <p className="text-[10px] text-muted-foreground">Path: Kenyatta University Teaching, Referral and Research Hospital (KUTRRH)</p>
+              <section>
+                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">4. Recommended Referral</h2>
+                <div className="text-sm">
+                  <p><strong>Facility:</strong> {recommendation.referralDestination}</p>
+                  <p className="mt-1"><strong>Pathway Detail:</strong> Kenyatta University Teaching, Referral and Research Hospital (KUTRRH)</p>
                 </div>
               </section>
 
-              {/* Signature Area */}
-              <footer className="mt-8 pt-6 border-t border-dashed text-center">
-                <p className="text-[10px] text-muted-foreground">Certified by AI Clinical Engine Assistant</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest mt-1">Date: {format(new Date(), 'PPPP p')}</p>
-              </footer>
+              <div className="mt-12 pt-8 border-t text-center text-[10px] text-slate-400 italic">
+                <p>This document was generated by the AI Clinical Engine Assistant for authorized healthcare personnel only.</p>
+                <p>© 2026 AI Epilepsy Assistant</p>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 pt-4">
-            <Button className="h-12 font-bold bg-primary text-white" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download</Button>
-            <Button variant="outline" className="h-12 font-bold" onClick={handleShare}><Share2 className="mr-2 h-4 w-4" /> Share</Button>
+            <Button className="h-12 font-bold bg-primary text-white" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download PDF</Button>
+            <Button variant="outline" className="h-12 font-bold" onClick={handleShare}><Share2 className="mr-2 h-4 w-4" /> Share Report</Button>
             <Button variant="ghost" className="col-span-2 h-12 text-muted-foreground font-bold" onClick={() => router.push('/dashboard')}><X className="mr-2 h-4 w-4" /> Dismiss</Button>
           </div>
         </div>
