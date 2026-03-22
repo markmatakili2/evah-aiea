@@ -152,15 +152,30 @@ function NewEncounterContent() {
     }
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: `Clinical Report - ${patientData.name}`,
-        text: `Clinical assessment for ${patientData.name} performed on ${format(new Date(), 'PPP')}.`,
-        url: window.location.href
-      }).catch(console.error);
+  const handleShare = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `Clinical Report - ${patientData.name}`,
+          text: `Clinical assessment for ${patientData.name} performed on ${format(new Date(), 'PPP')}.`,
+          url: window.location.href
+        });
+      } catch (error: any) {
+        console.warn("Sharing failed or was cancelled:", error);
+        if (error.name !== 'AbortError') {
+          toast({ 
+            title: "Sharing Restricted", 
+            description: "Your browser or device has restricted sharing permissions. Please use the Download option instead.",
+            variant: "destructive"
+          });
+        }
+      }
     } else {
-      toast({ title: "Sharing Not Supported", description: "Sharing is not available on this browser. Use Download instead." });
+      toast({ 
+        title: "Sharing Not Supported", 
+        description: "This browser does not support the native share feature. Use Download instead.",
+        variant: "destructive"
+      });
     }
   };
 
