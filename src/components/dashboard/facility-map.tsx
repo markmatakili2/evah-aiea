@@ -7,7 +7,6 @@ import { MapPin, Navigation, Phone, ShieldCheck, Clock, ExternalLink } from 'luc
 import { mockHealthFacilities } from '@/lib/mock-data';
 import type { HealthFacility, UrgencyLevel } from '@/lib/clinical-engine/types';
 import { Badge } from '@/components/ui/badge';
-import Image from 'next/image';
 
 interface FacilityMapProps {
   urgency: UrgencyLevel;
@@ -49,30 +48,32 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
 
   return (
     <Card className="overflow-hidden border-primary/20 shadow-lg animate-in zoom-in-95 duration-300">
-      <div className="relative aspect-video w-full bg-slate-200 cursor-pointer" onClick={openGoogleMaps}>
-        {/* IMAGE SOURCE IS SPECIFIED BELOW ON LINE 63 */}
-        <Image 
-          src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=800&h=450" 
-          alt="KUTRRH Referral Map" 
-          fill 
-          className="object-cover" 
-          data-ai-hint="google map"
-        />
+      <div 
+        className="relative aspect-video w-full bg-slate-50 flex items-center justify-center cursor-pointer border-b" 
+        onClick={openGoogleMaps}
+      >
+        <div className="bg-primary/5 p-10 rounded-full border-4 border-white shadow-inner flex items-center justify-center">
+          <MapPin className="h-16 w-16 text-primary fill-primary/10 animate-pulse" />
+        </div>
         
         {/* UI Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-100/80 via-transparent to-transparent pointer-events-none" />
         
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-          <div className="flex flex-col text-white">
-            <Badge className="w-fit mb-1 bg-white/20 backdrop-blur-md text-white border-white/30 text-[10px] font-bold uppercase tracking-wider">
+          <div className="flex flex-col text-slate-900">
+            <Badge className="w-fit mb-1 bg-primary text-white border-none text-[10px] font-bold uppercase tracking-wider">
               {urgency} REFERRAL PATHWAY
             </Badge>
-            <h3 className="text-sm font-bold leading-tight max-w-[220px] drop-shadow-md">{nearest.name}</h3>
-            <p className="text-[10px] opacity-90 flex items-center gap-1 mt-1 drop-shadow-sm">
-              <MapPin className="h-2.5 w-2.5" /> Thika Rd, Nairobi, Kenya
+            <h3 className="text-sm font-bold leading-tight max-w-[220px]">{nearest.name}</h3>
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+              <MapPin className="h-2.5 w-2.5 text-primary" /> Thika Rd, Nairobi, Kenya
             </p>
           </div>
-          <Button size="icon" className="h-10 w-10 rounded-full bg-primary text-white shadow-2xl ring-4 ring-white/30" onClick={(e) => { e.stopPropagation(); openGoogleMaps(); }}>
+          <Button 
+            size="icon" 
+            className="h-10 w-10 rounded-full bg-primary text-white shadow-xl ring-4 ring-white" 
+            onClick={(e) => { e.stopPropagation(); openGoogleMaps(); }}
+          >
             <ExternalLink className="h-5 w-5" />
           </Button>
         </div>
