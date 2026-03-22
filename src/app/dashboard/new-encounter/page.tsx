@@ -455,7 +455,7 @@ function NewEncounterContent() {
           </div>
 
           {/* SIMPLIFIED WORD-DOC STYLE REPORT PREVIEW */}
-          <div id="clinical-report-content" className="bg-white p-8 border shadow-sm min-h-[600px] text-slate-900 font-serif leading-normal">
+          <div id="clinical-report-content" className="bg-white p-8 border shadow-sm min-h-[600px] text-slate-900 leading-normal" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
             <div className="text-center border-b pb-6 mb-8">
               <h1 className="text-2xl font-bold uppercase tracking-tight">Clinical Encounter Report</h1>
               <p className="text-sm font-bold text-muted-foreground mt-1 uppercase">AI Epilepsy Assistant • Confidential Patient Record</p>

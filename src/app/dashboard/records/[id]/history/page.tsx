@@ -60,7 +60,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
     if (!patient) return;
 
     const reportContent = (
-      <div className="p-8 font-sans max-w-4xl mx-auto bg-white text-slate-900">
+      <div className="p-8 max-w-4xl mx-auto bg-white text-slate-900" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
         <header className="border-b-2 border-primary pb-6 mb-8 flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-primary">Clinical History Report</h1>
