@@ -22,18 +22,18 @@ import Link from "next/link";
 import { format } from "date-fns";
 
 export default function HistoryPage() {
-    const [encounters, setEncounters] = useState<any[]>([]);
-    const [isDemo, setIsDemo] = useState(false);
+  const [encounters, setEncounters] = useState<any[]>([]);
+  const [isDemo, setIsDemo] = useState(false);
 
-    useEffect(() => {
-        const demoFlag = localStorage.getItem('is_demo') === 'true';
-        setIsDemo(demoFlag);
-        if (demoFlag) {
-            setEncounters(mockEncounters);
-        } else {
-            setEncounters([]);
-        }
-    }, []);
+  useEffect(() => {
+    const demoFlag = localStorage.getItem('is_demo') === 'true';
+    setIsDemo(demoFlag);
+    if (demoFlag) {
+      setEncounters(mockEncounters);
+    } else {
+      setEncounters([]);
+    }
+  }, []);
 
   return (
     <Card className="border-none shadow-none bg-transparent">
@@ -42,7 +42,7 @@ export default function HistoryPage() {
         <CardDescription>
           Unified view of all patient encounters and triage results in your circle.
         </CardDescription>
-      </Header>
+      </CardHeader>
       <CardContent className="px-0">
         {encounters.length > 0 ? (
           <Accordion type="single" collapsible className="w-full space-y-3">
@@ -53,7 +53,7 @@ export default function HistoryPage() {
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex justify-between items-center w-full pr-4">
                       <div className="text-left">
-                        <div className="font-bold text-primary flex items-center gap-1 hover:underline decoration-primary/30">
+                        <div className="font-bold text-primary flex items-center gap-1">
                           {patient?.name || `Case #${encounter.id.toUpperCase()}`}
                         </div>
                         <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">
@@ -85,17 +85,17 @@ export default function HistoryPage() {
                       </div>
 
                       {encounter.redFlags.length > 0 && (
-                          <div className="bg-red-50 p-3 rounded-lg border border-red-100">
-                              <h4 className="text-[10px] font-bold uppercase text-red-600 mb-1">Red Flags Detected</h4>
-                              <ul className="text-xs list-disc pl-4 text-red-900 space-y-0.5">
-                                  {encounter.redFlags.map((f: string, i: number) => <li key={i}>{f}</li>)}
-                              </ul>
-                          </div>
+                        <div className="bg-red-50 p-3 rounded-lg border border-red-100">
+                          <h4 className="text-[10px] font-bold uppercase text-red-600 mb-1">Red Flags Detected</h4>
+                          <ul className="text-xs list-disc pl-4 text-red-900 space-y-0.5">
+                            {encounter.redFlags.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                          </ul>
+                        </div>
                       )}
                       
                       <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
-                          <h4 className="text-[10px] font-bold uppercase text-primary mb-1">Proposed Management</h4>
-                          <p className="text-sm font-bold text-slate-800">{encounter.recommendation.action}</p>
+                        <h4 className="text-[10px] font-bold uppercase text-primary mb-1">Proposed Management</h4>
+                        <p className="text-sm font-bold text-slate-800">{encounter.recommendation.action}</p>
                       </div>
                     </div>
                   </AccordionContent>
