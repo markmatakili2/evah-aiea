@@ -9,14 +9,9 @@ import {
   MoreVertical, 
   UserPlus, 
   History, 
-  Shield, 
-  Activity, 
-  MapPin,
-  ClipboardList,
   UserCheck,
   Stethoscope,
-  Building2,
-  ChevronRight
+  Building2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -51,6 +46,7 @@ export default function Dashboard() {
 
   const isSupervisor = role === 'supervisor';
   const isClinician = role === 'clinician';
+  const isCHW = role === 'chw';
   const urgentCount = patients.filter(p => p.status === 'Urgent').length;
 
   return (
@@ -64,19 +60,32 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {(isSupervisor || isClinician) && (
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-primary/5 border-primary/10 col-span-2">
-            <CardHeader className="p-4 pb-0">
-              <Users className="h-5 w-5 text-primary" />
-            </CardHeader>
-            <CardContent className="p-4 pt-2">
-              <div className="text-3xl font-bold text-primary">{isDemo ? '1,240' : '0'}</div>
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">Regional Patient Registry</p>
-            </CardContent>
-          </Card>
-          
-          {isSupervisor && (
+      <div className="grid grid-cols-2 gap-4">
+        {/* Universal Stats for all care roles */}
+        <Card className="bg-primary/5 border-primary/10 col-span-2">
+          <CardHeader className="p-4 pb-0">
+            <Users className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent className="p-4 pt-2">
+            <div className="text-3xl font-bold text-primary">{isDemo ? '1,240' : '0'}</div>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Regional Patient Registry</p>
+          </CardContent>
+        </Card>
+
+        {/* Urgent Alerts - Crucial for CHW and Clinicians */}
+        <Card className="bg-red-50 border-red-100">
+          <CardHeader className="p-4 pb-0">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+          </CardHeader>
+          <CardContent className="p-4 pt-2">
+            <div className="text-2xl font-bold text-red-600">{urgentCount}</div>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Urgent Alerts</p>
+          </CardContent>
+        </Card>
+
+        {/* Role Specific Stats */}
+        {isSupervisor && (
+          <>
             <Card className="bg-primary/5 border-primary/10">
               <CardHeader className="p-4 pb-0">
                 <Stethoscope className="h-5 w-5 text-primary" />
@@ -86,19 +95,6 @@ export default function Dashboard() {
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Clinicians</p>
               </CardContent>
             </Card>
-          )}
-
-          <Card className="bg-primary/5 border-primary/10">
-            <CardHeader className="p-4 pb-0">
-              <UserCheck className="h-5 w-5 text-primary" />
-            </CardHeader>
-            <CardContent className="p-4 pt-2">
-              <div className="text-2xl font-bold text-primary">{isDemo ? mockCHWs.length : '0'}</div>
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">CHWs in Circle</p>
-            </CardContent>
-          </Card>
-
-          {isSupervisor && (
             <Card className="bg-primary/5 border-primary/10">
               <CardHeader className="p-4 pb-0">
                 <Building2 className="h-5 w-5 text-primary" />
@@ -108,21 +104,35 @@ export default function Dashboard() {
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Health Facilities</p>
               </CardContent>
             </Card>
-          )}
+          </>
+        )}
 
-          <Card className="bg-red-50 border-red-100">
+        {(isSupervisor || isClinician) && (
+          <Card className={cn("bg-primary/5 border-primary/10", !isSupervisor && "col-span-1")}>
             <CardHeader className="p-4 pb-0">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <UserCheck className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent className="p-4 pt-2">
-              <div className="text-2xl font-bold text-red-600">{urgentCount}</div>
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">Urgent Alerts</p>
+              <div className="text-2xl font-bold text-primary">{isDemo ? mockCHWs.length : '0'}</div>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">CHWs in Circle</p>
             </CardContent>
           </Card>
-        </div>
-      )}
+        )}
 
-      {!isSupervisor && !isClinician && (
+        {isCHW && (
+          <Card className="bg-primary/5 border-primary/10">
+            <CardHeader className="p-4 pb-0">
+              <History className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent className="p-4 pt-2">
+              <div className="text-2xl font-bold text-primary">{isDemo ? '28' : '0'}</div>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">Encounters Done</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {isCHW && (
         <Button asChild size="lg" className="w-full h-16 text-lg font-headline gap-3 shadow-lg shadow-primary/20">
           <Link href="/dashboard/new-encounter">
             <UserPlus className="h-6 w-6" />
@@ -183,7 +193,7 @@ export default function Dashboard() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      {!isSupervisor && !isClinician && (
+                      {isCHW && (
                         <DropdownMenuItem asChild>
                           <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
                             <UserPlus className="mr-2 h-4 w-4" /> Start Encounter
