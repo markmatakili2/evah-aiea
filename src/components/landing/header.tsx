@@ -5,10 +5,9 @@ import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const navLinks = [
-  { href: "#about", label: "About" },
-  { href: "#features", label: "Features" },
-  { href: "#specialists", label: "Specialists" },
-  { href: "#contact", label: "Contact Us" },
+  { href: "#about", label: "Mission" },
+  { href: "#features", label: "How it Works" },
+  { href: "/terms-of-service", label: "Governance" },
 ];
 
 export function Header() {
@@ -35,8 +34,8 @@ export function Header() {
           <Button variant="ghost" asChild>
             <Link href="/login">Log In</Link>
           </Button>
-          <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
-            <Link href="/register">Register</Link>
+          <Button asChild className="bg-primary text-white hover:bg-primary/90">
+            <Link href="/register">Join the Mission</Link>
           </Button>
         </div>
 
@@ -69,8 +68,8 @@ export function Header() {
                     <Button variant="outline" asChild>
                         <Link href="/login">Log In</Link>
                     </Button>
-                    <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                        <Link href="/register">Register</Link>
+                    <Button asChild className="bg-primary text-white">
+                        <Link href="/register">Join</Link>
                     </Button>
                  </div>
               </div>

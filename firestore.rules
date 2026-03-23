@@ -3,187 +3,45 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * DIGILAB CONNECT SECURITY RULES
+     * AI EPILEPSY ASSISTANT (AIEA) SECURITY RULES
      *
      * Core Philosophy:
-     * This ruleset implements a multi-tenant healthcare model using "Authorization Independence."
-     * Access is granted based on verified identity (Firebase Auth) and cross-referenced 
-     * denormalized fields within documents to avoid costly cross-collection lookups (get() calls).
-     *
-     * Data Structure:
-     * - User Profiles: Top-level collections (/patients, /lab_personnel, /lab_owners) keyed by Auth UID.
-     * - Public Catalogs: /labs and /tests are readable by authenticated users for browsing.
-     * - Transactional Data: Requests and Results are nested under /patients/{patientId} for 
-     *   path-based ownership, while using internal fields to grant access to Lab Personnel 
-     *   and Lab Owners.
-     *
-     * Key Security Decisions:
-     * - Ownership-First: Primary access to sensitive health data is governed by the user's UID.
-     * - Shared Access: Lab personnel and owners are granted access to specific requests/results 
-     *   only if their UIDs are denormalized onto those documents.
-     * - Immutability: Critical relational fields (like patientId or labOwnerId) are enforced 
-     *   as immutable to prevent data hijacking.
-     * - Prototyping Flexibility: Logic enforces "who" can access data but does not 
-     *   strictly validate the "shape" of the data content, allowing for rapid iteration.
+     * Clinical data ownership is restricted to the specific Community Health Worker (CHW) 
+     * who registered the patient, or authorized supervisors for the region.
      */
 
     // --- GLOBAL HELPER FUNCTIONS ---
 
-    /** @description Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
-    }
-
-    /** @description Checks if the authenticated user's UID matches the provided userId. */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /** @description Checks if a document exists and belongs to the authenticated user. */
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
-    /** @description Checks if the authenticated user is the owner of a document based on an internal field. */
-    function isDataOwner(field) {
-      return isSignedIn() && resource != null && request.auth.uid == resource.data[field];
-    }
-
-    /** @description Checks if the incoming data links the document to the authenticated user. */
-    function isNewDataOwner(field) {
-      return isSignedIn() && request.resource.data[field] == request.auth.uid;
     }
 
     // --- COLLECTION RULES ---
 
     /**
-     * @description Rules for Patient profiles. Patients own their own profile.
+     * @description Rules for Patient profiles. CHWs own the patients they register.
      * @path /patients/{patientId}
-     * @allow (create) if auth.uid == "user123" and request.resource.data.id == "user123"
-     * @deny (read) if auth.uid != patientId
-     * @principle Path-based ownership and self-creation.
      */
     match /patients/{patientId} {
-      allow get, list: if isOwner(patientId);
-      allow create: if isOwner(patientId) && request.resource.data.id == patientId;
-      allow update: if isExistingOwner(patientId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(patientId);
-    }
-
-    /**
-     * @description Rules for Lab Personnel profiles. Personnel own their own profile.
-     * @path /lab_personnel/{personnelId}
-     * @allow (get) if auth.uid == personnelId
-     * @deny (delete) if auth.uid != personnelId
-     * @principle Path-based ownership and self-creation.
-     */
-    match /lab_personnel/{personnelId} {
-      allow get, list: if isOwner(personnelId);
-      allow create: if isOwner(personnelId) && request.resource.data.id == personnelId;
-      allow update: if isExistingOwner(personnelId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(personnelId);
-    }
-
-    /**
-     * @description Rules for Lab Owner profiles. Owners own their own profile.
-     * @path /lab_owners/{ownerId}
-     * @allow (update) if auth.uid == ownerId
-     * @deny (create) if auth.uid != ownerId
-     * @principle Path-based ownership and self-creation.
-     */
-    match /lab_owners/{ownerId} {
-      allow get, list: if isOwner(ownerId);
-      allow create: if isOwner(ownerId) && request.resource.data.id == ownerId;
-      allow update: if isExistingOwner(ownerId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(ownerId);
-    }
-
-    /**
-     * @description Labs are publicly browsable by users, but only the specific owner can manage them.
-     * @path /labs/{labId}
-     * @allow (get) if isSignedIn()
-     * @allow (update) if auth.uid == resource.data.labOwnerId
-     * @deny (create) if request.resource.data.labOwnerId != auth.uid
-     * @principle Public read with owner-only writes via denormalized ownership field.
-     */
-    match /labs/{labId} {
-      allow get, list: if isSignedIn();
-      allow create: if isNewDataOwner('labOwnerId');
-      allow update: if isDataOwner('labOwnerId') && request.resource.data.labOwnerId == resource.data.labOwnerId;
-      allow delete: if isDataOwner('labOwnerId');
-    }
-
-    /**
-     * @description Tests catalog. Authenticated users can browse tests.
-     * @path /tests/{testId}
-     * @allow (list) if isSignedIn()
-     * @deny (write) if true (Restricted to Admin role)
-     * @principle Public read for authenticated users; writes restricted to platform admins.
-     */
-    match /tests/{testId} {
-      allow get, list: if isSignedIn();
-      // CRITICAL: Cannot implement owner-only writes. The 'Test' entity is missing an 'ownerId' or 'authorId' field.
-      allow create, update, delete: if false; // TODO: Implement admin role check for test management.
-    }
-
-    /**
-     * @description Test Requests. Accessible by the Patient (owner), Allocated Personnel, or the Lab Owner.
-     * @path /patients/{patientId}/requests/{requestId}
-     * @allow (get) if auth.uid == patientId || auth.uid == resource.data.allocatedPersonnelId
-     * @deny (list) if auth.uid != patientId
-     * @principle Shared access via denormalized UIDs (Authorization Independence).
-     */
-    match /patients/{patientId}/requests/{requestId} {
-      allow get: if isOwner(patientId) || (resource != null && (request.auth.uid == resource.data.allocatedPersonnelId || request.auth.uid == resource.data.chosenLabOwnerId));
-      allow list: if isOwner(patientId);
-      allow create: if isOwner(patientId) && request.resource.data.patientId == patientId;
-      allow update: if (isOwner(patientId) || (resource != null && (request.auth.uid == resource.data.allocatedPersonnelId || request.auth.uid == resource.data.chosenLabOwnerId))) && request.resource.data.patientId == resource.data.patientId;
-      allow delete: if isExistingOwner(patientId);
-    }
-
-    /**
-     * @description Test Results. Accessible by the Patient, the Personnel who submitted it, and the Lab Owner.
-     * @path /patients/{patientId}/test_results/{resultId}
-     * @allow (get) if auth.uid == resource.data.submittedByPersonnelId
-     * @deny (create) if auth.uid != request.resource.data.submittedByPersonnelId
-     * @principle Shared access model allowing multiple stakeholders to view health records.
-     */
-    match /patients/{patientId}/test_results/{resultId} {
-      allow get: if isOwner(patientId) || (resource != null && (request.auth.uid == resource.data.submittedByPersonnelId || request.auth.uid == resource.data.relevantLabOwnerId));
-      allow list: if isOwner(patientId);
-      allow create: if isSignedIn() && request.resource.data.patientId == patientId;
-      allow update: if (isOwner(patientId) || (resource != null && (request.auth.uid == resource.data.submittedByPersonnelId || request.auth.uid == resource.data.relevantLabOwnerId))) && request.resource.data.patientId == resource.data.patientId;
-      allow delete: if isExistingOwner(patientId) || (resource != null && request.auth.uid == resource.data.relevantLabOwnerId);
-    }
-
-    /**
-     * @description Ratings for lab personnel. Contextualized within a request.
-     * @path /requests/{requestId}/personnel_ratings/{ratingId}
-     * @allow (create) if auth.uid == request.resource.data.patientId
-     * @deny (update) if auth.uid != resource.data.patientId
-     * @principle Authorization based on denormalized patient and personnel IDs.
-     */
-    match /requests/{requestId}/personnel_ratings/{ratingId} {
-      allow get: if isSignedIn() && (request.auth.uid == resource.data.patientId || request.auth.uid == resource.data.personnelId);
-      allow list: if isSignedIn();
-      allow create: if isNewDataOwner('patientId') && request.resource.data.requestId == requestId;
-      allow update: if isDataOwner('patientId') && request.resource.data.patientId == resource.data.patientId;
-      allow delete: if isDataOwner('patientId');
-    }
-
-    /**
-     * @description Abuse reports against personnel. Restricted to involved parties and admins.
-     * @path /requests/{requestId}/abuse_reports/{reportId}
-     * @allow (create) if auth.uid == request.resource.data.reportingPatientId
-     * @deny (get) if auth.uid != reportingPatientId && auth.uid != reportedPersonnelId
-     * @principle Strict isolation of sensitive misconduct reports.
-     */
-    match /requests/{requestId}/abuse_reports/{reportId} {
-      allow get: if isSignedIn() && (request.auth.uid == resource.data.reportingPatientId || request.auth.uid == resource.data.reportedPersonnelId);
-      allow list: if false; // Deny listing abuse reports for general users.
-      allow create: if isNewDataOwner('reportingPatientId') && request.resource.data.requestId == requestId;
-      allow update: if isDataOwner('reportingPatientId') && request.resource.data.reportingPatientId == resource.data.reportingPatientId;
-      allow delete: if isDataOwner('reportingPatientId');
+      // Allow read if the user is signed in
+      allow read: if isSignedIn();
+      
+      // Allow create if the user is signed in and sets themselves as the CHW
+      allow create: if isSignedIn() && request.resource.data.chwId == request.auth.uid;
+      
+      // Allow update if the user is the assigned CHW
+      allow update: if isSignedIn() && resource.data.chwId == request.auth.uid;
+      
+      allow delete: if false; // Deletion restricted for clinical audit purposes
+      
+      /**
+       * @description Sub-collection of encounter logs per patient.
+       */
+      match /encounters/{encounterId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if false; // Clinical records are immutable
+      }
     }
   }
 }

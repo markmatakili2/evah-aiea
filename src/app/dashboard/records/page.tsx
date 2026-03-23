@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, MoreHorizontal, History, UserPlus, AlertCircle, Users, Shield, UserCircle, Mail, Phone } from "lucide-react";
+import { Search, Filter, MoreVertical, History, UserPlus, AlertCircle, Users, Shield, UserCircle, Mail, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
