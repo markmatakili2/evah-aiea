@@ -1,23 +1,21 @@
-
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
   Search, 
-  Filter, 
   MoreVertical, 
   History, 
   UserPlus, 
   AlertCircle, 
-  Users, 
-  Shield, 
   UserCircle, 
   Building2, 
   PlusCircle,
   MapPin,
   Phone,
-  Mail
+  Mail,
+  ChevronRight,
+  Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -52,6 +50,7 @@ export default function RecordsPage() {
   const [activeTab, setActiveTab] = useState("patients");
   const [isDemo, setIsDemo] = useState(false);
   const [showAddHospital, setShowAddHospital] = useState(false);
+  const [selectedCHW, setSelectedCHW] = useState<any>(null);
 
   useEffect(() => {
     const savedRole = localStorage.getItem('demo_role');
@@ -103,13 +102,22 @@ export default function RecordsPage() {
     f.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Determine which tabs to show based on role
+  // Clinicians see Patients and CHWs
+  // Supervisors see Patients, Clinicians, CHWs, and Facilities
+  const tabConfig = isSupervisor 
+    ? { count: 4, tabs: ['patients', 'clinicians', 'chws', 'facilities'] }
+    : isClinician 
+      ? { count: 2, tabs: ['patients', 'chws'] }
+      : { count: 1, tabs: ['patients'] };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-headline font-bold text-primary tracking-tight italic">
           {isSupervisor ? "Regional Management" : "Regional Registry"}
         </h1>
-        {isSupervisor && activeTab === 'facilities' && (
+        {isSupervisor && activeTab === 'facilities' && (activeTab === 'facilities') && (
           <Button size="sm" className="gap-2" onClick={() => setShowAddHospital(true)}>
             <PlusCircle className="h-4 w-4" /> Add Hospital
           </Button>
@@ -130,10 +138,10 @@ export default function RecordsPage() {
         <Tabs defaultValue="patients" className="w-full" onValueChange={setActiveTab}>
           <TabsList className={cn(
             "grid w-full bg-muted/50 p-1 rounded-xl h-12",
-            isSupervisor ? "grid-cols-4" : "grid-cols-3"
+            tabConfig.count === 4 ? "grid-cols-4" : tabConfig.count === 2 ? "grid-cols-2" : "grid-cols-1"
           )}>
             <TabsTrigger value="patients" className="rounded-lg text-[10px] sm:text-xs">Patients</TabsTrigger>
-            <TabsTrigger value="clinicians" className="rounded-lg text-[10px] sm:text-xs">Clinicians</TabsTrigger>
+            {isSupervisor && <TabsTrigger value="clinicians" className="rounded-lg text-[10px] sm:text-xs">Clinicians</TabsTrigger>}
             <TabsTrigger value="chws" className="rounded-lg text-[10px] sm:text-xs">CHWs</TabsTrigger>
             {isSupervisor && <TabsTrigger value="facilities" className="rounded-lg text-[10px] sm:text-xs">Facilities</TabsTrigger>}
           </TabsList>
@@ -144,35 +152,37 @@ export default function RecordsPage() {
             ))}
           </TabsContent>
 
-          <TabsContent value="clinicians" className="space-y-3 mt-4">
-            {filteredClinicians.map(clinician => (
-              <Card key={clinician.id} className="border-none shadow-sm bg-card/50">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                    <Shield className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground truncate">{clinician.name}</h3>
-                      <Badge variant={clinician.status === 'Approved' ? 'secondary' : 'outline'} className="text-[8px] h-4">
-                        {clinician.status}
-                      </Badge>
+          {isSupervisor && (
+            <TabsContent value="clinicians" className="space-y-3 mt-4">
+              {filteredClinicians.map(clinician => (
+                <Card key={clinician.id} className="border-none shadow-sm bg-card/50">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                      <UserCircle className="h-6 w-6" />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{clinician.role} • {clinician.hospital}</p>
-                  </div>
-                  {isSupervisor && clinician.status === 'Pending' && (
-                    <Button size="sm" onClick={() => handleApprove(clinician.name)} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-bold">
-                      Approve
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </TabsContent>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-foreground truncate">{clinician.name}</h3>
+                        <Badge variant={clinician.status === 'Approved' ? 'secondary' : 'outline'} className="text-[8px] h-4">
+                          {clinician.status}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{clinician.role} • {clinician.hospital}</p>
+                    </div>
+                    {clinician.status === 'Pending' && (
+                      <Button size="sm" onClick={() => handleApprove(clinician.name)} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-bold">
+                        Approve
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </TabsContent>
+          )}
 
           <TabsContent value="chws" className="space-y-3 mt-4">
             {filteredCHWs.map(chw => (
-              <Card key={chw.id} className="border-none shadow-sm bg-card/50">
+              <Card key={chw.id} className="border-none shadow-sm bg-card/50 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedCHW(chw)}>
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                     <UserCircle className="h-6 w-6" />
@@ -186,11 +196,14 @@ export default function RecordsPage() {
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">Sector: {chw.sector} • {chw.activePatients} Patients</p>
                   </div>
-                  {isSupervisor && chw.status === 'Pending' && (
-                    <Button size="sm" onClick={() => handleApprove(chw.name)} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-bold">
-                      Approve
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {isSupervisor && chw.status === 'Pending' && (
+                      <Button size="sm" onClick={(e) => { e.stopPropagation(); handleApprove(chw.name); }} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-bold">
+                        Approve
+                      </Button>
+                    )}
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -233,6 +246,79 @@ export default function RecordsPage() {
           ))}
         </div>
       )}
+
+      {/* CHW Profile Dialog */}
+      <Dialog open={!!selectedCHW} onOpenChange={(open) => !open && setSelectedCHW(null)}>
+        <DialogContent className="max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-headline italic text-primary flex items-center gap-2">
+              <UserCircle className="h-6 w-6" /> CHW Profile
+            </DialogTitle>
+            <DialogDescription>Detailed regional worker activity and contact profile.</DialogDescription>
+          </DialogHeader>
+          {selectedCHW && (
+            <div className="space-y-6 py-4">
+              <div className="flex flex-col items-center text-center gap-2">
+                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
+                  {selectedCHW.name.charAt(0)}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-primary">{selectedCHW.name}</h3>
+                  <Badge variant="secondary" className="uppercase text-[9px] tracking-widest">{selectedCHW.status}</Badge>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div className="p-4 bg-muted/30 rounded-2xl space-y-3">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold uppercase text-muted-foreground">Assigned Sector</span>
+                      <span className="text-sm font-medium">{selectedCHW.sector}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-4 w-4 text-primary" />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold uppercase text-muted-foreground">Email Address</span>
+                      <span className="text-sm font-medium">{selectedCHW.email}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-4 w-4 text-primary" />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold uppercase text-muted-foreground">Contact Phone</span>
+                      <span className="text-sm font-medium">{selectedCHW.phone}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border-2 border-dashed rounded-2xl flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-bold">Active Patient Registry</span>
+                  </div>
+                  <Badge className="bg-primary text-white h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold">
+                    {selectedCHW.activePatients}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                 <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-1">
+                   <Info className="h-3 w-3" /> Supervision Note
+                 </h4>
+                 <p className="text-xs text-slate-600 leading-relaxed bg-primary/5 p-3 rounded-xl">
+                   Worker is currently managing {selectedCHW.activePatients} families in the {selectedCHW.sector} region. Performance rating: {selectedCHW.performance || 'N/A'}.
+                 </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" className="w-full h-12 rounded-xl" onClick={() => setSelectedCHW(null)}>Close Profile</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Onboarding Dialog */}
       <Dialog open={showAddHospital} onOpenChange={setShowAddHospital}>
@@ -296,11 +382,13 @@ function PatientCard({ patient, isRestricted }: { patient: any, isRestricted: bo
           {patient.name?.charAt(0) || 'P'}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground truncate">{patient.name}</h3>
+          <Link href={`/dashboard/records/${patient.id}/history`} className="hover:underline decoration-primary/40 underline-offset-2">
+            <h3 className="font-bold text-foreground truncate">{patient.name}</h3>
+          </Link>
           <div className="flex flex-col gap-0.5 mt-0.5">
             <p className="text-[10px] text-muted-foreground">{patient.location}</p>
             {patient.chwName && (
-              <p className="text-[10px] font-bold text-primary/60 uppercase">CHW: {patient.chwName}</p>
+              <p className="text-[10px] font-bold text-primary/60 uppercase">Responsible CHW: {patient.chwName}</p>
             )}
           </div>
           <div className="flex items-center gap-2 mt-2">
@@ -332,11 +420,6 @@ function PatientCard({ patient, isRestricted }: { patient: any, isRestricted: bo
                 <DropdownMenuItem asChild>
                   <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
                     <UserPlus className="mr-2 h-4 w-4" /> New Assessment
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/new-encounter?patientId=${patient.id}&startAt=redflags`}>
-                    <AlertCircle className="mr-2 h-4 w-4" /> Quick Red Flags
                   </Link>
                 </DropdownMenuItem>
               </>

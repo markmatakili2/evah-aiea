@@ -6,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,8 +24,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Star, FileText, MessageSquareWarning, Bot, Printer, MessageSquare, User, ClipboardList } from "lucide-react";
-import { mockEncounters } from "@/lib/mock-data";
+import { Star, FileText, MessageSquareWarning, Bot, Printer, MessageSquare, User, ClipboardList, ExternalLink } from "lucide-react";
+import { mockEncounters, mockPatients } from "@/lib/mock-data";
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,47 +56,65 @@ export default function HistoryPage() {
         <CardDescription>
           Unified view of all patient encounters and triage results.
         </CardDescription>
-      </CardHeader>
+      </Header>
       <CardContent>
         {encounters.length > 0 ? (
           <Accordion type="single" collapsible className="w-full">
-            {encounters.map((encounter) => (
-              <AccordionItem key={encounter.id} value={encounter.id}>
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex justify-between items-center w-full pr-4">
-                    <div className="text-left">
-                      <p className="font-semibold">Case #{encounter.id.toUpperCase()}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Date: {format(new Date(encounter.date), "PPP")}
-                      </p>
+            {encounters.map((encounter) => {
+              const patient = mockPatients.find(p => p.id === encounter.patientId);
+              return (
+                <AccordionItem key={encounter.id} value={encounter.id}>
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex justify-between items-center w-full pr-4">
+                      <div className="text-left">
+                        <p className="font-bold text-primary flex items-center gap-1">
+                          {patient?.name || `Case #${encounter.id.toUpperCase()}`}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
+                          {format(new Date(encounter.date), "PPP")}
+                        </p>
+                      </div>
+                      <Badge variant={encounter.recommendation.urgencyLevel === 'EMERGENCY' ? 'destructive' : 'secondary'} className="text-[8px] h-5 px-2">
+                        {encounter.recommendation.urgencyLevel}
+                      </Badge>
                     </div>
-                    <Badge variant={encounter.type === 'Emergency' ? 'destructive' : 'secondary'}>
-                      {encounter.type}
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-4 bg-muted/50 rounded-md">
-                  <div className="space-y-4">
-                    <div>
-                        <h4 className="text-[10px] font-bold uppercase text-muted-foreground mb-1 tracking-widest">Summary</h4>
-                        <p className="text-sm leading-relaxed">{encounter.summary}</p>
-                    </div>
-                    {encounter.redFlags.length > 0 && (
-                        <div className="bg-red-50 p-3 rounded-lg border border-red-100">
-                            <h4 className="text-[10px] font-bold uppercase text-red-600 mb-1">Red Flags Reported</h4>
-                            <ul className="text-xs list-disc pl-4 text-red-900">
-                                {encounter.redFlags.map((f: string, i: number) => <li key={i}>{f}</li>)}
-                            </ul>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-4 bg-muted/50 rounded-xl mt-1 border border-dashed border-primary/10">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="text-[10px] font-bold uppercase text-muted-foreground mb-1 tracking-widest">Summary</h4>
+                          <p className="text-sm leading-relaxed">{encounter.summary}</p>
                         </div>
-                    )}
-                    <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
-                        <h4 className="text-[10px] font-bold uppercase text-primary mb-1">Final Action Taken</h4>
-                        <p className="text-sm font-bold text-slate-800">{encounter.recommendation.action}</p>
+                        <Button asChild variant="ghost" size="sm" className="h-8 text-[10px] font-bold uppercase text-primary gap-1">
+                          <Link href={`/dashboard/records/${encounter.patientId}/history`}>
+                            Full History <ExternalLink className="h-3 w-3" />
+                          </Link>
+                        </Button>
+                      </div>
+
+                      <div className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                        <User className="h-3 w-3 text-primary/60" />
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Author: {encounter.authorName} ({encounter.authorRole})</span>
+                      </div>
+
+                      {encounter.redFlags.length > 0 && (
+                          <div className="bg-red-50 p-3 rounded-lg border border-red-100">
+                              <h4 className="text-[10px] font-bold uppercase text-red-600 mb-1">Red Flags Reported</h4>
+                              <ul className="text-xs list-disc pl-4 text-red-900">
+                                  {encounter.redFlags.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                              </ul>
+                          </div>
+                      )}
+                      <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
+                          <h4 className="text-[10px] font-bold uppercase text-primary mb-1">Final Action Taken</h4>
+                          <p className="text-sm font-bold text-slate-800">{encounter.recommendation.action}</p>
+                      </div>
                     </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
           </Accordion>
         ) : (
           <div className="py-20 text-center border-2 border-dashed rounded-xl bg-muted/10">

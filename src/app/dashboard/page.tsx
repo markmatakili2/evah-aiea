@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from "react";
@@ -16,7 +15,8 @@ import {
   ClipboardList,
   UserCheck,
   Stethoscope,
-  Building2
+  Building2,
+  ChevronRight
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -76,15 +76,17 @@ export default function Dashboard() {
             </CardContent>
           </Card>
           
-          <Card className="bg-primary/5 border-primary/10">
-            <CardHeader className="p-4 pb-0">
-              <Stethoscope className="h-5 w-5 text-primary" />
-            </CardHeader>
-            <CardContent className="p-4 pt-2">
-              <div className="text-2xl font-bold text-primary">{isDemo ? mockClinicians.length : '0'}</div>
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">Clinicians</p>
-            </CardContent>
-          </Card>
+          {isSupervisor && (
+            <Card className="bg-primary/5 border-primary/10">
+              <CardHeader className="p-4 pb-0">
+                <Stethoscope className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent className="p-4 pt-2">
+                <div className="text-2xl font-bold text-primary">{isDemo ? mockClinicians.length : '0'}</div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">Clinicians</p>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="bg-primary/5 border-primary/10">
             <CardHeader className="p-4 pb-0">
@@ -147,8 +149,10 @@ export default function Dashboard() {
                   <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground uppercase">
                     {patient.name.charAt(0)}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{patient.name}</h3>
+                  <div className="flex-1 min-w-0">
+                    <Link href={`/dashboard/records/${patient.id}/history`} className="hover:underline decoration-primary/40 underline-offset-2">
+                      <h3 className="font-bold text-foreground truncate">{patient.name}</h3>
+                    </Link>
                     <div className="flex flex-col gap-1 mt-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">{patient.age}Y • {patient.gender}</span>
@@ -165,7 +169,7 @@ export default function Dashboard() {
                         </Badge>
                       </div>
                       {(isClinician || isSupervisor) && patient.chwName && (
-                        <p className="text-[10px] font-bold text-primary/60 uppercase">CHW: {patient.chwName}</p>
+                        <p className="text-[10px] font-bold text-primary/60 uppercase truncate">CHW: {patient.chwName}</p>
                       )}
                     </div>
                   </div>
