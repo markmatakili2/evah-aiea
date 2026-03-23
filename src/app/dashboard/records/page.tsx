@@ -7,7 +7,6 @@ import {
   MoreVertical, 
   History, 
   UserPlus, 
-  AlertCircle, 
   UserCircle, 
   Building2, 
   PlusCircle,
@@ -103,8 +102,6 @@ export default function RecordsPage() {
   );
 
   // Determine which tabs to show based on role
-  // Clinicians see Patients and CHWs
-  // Supervisors see Patients, Clinicians, CHWs, and Facilities
   const tabConfig = isSupervisor 
     ? { count: 4, tabs: ['patients', 'clinicians', 'chws', 'facilities'] }
     : isClinician 
@@ -117,7 +114,7 @@ export default function RecordsPage() {
         <h1 className="text-2xl font-headline font-bold text-primary tracking-tight italic">
           {isSupervisor ? "Regional Management" : "Regional Registry"}
         </h1>
-        {isSupervisor && activeTab === 'facilities' && (activeTab === 'facilities') && (
+        {isSupervisor && activeTab === 'facilities' && (
           <Button size="sm" className="gap-2" onClick={() => setShowAddHospital(true)}>
             <PlusCircle className="h-4 w-4" /> Add Hospital
           </Button>
@@ -309,7 +306,7 @@ export default function RecordsPage() {
                    <Info className="h-3 w-3" /> Supervision Note
                  </h4>
                  <p className="text-xs text-slate-600 leading-relaxed bg-primary/5 p-3 rounded-xl">
-                   Worker is currently managing {selectedCHW.activePatients} families in the {selectedCHW.sector} region. Performance rating: {selectedCHW.performance || 'N/A'}.
+                   Worker is currently managing {selectedCHW.activePatients} families in the {selectedCHW.sector} region.
                  </p>
               </div>
             </div>
