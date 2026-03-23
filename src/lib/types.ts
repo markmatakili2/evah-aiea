@@ -12,7 +12,7 @@ export type Patient = {
   status: 'Stable' | 'Urgent' | 'Follow-up';
   updatedAt?: string;
   chwId?: string;
-  chwName?: string; // Added for attribution
+  chwName?: string;
 };
 
 export type Encounter = {
@@ -30,8 +30,8 @@ export type Encounter = {
   };
   type: 'Initial' | 'Routine' | 'Emergency';
   discordanceNote?: string;
-  authorName: string; // Added for attribution
-  authorRole: string; // Added for attribution
+  authorName: string;
+  authorRole: string;
   isClinicianUpdated?: boolean;
 };
 

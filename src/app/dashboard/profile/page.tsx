@@ -1,4 +1,3 @@
-
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockUserProfile } from "@/lib/mock-data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 
 export default function ProfilePage() {
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-2">
-      <h1 className="text-3xl font-semibold font-headline">Profile Settings</h1>
+      <h1 className="text-3xl font-semibold font-headline">Account Settings</h1>
 
       <Tabs defaultValue="profile">
         <TabsList className="grid w-full grid-cols-2 max-w-sm">
@@ -30,7 +28,7 @@ export default function ProfilePage() {
             <CardHeader>
               <CardTitle>Personal Information</CardTitle>
               <CardDescription>
-                Update your personal details here. Click save when you're done.
+                Update your care provider details here.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -54,16 +52,12 @@ export default function ProfilePage() {
                     <Input id="email" type="email" defaultValue={mockUserProfile.email} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="dob">Date of Birth</Label>
-                    <Input id="dob" type="date" defaultValue={mockUserProfile.dob} />
-                </div>
-                <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
                     <Input id="phone" type="tel" defaultValue={mockUserProfile.phone} />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="gender">Gender</Label>
-                    <Select defaultValue={mockUserProfile.gender.toLowerCase()}>
+                    <Select defaultValue={mockUserProfile.gender?.toLowerCase() || 'other'}>
                         <SelectTrigger id="gender">
                             <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
@@ -71,31 +65,19 @@ export default function ProfilePage() {
                             <SelectItem value="male">Male</SelectItem>
                             <SelectItem value="female">Female</SelectItem>
                             <SelectItem value="other">Other</SelectItem>
-                            <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input id="address" defaultValue={mockUserProfile.address.line1} />
+                    <Label htmlFor="address">Work Address</Label>
+                    <Input id="address" defaultValue={mockUserProfile.address?.line1} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="city">City/Town</Label>
-                    <Input id="city" defaultValue={mockUserProfile.address.city} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    <Input id="country" defaultValue={mockUserProfile.address.country} />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                    <Label>Allow Location Access</Label>
-                    <div className="flex items-center space-x-2 h-10">
-                        <Switch id="location-access" defaultChecked={mockUserProfile.allowLocation} />
-                        <Label htmlFor="location-access" className="text-sm text-muted-foreground">Enable to find nearby labs easily</Label>
-                    </div>
+                    <Input id="city" defaultValue={mockUserProfile.address?.city} />
                 </div>
               </div>
-              <Button className="bg-accent text-accent-foreground hover:bg-accent/90">Save Changes</Button>
+              <Button className="bg-primary text-white hover:bg-primary/90">Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -120,7 +102,7 @@ export default function ProfilePage() {
                         <Label htmlFor="confirm-password">Confirm New Password</Label>
                         <Input id="confirm-password" type="password" />
                     </div>
-                    <Button className="bg-accent text-accent-foreground hover:bg-accent/90">Update Password</Button>
+                    <Button className="bg-primary text-white">Update Password</Button>
                 </CardContent>
             </Card>
         </TabsContent>

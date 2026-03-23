@@ -1,4 +1,4 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/analyze-test-history.ts';
+// AI flows for clinical support will be registered here.

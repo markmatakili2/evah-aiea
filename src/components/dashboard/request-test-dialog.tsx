@@ -1,6 +1,3 @@
-
 'use client';
-// Legacy Component - Removed to prevent import errors
-export function RequestTestDialog({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
+// This component has been removed as it is not part of the AIEA clinical assistant.
+export default function RemovedComponent() { return null; }
