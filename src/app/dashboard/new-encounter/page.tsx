@@ -50,6 +50,7 @@ import {
 import { FacilityMap } from '@/components/dashboard/facility-map';
 import { usePrint } from '@/hooks/usePrint';
 import { format } from 'date-fns';
+import { mockUserProfile } from '@/lib/mock-data';
 
 type Step = 'consent' | 'patient' | 'history' | 'causes' | 'redflags' | 'assessment' | 'report' | 'final';
 
@@ -108,8 +109,9 @@ function NewEncounterContent() {
 
   const calculatedAge = useMemo(() => {
     if (!patientData.dob) return 'N/A';
-    const birthYear = new Date(patientData.dob).getFullYear();
-    return isNaN(birthYear) ? 'N/A' : new Date().getFullYear() - birthYear;
+    const birthDate = new Date(patientData.dob);
+    if (isNaN(birthDate.getTime())) return 'N/A';
+    return new Date().getFullYear() - birthDate.getFullYear();
   }, [patientData.dob]);
 
   const runAssessment = () => {
@@ -393,7 +395,6 @@ function NewEncounterContent() {
               </div>
             </CardHeader>
             <CardContent className="p-0 divide-y">
-              {/* Patient Quick Info */}
               <div className="p-4 bg-muted/20 grid grid-cols-2 gap-4">
                 <div><Label className="text-[10px] uppercase text-muted-foreground">Patient</Label><p className="text-sm font-bold">{patientData.name}</p></div>
                 <div><Label className="text-[10px] uppercase text-muted-foreground">Age / Sex</Label><p className="text-sm font-bold">{calculatedAge}Y • {patientData.sex}</p></div>
@@ -454,7 +455,6 @@ function NewEncounterContent() {
             <Badge className="bg-green-600">CERTIFIED</Badge>
           </div>
 
-          {/* SIMPLIFIED WORD-DOC STYLE REPORT PREVIEW */}
           <div id="clinical-report-content" className="bg-white p-8 border shadow-sm min-h-[600px] text-slate-900 leading-normal" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
             <div className="text-center border-b pb-6 mb-8">
               <h1 className="text-2xl font-bold uppercase tracking-tight">Clinical Encounter Report</h1>
@@ -510,6 +510,15 @@ function NewEncounterContent() {
                 <div className="text-sm">
                   <p><strong>Facility:</strong> {recommendation.referralDestination}</p>
                   <p className="mt-1"><strong>Pathway Detail:</strong> Kenyatta University Teaching, Referral and Research Hospital (KUTRRH)</p>
+                </div>
+              </section>
+
+              <section>
+                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">5. Record Attribution</h2>
+                <div className="text-sm space-y-1 italic">
+                  <p><strong>Author:</strong> {mockUserProfile.name}</p>
+                  <p><strong>Role:</strong> {mockUserProfile.role.toUpperCase()}</p>
+                  <p><strong>Sector:</strong> {mockUserProfile.location}</p>
                 </div>
               </section>
 
