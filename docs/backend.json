@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Patient": {
@@ -13,7 +14,8 @@
         "location": { "type": "string" },
         "contact": { "type": "string" },
         "status": { "type": "string", "enum": ["Stable", "Urgent", "Follow-up"] },
-        "registrationDate": { "type": "string", "format": "date-time" }
+        "registrationDate": { "type": "string", "format": "date-time" },
+        "chwId": { "type": "string" }
       },
       "required": ["id", "name", "age", "gender", "location", "status"]
     },
@@ -30,9 +32,33 @@
         "redFlags": { "type": "array", "items": { "type": "string" } },
         "urgencyLevel": { "type": "string", "enum": ["EMERGENCY", "URGENT", "ROUTINE", "STABLE"] },
         "actionTaken": { "type": "string" },
-        "discordanceNote": { "type": "string", "description": "Notes if the clinician overrode AI suggestions." }
+        "authorId": { "type": "string" },
+        "authorRole": { "type": "string" }
       },
       "required": ["id", "patientId", "date", "urgencyLevel"]
+    },
+    "HealthFacility": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HealthFacility",
+      "type": "object",
+      "description": "A medical facility that accepts referrals for epilepsy patients.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["specialist", "district", "local"] },
+        "address": { "type": "string" },
+        "contactEmail": { "type": "string", "format": "email" },
+        "contactPhone": { "type": "string" },
+        "location": { "type": "string" },
+        "coordinates": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        }
+      },
+      "required": ["id", "name", "type", "address"]
     }
   },
   "auth": {
@@ -54,6 +80,14 @@
           "entityName": "ClinicalEncounter",
           "schema": { "$ref": "#/backend/entities/ClinicalEncounter" },
           "description": "Sub-collection of encounter logs per patient."
+        }
+      },
+      {
+        "path": "/facilities/{facilityId}",
+        "definition": {
+          "entityName": "HealthFacility",
+          "schema": { "$ref": "#/backend/entities/HealthFacility" },
+          "description": "Registered health facilities for referrals."
         }
       }
     ]

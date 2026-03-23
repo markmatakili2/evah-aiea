@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from "react";
@@ -14,7 +15,8 @@ import {
   MapPin,
   ClipboardList,
   UserCheck,
-  Stethoscope
+  Stethoscope,
+  Building2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -27,7 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { mockPatients, mockUserProfile, mockCHWs, mockClinicians } from "@/lib/mock-data";
+import { mockPatients, mockUserProfile, mockCHWs, mockClinicians, mockHealthFacilities } from "@/lib/mock-data";
 
 export default function Dashboard() {
   const [role, setRole] = useState<string>('chw');
@@ -73,17 +75,17 @@ export default function Dashboard() {
               <p className="text-[10px] uppercase font-bold text-muted-foreground">Regional Patient Registry</p>
             </CardContent>
           </Card>
-          {isSupervisor && (
-            <Card className="bg-primary/5 border-primary/10">
-              <CardHeader className="p-4 pb-0">
-                <Stethoscope className="h-5 w-5 text-primary" />
-              </CardHeader>
-              <CardContent className="p-4 pt-2">
-                <div className="text-2xl font-bold text-primary">{isDemo ? mockClinicians.length : '0'}</div>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">Clinicians</p>
-              </CardContent>
-            </Card>
-          )}
+          
+          <Card className="bg-primary/5 border-primary/10">
+            <CardHeader className="p-4 pb-0">
+              <Stethoscope className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent className="p-4 pt-2">
+              <div className="text-2xl font-bold text-primary">{isDemo ? mockClinicians.length : '0'}</div>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">Clinicians</p>
+            </CardContent>
+          </Card>
+
           <Card className="bg-primary/5 border-primary/10">
             <CardHeader className="p-4 pb-0">
               <UserCheck className="h-5 w-5 text-primary" />
@@ -93,28 +95,28 @@ export default function Dashboard() {
               <p className="text-[10px] uppercase font-bold text-muted-foreground">CHWs in Circle</p>
             </CardContent>
           </Card>
-          {!isSupervisor && (
-            <Card className="bg-red-50 border-red-100">
-              <CardHeader className="p-4 pb-0">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-              </CardHeader>
-              <CardContent className="p-4 pt-2">
-                <div className="text-2xl font-bold text-red-600">{urgentCount}</div>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">Urgent Alerts</p>
-              </CardContent>
-            </Card>
-          )}
+
           {isSupervisor && (
-            <Card className="bg-red-50 border-red-100">
+            <Card className="bg-primary/5 border-primary/10">
               <CardHeader className="p-4 pb-0">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <Building2 className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent className="p-4 pt-2">
-                <div className="text-2xl font-bold text-red-600">{urgentCount}</div>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">Urgent Alerts</p>
+                <div className="text-2xl font-bold text-primary">{isDemo ? mockHealthFacilities.length : '0'}</div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">Health Facilities</p>
               </CardContent>
             </Card>
           )}
+
+          <Card className="bg-red-50 border-red-100">
+            <CardHeader className="p-4 pb-0">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+            </CardHeader>
+            <CardContent className="p-4 pt-2">
+              <div className="text-2xl font-bold text-red-600">{urgentCount}</div>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">Urgent Alerts</p>
+            </CardContent>
+          </Card>
         </div>
       )}
 
