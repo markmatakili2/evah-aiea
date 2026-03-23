@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -21,18 +22,24 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/dashboard", icon: Home, label: "Home" },
-  { href: "/dashboard/assess", icon: ClipboardList, label: "Assess" },
-  { href: "/dashboard/records", icon: List, label: "Records" },
-  { href: "/dashboard/analytics", icon: Activity, label: "Data" },
-  { href: "/dashboard/history", icon: History, label: "History" },
-  { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
-  { href: "/dashboard/profile", icon: User, label: "Profile" },
-];
-
 export function SidebarNav() {
   const pathname = usePathname();
+  const [role, setRole] = useState('chw');
+
+  useEffect(() => {
+    const savedRole = localStorage.getItem('demo_role');
+    if (savedRole) setRole(savedRole);
+  }, []);
+
+  const navItems = [
+    { href: "/dashboard", icon: Home, label: "Home" },
+    { href: "/dashboard/assess", icon: ClipboardList, label: "Assess" },
+    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records" },
+    { href: "/dashboard/analytics", icon: Activity, label: "Data" },
+    { href: "/dashboard/history", icon: History, label: "History" },
+    { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
+    { href: "/dashboard/profile", icon: User, label: "Profile" },
+  ];
 
   return (
     <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">

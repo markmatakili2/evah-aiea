@@ -43,7 +43,7 @@ export const mockEncounters: Encounter[] = [
   {
     id: 'e1',
     patientId: 'p1',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago (Recent)
+    date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     summary: 'Emergency presentation: Prolonged convulsive seizure lasting 7 minutes. Status Epilepticus protocol initiated. Patient was stabilized and referral to tertiary hospital recommended.',
     redFlags: ['Prolonged Seizure (> 5 min)', 'Repeated Seizures without recovery'],
     recommendation: { 
@@ -77,13 +77,15 @@ export const mockEncounters: Encounter[] = [
 ];
 
 export const mockClinicians = [
-  { id: 'c1', name: 'Dr. Sarah Mwangi', role: 'Senior Neurologist', hospital: 'National Referral', email: 's.mwangi@health.go.ke', phone: '+254 700 111 222', license: 'KMPDC-9982' },
-  { id: 'c2', name: 'Dr. Robert Chen', role: 'General Practitioner', hospital: 'District General', email: 'r.chen@health.go.ke', phone: '+254 700 333 444', license: 'KMPDC-4421' },
+  { id: 'c1', name: 'Dr. Sarah Mwangi', role: 'Senior Neurologist', hospital: 'National Referral', email: 's.mwangi@health.go.ke', phone: '+254 700 111 222', license: 'KMPDC-9982', status: 'Approved' },
+  { id: 'c2', name: 'Dr. Robert Chen', role: 'General Practitioner', hospital: 'District General', email: 'r.chen@health.go.ke', phone: '+254 700 333 444', license: 'KMPDC-4421', status: 'Approved' },
+  { id: 'c3', name: 'Dr. Emily Wanjiku', role: 'Medical Officer', hospital: 'Regional Hospital', email: 'e.wanjiku@health.go.ke', phone: '+254 700 555 666', license: 'KMPDC-7712', status: 'Pending' },
 ];
 
 export const mockCHWs = [
-  { id: 'chw1', name: 'Alex Mutua', sector: 'Kijiji Village', activePatients: 28, email: 'a.mutua@chw.org', phone: '+254 711 555 666', performance: 'Excellent' },
-  { id: 'chw2', name: 'Grace Achieng', sector: 'Mlimani Sector', activePatients: 15, email: 'g.achieng@chw.org', phone: '+254 711 777 888', performance: 'Good' },
+  { id: 'chw1', name: 'Alex Mutua', sector: 'Kijiji Village', activePatients: 28, email: 'a.mutua@chw.org', phone: '+254 711 555 666', performance: 'Excellent', status: 'Approved' },
+  { id: 'chw2', name: 'Grace Achieng', sector: 'Mlimani Sector', activePatients: 15, email: 'g.achieng@chw.org', phone: '+254 711 777 888', performance: 'Good', status: 'Approved' },
+  { id: 'chw3', name: 'James Otieno', sector: 'Ziwani Block', activePatients: 0, email: 'j.otieno@chw.org', phone: '+254 711 999 000', performance: 'New', status: 'Pending' },
 ];
 
 export const mockHealthFacilities: HealthFacility[] = [

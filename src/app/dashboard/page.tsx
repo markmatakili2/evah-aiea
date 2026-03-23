@@ -13,7 +13,8 @@ import {
   Activity, 
   MapPin,
   ClipboardList,
-  UserCheck
+  UserCheck,
+  Stethoscope
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -26,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { mockPatients, mockUserProfile, mockCHWs } from "@/lib/mock-data";
+import { mockPatients, mockUserProfile, mockCHWs, mockClinicians } from "@/lib/mock-data";
 
 export default function Dashboard() {
   const [role, setRole] = useState<string>('chw');
@@ -61,27 +62,38 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {(isSupervisor || isClinician) ? (
-          <>
-            <Card className="bg-primary/5 border-primary/10 col-span-2">
-              <CardHeader className="p-4 pb-0">
-                <Users className="h-5 w-5 text-primary" />
-              </CardHeader>
-              <CardContent className="p-4 pt-2">
-                <div className="text-3xl font-bold text-primary">{isDemo ? '1,240' : '0'}</div>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">Regional Patient Registry</p>
-              </CardContent>
-            </Card>
+      {(isSupervisor || isClinician) && (
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="bg-primary/5 border-primary/10 col-span-2">
+            <CardHeader className="p-4 pb-0">
+              <Users className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent className="p-4 pt-2">
+              <div className="text-3xl font-bold text-primary">{isDemo ? '1,240' : '0'}</div>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">Regional Patient Registry</p>
+            </CardContent>
+          </Card>
+          {isSupervisor && (
             <Card className="bg-primary/5 border-primary/10">
               <CardHeader className="p-4 pb-0">
-                <UserCheck className="h-5 w-5 text-primary" />
+                <Stethoscope className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent className="p-4 pt-2">
-                <div className="text-2xl font-bold text-primary">{isDemo ? mockCHWs.length : '0'}</div>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">CHWs in Circle</p>
+                <div className="text-2xl font-bold text-primary">{isDemo ? mockClinicians.length : '0'}</div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">Clinicians</p>
               </CardContent>
             </Card>
+          )}
+          <Card className="bg-primary/5 border-primary/10">
+            <CardHeader className="p-4 pb-0">
+              <UserCheck className="h-5 w-5 text-primary" />
+            </CardHeader>
+            <CardContent className="p-4 pt-2">
+              <div className="text-2xl font-bold text-primary">{isDemo ? mockCHWs.length : '0'}</div>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">CHWs in Circle</p>
+            </CardContent>
+          </Card>
+          {!isSupervisor && (
             <Card className="bg-red-50 border-red-100">
               <CardHeader className="p-4 pb-0">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -91,18 +103,8 @@ export default function Dashboard() {
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Urgent Alerts</p>
               </CardContent>
             </Card>
-          </>
-        ) : (
-          <>
-            <Card className="bg-primary/5 border-primary/10">
-              <CardHeader className="p-4 pb-0">
-                <Users className="h-5 w-5 text-primary" />
-              </CardHeader>
-              <CardContent className="p-4 pt-2">
-                <div className="text-2xl font-bold text-primary">{patients.length}</div>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">My Patients</p>
-              </CardContent>
-            </Card>
+          )}
+          {isSupervisor && (
             <Card className="bg-red-50 border-red-100">
               <CardHeader className="p-4 pb-0">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -112,9 +114,9 @@ export default function Dashboard() {
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Urgent Alerts</p>
               </CardContent>
             </Card>
-          </>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {!isSupervisor && !isClinician && (
         <Button asChild size="lg" className="w-full h-16 text-lg font-headline gap-3 shadow-lg shadow-primary/20">

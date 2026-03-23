@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, MoreVertical, History, UserPlus, AlertCircle, Users, Shield, UserCircle, Mail, Phone } from "lucide-react";
+import { Search, Filter, MoreVertical, History, UserPlus, AlertCircle, Users, Shield, UserCircle, Mail, Phone, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { mockPatients, mockClinicians, mockCHWs } from "@/lib/mock-data";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RecordsPage() {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [role, setRole] = useState<string>('chw');
   const [activeTab, setActiveTab] = useState("patients");
@@ -32,6 +34,13 @@ export default function RecordsPage() {
   const clinicians = isDemo ? mockClinicians : [];
   const chws = isDemo ? mockCHWs : [];
 
+  const handleApprove = (name: string) => {
+    toast({
+      title: "Account Approved",
+      description: `${name}'s account has been verified and activated for the regional circle.`,
+    });
+  };
+
   const filteredPatients = patients.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -50,7 +59,9 @@ export default function RecordsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-headline font-bold text-primary tracking-tight italic">Regional Registry</h1>
+        <h1 className="text-2xl font-headline font-bold text-primary tracking-tight italic">
+          {isSupervisor ? "Regional User Management" : "Regional Registry"}
+        </h1>
         <Button variant="outline" size="icon" className="h-10 w-10">
           <Filter className="h-4 w-4" />
         </Button>
@@ -77,7 +88,7 @@ export default function RecordsPage() {
           <TabsContent value="patients" className="space-y-3 mt-4">
             {filteredPatients.length > 0 ? (
               filteredPatients.map(patient => (
-                <PatientCard key={patient.id} patient={patient} isRestricted={true} />
+                <PatientCard key={patient.id} patient={patient} isRestricted={isSupervisor} />
               ))
             ) : (
               <div className="py-20 text-center text-muted-foreground italic">No patient records available.</div>
@@ -92,10 +103,21 @@ export default function RecordsPage() {
                     <Shield className="h-6 w-6" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{clinician.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground truncate">{clinician.name}</h3>
+                      <Badge variant={clinician.status === 'Approved' ? 'secondary' : 'outline'} className="text-[8px] h-4">
+                        {clinician.status}
+                      </Badge>
+                    </div>
                     <p className="text-xs text-muted-foreground mt-0.5">{clinician.role} • {clinician.hospital}</p>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
+                  {isSupervisor && clinician.status === 'Pending' ? (
+                    <Button size="sm" onClick={() => handleApprove(clinician.name)} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-bold">
+                      Approve
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -109,10 +131,21 @@ export default function RecordsPage() {
                     <UserCircle className="h-6 w-6" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{chw.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground truncate">{chw.name}</h3>
+                      <Badge variant={chw.status === 'Approved' ? 'secondary' : 'outline'} className="text-[8px] h-4">
+                        {chw.status}
+                      </Badge>
+                    </div>
                     <p className="text-xs text-muted-foreground mt-0.5">Sector: {chw.sector} • {chw.activePatients} Patients</p>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
+                  {isSupervisor && chw.status === 'Pending' ? (
+                    <Button size="sm" onClick={() => handleApprove(chw.name)} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-bold">
+                      Approve
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
