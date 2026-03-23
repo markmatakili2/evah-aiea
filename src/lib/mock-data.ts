@@ -1,10 +1,9 @@
 import { AlertCircle, Calendar, ClipboardCheck } from 'lucide-react';
-import type { Notification, Patient, UserProfile } from './types';
+import type { Notification, Patient, UserProfile, Encounter } from './types';
 import type { HealthFacility } from './clinical-engine/types';
 
 /**
  * @fileOverview WHO mhGAP-aligned mock data for the AI Epilepsy Assistant prototype.
- * Cleaned of all DigiLab diagnostic testing data.
  */
 
 export const mockNotifications: Notification[] = [
@@ -34,21 +33,29 @@ export const mockUserProfile: UserProfile = {
 };
 
 export const mockPatients: Patient[] = [
-  { id: 'p1', name: 'Zahara Hassan', age: 24, gender: 'Female', location: 'Kijiji Village', status: 'Urgent', contact: '+254 711 000 111', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
-  { id: 'p2', name: 'John Kamau', age: 45, gender: 'Male', location: 'Mlimani Sector', status: 'Stable', contact: '+254 722 000 222', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
-  { id: 'p3', name: 'Amina Juma', age: 12, gender: 'Female', location: 'Pwani Area', status: 'Follow-up', contact: '+254 733 000 333', updatedAt: new Date().toISOString(), chwId: 'demo-uid' },
-  { id: 'p4', name: 'David Omondi', age: 31, gender: 'Male', location: 'Ziwani Block', status: 'Stable', contact: '+254 744 000 444', updatedAt: new Date(Date.now() - 86400000).toISOString(), chwId: 'demo-uid' },
+  { id: 'p1', name: 'Zahara Hassan', age: 24, gender: 'Female', location: 'Kijiji Village', status: 'Urgent', contact: '+254 711 000 111', updatedAt: new Date().toISOString(), chwId: 'chw1', chwName: 'Alex Mutua' },
+  { id: 'p2', name: 'John Kamau', age: 45, gender: 'Male', location: 'Mlimani Sector', status: 'Stable', contact: '+254 722 000 222', updatedAt: new Date().toISOString(), chwId: 'chw2', chwName: 'Grace Achieng' },
+  { id: 'p3', name: 'Amina Juma', age: 12, gender: 'Female', location: 'Pwani Area', status: 'Follow-up', contact: '+254 733 000 333', updatedAt: new Date().toISOString(), chwId: 'chw1', chwName: 'Alex Mutua' },
+  { id: 'p4', name: 'David Omondi', age: 31, gender: 'Male', location: 'Ziwani Block', status: 'Stable', contact: '+254 744 000 444', updatedAt: new Date(Date.now() - 86400000).toISOString(), chwId: 'chw2', chwName: 'Grace Achieng' },
 ];
 
-export const mockEncounters = [
+export const mockEncounters: Encounter[] = [
   {
     id: 'e1',
     patientId: 'p1',
-    date: new Date(Date.now() - 86400000 * 2).toISOString(),
+    date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago (Recent)
     summary: 'Emergency presentation: Prolonged convulsive seizure lasting 7 minutes. Status Epilepticus protocol initiated. Patient was stabilized and referral to tertiary hospital recommended.',
     redFlags: ['Prolonged Seizure (> 5 min)', 'Repeated Seizures without recovery'],
-    recommendation: { action: 'IMMEDIATE EMERGENCY REFERRAL', urgencyLevel: 'EMERGENCY' },
-    type: 'Emergency'
+    recommendation: { 
+      action: 'IMMEDIATE EMERGENCY REFERRAL', 
+      urgencyLevel: 'EMERGENCY',
+      referralDestination: 'KUTRRH',
+      antiStigmaMessages: ["Epilepsy is a medical condition of the brain."],
+      safetyAdvice: ["Avoid cooking over open fires alone."]
+    },
+    type: 'Emergency',
+    authorName: 'Alex Mutua',
+    authorRole: 'CHW'
   },
   {
     id: 'e2',
@@ -56,8 +63,16 @@ export const mockEncounters = [
     date: new Date(Date.now() - 86400000 * 15).toISOString(),
     summary: 'Routine review. Patient reporting good adherence to medication. Seizure frequency decreased to 1 per month.',
     redFlags: [],
-    recommendation: { action: 'Continue current management and adherence counseling.', urgencyLevel: 'STABLE' },
-    type: 'Routine'
+    recommendation: { 
+      action: 'Continue current management and adherence counseling.', 
+      urgencyLevel: 'STABLE',
+      referralDestination: 'Local Health Post',
+      antiStigmaMessages: ["Promote dignity: People with epilepsy can lead productive lives."],
+      safetyAdvice: ["Ensure adequate sleep."]
+    },
+    type: 'Routine',
+    authorName: 'Alex Mutua',
+    authorRole: 'CHW'
   }
 ];
 

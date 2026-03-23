@@ -26,6 +26,7 @@ export default function RecordsPage() {
   }, []);
 
   const isSupervisor = role === 'supervisor';
+  const isClinician = role === 'clinician';
 
   const patients = isDemo ? mockPatients : [];
   const clinicians = isDemo ? mockClinicians : [];
@@ -65,7 +66,7 @@ export default function RecordsPage() {
         />
       </div>
 
-      {isSupervisor ? (
+      {(isSupervisor || isClinician) ? (
         <Tabs defaultValue="patients" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-1 rounded-xl h-12">
             <TabsTrigger value="patients" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Patients</TabsTrigger>
@@ -76,7 +77,7 @@ export default function RecordsPage() {
           <TabsContent value="patients" className="space-y-3 mt-4">
             {filteredPatients.length > 0 ? (
               filteredPatients.map(patient => (
-                <PatientCard key={patient.id} patient={patient} isSupervisor={true} />
+                <PatientCard key={patient.id} patient={patient} isRestricted={true} />
               ))
             ) : (
               <div className="py-20 text-center text-muted-foreground italic">No patient records available.</div>
@@ -84,52 +85,44 @@ export default function RecordsPage() {
           </TabsContent>
 
           <TabsContent value="clinicians" className="space-y-3 mt-4">
-            {filteredClinicians.length > 0 ? (
-              filteredClinicians.map(clinician => (
-                <Card key={clinician.id} className="border-none shadow-sm bg-card/50">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                      <Shield className="h-6 w-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">{clinician.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{clinician.role} • {clinician.hospital}</p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="py-20 text-center text-muted-foreground italic">No clinicians registered in this region.</div>
-            )}
+            {filteredClinicians.map(clinician => (
+              <Card key={clinician.id} className="border-none shadow-sm bg-card/50">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                    <Shield className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground truncate">{clinician.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{clinician.role} • {clinician.hospital}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
+                </CardContent>
+              </Card>
+            ))}
           </TabsContent>
 
           <TabsContent value="chws" className="space-y-3 mt-4">
-            {filteredCHWs.length > 0 ? (
-              filteredCHWs.map(chw => (
-                <Card key={chw.id} className="border-none shadow-sm bg-card/50">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                      <UserCircle className="h-6 w-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">{chw.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">Sector: {chw.sector}</p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="py-20 text-center text-muted-foreground italic">No CHWs active in this region.</div>
-            )}
+            {filteredCHWs.map(chw => (
+              <Card key={chw.id} className="border-none shadow-sm bg-card/50">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                    <UserCircle className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground truncate">{chw.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Sector: {chw.sector} • {chw.activePatients} Patients</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-5 w-5" /></Button>
+                </CardContent>
+              </Card>
+            ))}
           </TabsContent>
         </Tabs>
       ) : (
         <div className="space-y-3 pb-4">
           {filteredPatients.length > 0 ? (
             filteredPatients.map((patient) => (
-              <PatientCard key={patient.id} patient={patient} isSupervisor={false} />
+              <PatientCard key={patient.id} patient={patient} isRestricted={false} />
             ))
           ) : (
             <div className="py-20 text-center text-muted-foreground bg-muted/10 rounded-2xl border-2 border-dashed">
@@ -143,7 +136,7 @@ export default function RecordsPage() {
   );
 }
 
-function PatientCard({ patient, isSupervisor }: { patient: any, isSupervisor: boolean }) {
+function PatientCard({ patient, isRestricted }: { patient: any, isRestricted: boolean }) {
   return (
     <Card className="border-none shadow-sm bg-card/50 hover:shadow-md transition-shadow">
       <CardContent className="p-4 flex items-center gap-4">
@@ -152,7 +145,12 @@ function PatientCard({ patient, isSupervisor }: { patient: any, isSupervisor: bo
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-foreground truncate">{patient.name}</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">{patient.location}</p>
+          <div className="flex flex-col gap-0.5 mt-0.5">
+            <p className="text-[10px] text-muted-foreground">{patient.location}</p>
+            {patient.chwName && (
+              <p className="text-[10px] font-bold text-primary/60 uppercase">CHW: {patient.chwName}</p>
+            )}
+          </div>
           <div className="flex items-center gap-2 mt-2">
             <Badge 
               variant="outline" 
@@ -177,7 +175,7 @@ function PatientCard({ patient, isSupervisor }: { patient: any, isSupervisor: bo
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Patient Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {!isSupervisor && (
+            {!isRestricted && (
               <>
                 <DropdownMenuItem asChild>
                   <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
