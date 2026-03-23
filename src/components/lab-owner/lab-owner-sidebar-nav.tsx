@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from "next/link";
@@ -7,11 +6,11 @@ import {
   Home,
   Package,
   User,
-  Beaker,
   MessageSquare,
   History,
   Wallet,
-  FlaskConical
+  FlaskConical,
+  Activity
 } from "lucide-react";
 import {
   Tooltip,
@@ -22,13 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const navItems = [
-  { href: "/lab-owner/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/lab-owner/dashboard/my-tests", icon: FlaskConical, label: "My Tests" },
-  { href: "/lab-owner/dashboard/requests", icon: Package, label: "Requests" },
-  { href: "/lab-owner/dashboard/history", icon: History, label: "History" },
-  { href: "/lab-owner/dashboard/earnings", icon: Wallet, label: "Earnings" },
-  { href: "/lab-owner/dashboard/chat", icon: MessageSquare, label: "Chat" },
-  { href: "/lab-owner/dashboard/profile", icon: User, label: "Profile" },
+  { href: "/dashboard", icon: Home, label: "Home" },
 ];
 
 export function LabOwnerSidebarNav() {
@@ -41,8 +34,8 @@ export function LabOwnerSidebarNav() {
           href="/"
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
-          <Beaker className="h-4 w-4 transition-all group-hover:scale-110" />
-          <span className="sr-only">DigiLab</span>
+          <Activity className="h-4 w-4 transition-all group-hover:scale-110" />
+          <span className="sr-only">AIEA</span>
         </Link>
         <TooltipProvider>
           {navItems.map((item) => (

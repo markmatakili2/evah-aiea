@@ -1,18 +1,10 @@
-
 'use client';
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home,
-  Package,
-  User,
-  Beaker,
-  MessageSquare,
-  Briefcase,
-  Wallet,
-  Users,
-  Bell
+  Activity
 } from "lucide-react";
 import {
   Tooltip,
@@ -23,14 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const navItems = [
-  { href: "/technician/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/technician/dashboard/patients", icon: Package, label: "Available Patients" },
-  { href: "/technician/dashboard/tasks", icon: Briefcase, label: "My Tasks" },
-  { href: "/technician/dashboard/earnings", icon: Wallet, label: "Earnings" },
-  { href: "/technician/dashboard/chat", icon: MessageSquare, label: "Chat" },
-  { href: "/technician/dashboard/referrals", icon: Users, label: "Referrals" },
-  { href: "/technician/dashboard/notifications", icon: Bell, label: "Notifications" },
-  { href: "/technician/dashboard/profile", icon: User, label: "Profile" },
+  { href: "/dashboard", icon: Home, label: "Home" },
 ];
 
 export function TechnicianSidebarNav() {
@@ -43,8 +28,8 @@ export function TechnicianSidebarNav() {
           href="/"
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
-          <Beaker className="h-4 w-4 transition-all group-hover:scale-110" />
-          <span className="sr-only">DigiLab</span>
+          <Activity className="h-4 w-4 transition-all group-hover:scale-110" />
+          <span className="sr-only">AIEA</span>
         </Link>
         <TooltipProvider>
           {navItems.map((item) => (
@@ -54,7 +39,7 @@ export function TechnicianSidebarNav() {
                   href={item.href}
                   className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
-                    pathname === item.href && "bg-accent text-accent-foreground"
+                    pathname.startsWith(item.href) && "bg-accent text-accent-foreground"
                   )}
                 >
                   <item.icon className="h-5 w-5" />

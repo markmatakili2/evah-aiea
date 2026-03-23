@@ -1,4 +1,3 @@
-
 import {
   Card,
   CardContent,
@@ -20,10 +19,10 @@ import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const mockAdmins = [
-  { id: 1, name: "Alice Johnson", email: "alice.j@digilab.co", phone: "+254712345678", role: "Super Admin" },
-  { id: 2, name: "Bob Williams", email: "bob.w@digilab.co", phone: "+254712345679", role: "Administration" },
-  { id: 3, name: "Charlie Brown", email: "charlie.b@digilab.co", phone: "+254712345680", role: "Accounts" },
-  { id: 4, name: "Diana Prince", email: "diana.p@digilab.co", phone: "+254712345681", role: "Board" },
+  { id: 1, name: "Alice Johnson", email: "alice.j@aiea.ai", phone: "+254711000111", role: "Super Admin" },
+  { id: 2, name: "Bob Williams", email: "bob.w@aiea.ai", phone: "+254711000222", role: "Administration" },
+  { id: 3, name: "Charlie Brown", email: "charlie.b@aiea.ai", phone: "+254711000333", role: "Accounts" },
+  { id: 4, name: "Diana Prince", email: "diana.p@aiea.ai", phone: "+254711000444", role: "Board" },
 ];
 
 export default function ManageAdminsPage() {
@@ -33,7 +32,7 @@ export default function ManageAdminsPage() {
         <div>
           <CardTitle>Manage Admins</CardTitle>
           <CardDescription>
-            Add, edit, or remove administrators.
+            Add, edit, or remove administrators for the AIEA platform.
           </CardDescription>
         </div>
         <Button>

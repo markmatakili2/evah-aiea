@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { analyzeTestHistory } from "@/ai/flows/analyze-test-history";
+import { analyzeClinicalHistory } from "@/ai/flows/analyze-clinical-history";
 import { Bot, Loader2 } from "lucide-react";
 
 interface AiInsightDialogProps {
@@ -27,24 +27,23 @@ export function AiInsightDialog({ historyData, children }: AiInsightDialogProps)
     setIsLoading(true);
     setInsights("");
     try {
-      // Simplistic stringification for the prompt
-      const resultsString = JSON.stringify(
+      const historyString = JSON.stringify(
         historyData.map((d: any) => ({
-          testName: d.testName,
           date: d.date,
-          results: d.results,
+          summary: d.summary,
+          urgency: d.recommendation?.urgencyLevel,
         })),
         null,
         2
       );
       
-      const response = await analyzeTestHistory({ testResults: resultsString });
+      const response = await analyzeClinicalHistory({ historyJson: historyString });
       setInsights(response.insights);
 
     } catch (error) {
       console.error("Failed to get AI insights", error);
       setInsights(
-        "Could not generate insights at this time. Please try again later."
+        "Could not generate clinical insights at this time. Please try again later."
       );
     } finally {
       setIsLoading(false);
@@ -64,7 +63,7 @@ export function AiInsightDialog({ historyData, children }: AiInsightDialogProps)
         {children || (
           <Button variant="outline" size="sm">
             <Bot className="mr-2 h-4 w-4" />
-            AI Insights
+            Clinical Insights
           </Button>
         )}
       </DialogTrigger>
@@ -72,23 +71,21 @@ export function AiInsightDialog({ historyData, children }: AiInsightDialogProps)
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2">
             <Bot className="w-6 h-6 text-primary" />
-            AI Health Insights
+            AI Clinical Analysis
           </DialogTitle>
           <DialogDescription>
-            AI-powered analysis of your test results. This is for informational
-            purposes only and is not a medical diagnosis. Consult a doctor for
-            medical advice.
+            AI-powered review of the patient's epilepsy history based on mhGAP protocols. This is suggestive analysis for clinical review only.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 min-h-[150px]">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-full gap-2">
               <Loader2 className="animate-spin h-8 w-8 text-primary" />
-              <p className="text-muted-foreground">Analyzing your history...</p>
+              <p className="text-muted-foreground">Analyzing clinical timeline...</p>
             </div>
           ) : (
             <div className="prose prose-sm max-w-none dark:prose-invert prose-p:text-foreground">
-              <p>{insights}</p>
+              <p className="whitespace-pre-wrap">{insights}</p>
             </div>
           )}
         </div>
