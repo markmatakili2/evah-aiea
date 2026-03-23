@@ -53,8 +53,20 @@ export default function HistoryPage() {
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex justify-between items-center w-full pr-4">
                       <div className="text-left">
-                        <div className="font-bold text-primary flex items-center gap-1">
-                          {patient?.name || `Case #${encounter.id.toUpperCase()}`}
+                        <div className="flex items-center gap-1">
+                          {patient ? (
+                            <Link 
+                              href={`/dashboard/records/${encounter.patientId}/history`}
+                              className="font-bold text-primary hover:underline z-10"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {patient.name}
+                            </Link>
+                          ) : (
+                            <span className="font-bold text-primary">
+                              {`Case #${encounter.id.toUpperCase()}`}
+                            </span>
+                          )}
                         </div>
                         <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">
                           {format(new Date(encounter.date), "PPP")}
@@ -84,7 +96,7 @@ export default function HistoryPage() {
                         <span className="text-[10px] font-bold text-muted-foreground uppercase">Author: {encounter.authorName} ({encounter.authorRole})</span>
                       </div>
 
-                      {encounter.redFlags.length > 0 && (
+                      {encounter.redFlags && encounter.redFlags.length > 0 && (
                         <div className="bg-red-50 p-3 rounded-lg border border-red-100">
                           <h4 className="text-[10px] font-bold uppercase text-red-600 mb-1">Red Flags Detected</h4>
                           <ul className="text-xs list-disc pl-4 text-red-900 space-y-0.5">
