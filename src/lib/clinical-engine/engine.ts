@@ -9,9 +9,44 @@ export function runClinicalLogic(input: ClinicalInput): Recommendation {
   let riskScore = 0;
   const detectedFlags: string[] = [];
   
-  // Suggestion Framing Messages
-  const framing = "SUGGESTION: Based on mhGAP protocols, the following management is proposed for your final decision.";
+  // 1. DYNAMIC RED FLAG DETECTION
+  // Prolonged Seizure (> 5 min) is an automated red flag
+  if (Number(input.seizureHistory.duration) >= 5) {
+    riskScore += 10;
+    detectedFlags.push("Status Epilepticus Risk (Duration >= 5m)");
+  }
 
+  // Repeated seizures without recovery
+  if (input.seizureHistory.isRepeated) {
+    riskScore += 10;
+    detectedFlags.push("Repeated Seizures (Cluster Risk)");
+  }
+
+  // Fever + Neck Stiffness
+  if (input.underlyingCauses.fever && input.underlyingCauses.neckStiffness) {
+    riskScore += 9;
+    detectedFlags.push("CNS Infection Risk (Fever + Neck Stiffness)");
+  }
+
+  // Pregnancy
+  if (input.patientProfile.isPregnant || (input.patientProfile.sex === 'female' && input.redFlags.isPregnant)) {
+    riskScore += 9;
+    detectedFlags.push("Eclampsia Risk (Pregnancy with Seizures)");
+  }
+
+  // Pediatric New Onset
+  if (input.patientProfile.age < 5) {
+    riskScore += 6;
+    detectedFlags.push("Pediatric New-Onset (Under 5 years)");
+  }
+
+  // Sudden weakness
+  if (input.underlyingCauses.suddenOnsetNeurological) {
+    riskScore += 8;
+    detectedFlags.push("Suspected Stroke/Acute Neurological Insult");
+  }
+
+  // Suggestion Framing Messages
   const antiStigmaMessages: string[] = [
     "Epilepsy is a medical condition of the brain, not a curse or a result of spirits.",
     "Epilepsy is NOT contagious. You cannot catch it by touch or saliva.",
@@ -31,47 +66,19 @@ export function runClinicalLogic(input: ClinicalInput): Recommendation {
     "Ensure adequate sleep and avoid excessive alcohol."
   ];
 
-  // 1. EMERGENCY EVALUATION (mhGAP Step 1 - Safety Primary)
-  if (input.redFlags.prolongedSeizure || input.redFlags.repeated) {
-    riskScore += 10;
-    detectedFlags.push("Status Epilepticus Risk (Prolonged/Repeated)");
-  }
-  if (input.redFlags.isPregnant || input.patientProfile.isPregnant) {
-    riskScore += 9;
-    detectedFlags.push("Pregnancy with Seizures (High Tier Eclampsia Risk)");
-  }
-  if (input.redFlags.feverNeck || input.underlyingCauses.suddenOnsetNeurological) {
-    riskScore += 9;
-    detectedFlags.push("Suspected CNS Infection (Meningitis/Encephalitis)");
-  }
-  if (input.redFlags.injury) {
-    riskScore += 7;
-    detectedFlags.push("Severe seizure-related trauma");
-  }
-
-  // 2. UNDERLYING CAUSES & SPECIAL POPULATIONS (Pediatrics)
-  if (input.redFlags.newOnsetUnder5) {
-    riskScore += 6;
-    detectedFlags.push("Pediatric New-Onset (Under 5 years)");
-  }
-  if (input.underlyingCauses.headTrauma || input.underlyingCauses.perinatalInsult) {
-    riskScore += 4;
-    counselingPoints.push("Structural evaluate suggested due to trauma/birth history.");
-  }
-
-  // 3. PHARMACOLOGIC PRINCIPLES (Suggestive dose/titration)
+  // 2. PHARMACOLOGIC PRINCIPLES
   let medGuidance = "";
   if (input.currentManagement) {
     if (input.currentManagement.adherence === 'poor') {
       medGuidance = "PRIORITY: Adherence counseling required before any dosage escalation.";
     } else if (input.currentManagement.sideEffects.length > 0) {
-      medGuidance = `Monitor side effects: ${input.currentManagement.sideEffects.join(", ")}. Dose adjustment or modification may be required.`;
+      medGuidance = `Monitor side effects: ${input.currentManagement.sideEffects.join(", ")}. Dose adjustment may be required.`;
     }
   } else if (riskScore < 5 && input.seizureHistory.frequency !== 'none') {
-    medGuidance = "Consider starting first-line anti-seizure medication (e.g., Carbamazepine or Sodium Valproate) per National Essential Medicines List.";
+    medGuidance = "Consider starting first-line anti-seizure medication per National Essential Medicines List.";
   }
 
-  // 4. DETERMINING URGENCY & TARGET FACILITY (GIS Guidance)
+  // 3. DETERMINING URGENCY & TARGET FACILITY
   let urgency: UrgencyLevel = 'STABLE';
   let action = "Continue local management and monthly monitoring.";
   let destination = "Local Health Post";
@@ -84,7 +91,7 @@ export function runClinicalLogic(input: ClinicalInput): Recommendation {
     destination = "Tertiary Specialist Unit / Hospital";
     followUp = "Immediate handover to specialized care.";
     targetFacilityType = 'specialist';
-  } else if (riskScore >= 5 || input.redFlags.medicationFail) {
+  } else if (riskScore >= 5) {
     urgency = 'URGENT';
     action = "Refer for Clinician Review within 24-48 hours.";
     destination = "District Hospital / Clinician";
@@ -108,6 +115,7 @@ export function runClinicalLogic(input: ClinicalInput): Recommendation {
     riskScore,
     clinicalReasoning: reasoning,
     clinicianReviewRequired: riskScore >= 5,
-    targetFacilityType
+    targetFacilityType,
+    detectedRedFlags: detectedFlags
   };
 }

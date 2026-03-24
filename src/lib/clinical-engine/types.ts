@@ -16,6 +16,7 @@ export interface ClinicalInput {
     triggers: string[];
     developmentalHistory?: string;
     comorbidities: string[];
+    isRepeated?: boolean; // New: identified in history
   };
   underlyingCauses: {
     fever: boolean;
@@ -23,6 +24,7 @@ export interface ClinicalInput {
     perinatalInsult: boolean;
     metabolicSuspicion: boolean;
     suddenOnsetNeurological: boolean;
+    neckStiffness?: boolean; // New: identified here
   };
   redFlags: {
     repeated: boolean;
@@ -54,6 +56,7 @@ export interface Recommendation {
   clinicalReasoning: string;
   clinicianReviewRequired: boolean;
   targetFacilityType?: 'specialist' | 'district' | 'local';
+  detectedRedFlags: string[]; // Added: for UI display
 }
 
 export interface HealthFacility {
