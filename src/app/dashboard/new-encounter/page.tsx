@@ -29,7 +29,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { runClinicalLogic } from '@/lib/clinical-engine/engine';
@@ -45,13 +45,16 @@ import {
 import { FacilityMap } from '@/components/dashboard/facility-map';
 import { usePrint } from '@/hooks/usePrint';
 import { format } from 'date-fns';
-import { mockUserProfile } from '@/lib/mock-data';
+import { mockUserProfile, mockPatients } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
+import { Encounter } from '@/lib/types';
 
 type Step = 'consent' | 'patient' | 'history' | 'causes' | 'assessment' | 'report' | 'final';
 
 function NewEncounterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const patientId = searchParams.get('patientId');
   const { toast } = useToast();
   const { print } = usePrint();
 
@@ -63,12 +66,13 @@ function NewEncounterContent() {
   const [isApproved, setIsApproved] = useState(false);
 
   // Patient Data State
+  const initialPatient = patientId ? mockPatients.find(p => p.id === patientId) : null;
   const [patientData, setPatientData] = useState({
-    name: '',
+    name: initialPatient?.name || '',
     dob: '',
-    sex: '',
-    location: '',
-    contact: '',
+    sex: initialPatient?.gender?.toLowerCase() || '',
+    location: initialPatient?.location || '',
+    contact: initialPatient?.contact || '',
     isPregnant: false,
     weight: ''
   });
@@ -95,11 +99,37 @@ function NewEncounterContent() {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
 
   const calculatedAge = useMemo(() => {
+    if (initialPatient?.age) return initialPatient.age;
     if (!patientData.dob) return 30;
     const birthDate = new Date(patientData.dob);
     if (isNaN(birthDate.getTime())) return 30;
     return new Date().getFullYear() - birthDate.getFullYear();
-  }, [patientData.dob]);
+  }, [patientData.dob, initialPatient]);
+
+  const saveEncounterToHistory = (rec: Recommendation, isOverride: boolean = false) => {
+    const newEncounter: Encounter = {
+      id: `e-${Date.now()}`,
+      patientId: patientId || 'new-patient',
+      date: new Date().toISOString(),
+      summary: `Guided assessment: ${historyData.type} episodes, semiology: ${historyData.semiology.join(', ')}. Symptoms lasted ${historyData.duration}m.`,
+      redFlags: rec.detectedRedFlags,
+      recommendation: {
+        action: rec.actionDescription,
+        urgencyLevel: rec.urgencyLevel,
+        referralDestination: rec.referralDestination,
+        antiStigmaMessages: rec.counselingPoints,
+        safetyAdvice: rec.safetyWarnings
+      },
+      type: rec.urgencyLevel === 'EMERGENCY' ? 'Emergency' : 'Routine',
+      discordanceNote: isOverride ? `${overrideData.reason}: ${overrideData.notes}` : undefined,
+      authorName: mockUserProfile.name,
+      authorRole: mockUserProfile.role.toUpperCase(),
+      isClinicianUpdated: mockUserProfile.role === 'clinician'
+    };
+
+    const existingLogs = JSON.parse(localStorage.getItem('session_encounters') || '[]');
+    localStorage.setItem('session_encounters', JSON.stringify([...existingLogs, newEncounter]));
+  };
 
   const runAssessment = () => {
     setStep('assessment');
@@ -128,16 +158,18 @@ function NewEncounterContent() {
   };
 
   const handleApprove = () => {
+    if (recommendation) saveEncounterToHistory(recommendation);
     setIsApproved(true);
     setStep('final');
-    toast({ title: "Recommendation Approved", description: "Generating clinical report document." });
+    toast({ title: "Recommendation Approved", description: "Encounter logged to clinical history." });
   };
 
   const handleOverrideComplete = () => {
+    if (recommendation) saveEncounterToHistory(recommendation, true);
     setShowOverrideDialog(false);
     setIsApproved(true);
     setStep('final');
-    toast({ title: "Override Logged", description: "Final clinical report generated with discordance notes." });
+    toast({ title: "Override Logged", description: "Encounter registered with clinical discordance notes." });
   };
 
   const handleDownload = () => {
@@ -208,12 +240,12 @@ function NewEncounterContent() {
             <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><UserCircle className="h-5 w-5" /> Patient Context</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2"><Label>Full Name</Label><Input value={patientData.name} onChange={e => setPatientData({...patientData, name: e.target.value})} placeholder="Patient's name" /></div>
-            <div className="space-y-2"><Label>Location / Address</Label><Input value={patientData.location} onChange={e => setPatientData({...patientData, location: e.target.value})} placeholder="Village or Sector" /></div>
+            <div className="space-y-2"><Label>Full Name</Label><Input value={patientData.name} onChange={e => setPatientData({...patientData, name: e.target.value})} placeholder="Patient's name" readOnly={!!initialPatient} /></div>
+            <div className="space-y-2"><Label>Location / Address</Label><Input value={patientData.location} onChange={e => setPatientData({...patientData, location: e.target.value})} placeholder="Village or Sector" readOnly={!!initialPatient} /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={patientData.dob} onChange={e => setPatientData({...patientData, dob: e.target.value})} /></div>
+              <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={patientData.dob} onChange={e => setPatientData({...patientData, dob: e.target.value})} readOnly={!!initialPatient} /></div>
               <div className="space-y-2"><Label>Sex</Label>
-                <Select value={patientData.sex} onValueChange={v => setPatientData({...patientData, sex: v})}>
+                <Select value={patientData.sex} onValueChange={v => setPatientData({...patientData, sex: v})} disabled={!!initialPatient}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent><SelectItem value="male">Male</SelectItem><SelectItem value="female">Female</SelectItem></SelectContent>
                 </Select>

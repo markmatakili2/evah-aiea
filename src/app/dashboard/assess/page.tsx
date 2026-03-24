@@ -54,6 +54,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePrint } from "@/hooks/usePrint";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
+import { Encounter } from "@/lib/types";
 
 type Message = {
   id: string;
@@ -118,6 +119,33 @@ export default function AssessPage() {
     ]);
   };
 
+  const saveEncounterToHistory = (recommendation: Recommendation, isOverride: boolean = false) => {
+    if (!selectedPatientId) return;
+
+    const newEncounter: Encounter = {
+      id: `e-${Date.now()}`,
+      patientId: selectedPatientId,
+      date: new Date().toISOString(),
+      summary: `Conversational assessment: ${messages.filter(m => m.role === 'user').map(m => m.content).join(' | ')}`,
+      redFlags: recommendation.detectedRedFlags,
+      recommendation: {
+        action: recommendation.actionDescription,
+        urgencyLevel: recommendation.urgencyLevel,
+        referralDestination: recommendation.referralDestination,
+        antiStigmaMessages: recommendation.counselingPoints,
+        safetyAdvice: recommendation.safetyWarnings
+      },
+      type: recommendation.urgencyLevel === 'EMERGENCY' ? 'Emergency' : 'Routine',
+      discordanceNote: isOverride ? `${overrideData.reason}: ${overrideData.notes}` : undefined,
+      authorName: mockUserProfile.name,
+      authorRole: mockUserProfile.role.toUpperCase(),
+      isClinicianUpdated: mockUserProfile.role === 'clinician'
+    };
+
+    const existingLogs = JSON.parse(localStorage.getItem('session_encounters') || '[]');
+    localStorage.setItem('session_encounters', JSON.stringify([...existingLogs, newEncounter]));
+  };
+
   const handleSendText = () => {
     if (!inputText.trim()) return;
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: inputText };
@@ -147,7 +175,6 @@ export default function AssessPage() {
     setIsProcessing(true);
     
     setTimeout(() => {
-      // Logic: If stage 0 and input is brief, ask a clarifying question
       if (conversationStage === 0 && input.split(' ').length < 10) {
         const clarifyingMsg: Message = {
           id: Date.now().toString(),
@@ -159,7 +186,6 @@ export default function AssessPage() {
         setConversationStage(1);
         setIsProcessing(false);
       } else {
-        // Run full analysis
         runOnDeviceAnalysis(input);
       }
     }, 1500);
@@ -193,17 +219,23 @@ export default function AssessPage() {
 
   const handleAction = (type: 'approve' | 'override') => {
     if (type === 'approve') {
+      if (activeRecommendation) {
+        saveEncounterToHistory(activeRecommendation);
+      }
       setShowFinalReport(true);
-      toast({ title: "Recommendation Approved", description: "Generating clinical encounter report." });
+      toast({ title: "Recommendation Approved", description: "Clinical encounter added to patient history." });
     } else {
       setShowOverrideDialog(true);
     }
   };
 
   const handleOverrideComplete = () => {
+    if (activeRecommendation) {
+      saveEncounterToHistory(activeRecommendation, true);
+    }
     setShowOverrideDialog(false);
     setShowFinalReport(true);
-    toast({ title: "Clinical Override Logged", description: "Assessment updated with specialist clinical oversight notes." });
+    toast({ title: "Clinical Override Logged", description: "Assessment updated with specialist oversight in registry." });
   };
 
   const handleDownload = () => {

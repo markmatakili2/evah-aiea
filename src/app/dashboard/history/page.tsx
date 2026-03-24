@@ -17,23 +17,33 @@ import {
 } from "@/components/ui/card";
 import { User, ClipboardList, ExternalLink } from "lucide-react";
 import { mockEncounters, mockPatients } from "@/lib/mock-data";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { Encounter } from "@/lib/types";
 
 export default function HistoryPage() {
-  const [encounters, setEncounters] = useState<any[]>([]);
+  const [sessionEncounters, setSessionEncounters] = useState<Encounter[]>([]);
   const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
     const demoFlag = localStorage.getItem('is_demo') === 'true';
     setIsDemo(demoFlag);
-    if (demoFlag) {
-      setEncounters(mockEncounters);
-    } else {
-      setEncounters([]);
+    
+    // Load logged encounters from session
+    const saved = localStorage.getItem('session_encounters');
+    if (saved) {
+      setSessionEncounters(JSON.parse(saved));
     }
   }, []);
+
+  const allEncounters = useMemo(() => {
+    const base = isDemo ? mockEncounters : [];
+    // Merge and sort by date descending
+    return [...sessionEncounters, ...base].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, [sessionEncounters, isDemo]);
 
   return (
     <div className="space-y-6">
@@ -45,9 +55,9 @@ export default function HistoryPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0">
-          {encounters.length > 0 ? (
+          {allEncounters.length > 0 ? (
             <Accordion type="single" collapsible className="w-full space-y-3">
-              {encounters.map((encounter) => {
+              {allEncounters.map((encounter) => {
                 const patient = mockPatients.find(p => p.id === encounter.patientId);
                 return (
                   <AccordionItem key={encounter.id} value={encounter.id} className="border rounded-xl bg-card px-4 shadow-sm">
@@ -65,7 +75,7 @@ export default function HistoryPage() {
                               </Link>
                             ) : (
                               <span className="font-bold text-primary">
-                                {`Case #${encounter.id.toUpperCase()}`}
+                                {`Case #${encounter.id.slice(-6).toUpperCase()}`}
                               </span>
                             )}
                           </div>
@@ -110,6 +120,13 @@ export default function HistoryPage() {
                           <h4 className="text-[10px] font-bold uppercase text-primary mb-1">Proposed Management</h4>
                           <p className="text-sm font-bold text-slate-800">{encounter.recommendation.action}</p>
                         </div>
+
+                        {encounter.discordanceNote && (
+                          <div className="p-3 border border-red-200 rounded-lg bg-red-50/30">
+                            <h4 className="text-[10px] font-bold uppercase text-red-800 mb-1">Clinical Discordance Note</h4>
+                            <p className="text-xs italic text-red-900">{encounter.discordanceNote}</p>
+                          </div>
+                        )}
                       </div>
                     </AccordionContent>
                   </AccordionItem>

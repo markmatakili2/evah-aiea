@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useMemo } from 'react';
+import { use, useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
@@ -40,6 +40,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Encounter } from '@/lib/types';
 
 const formatSafeDate = (dateValue: any, formatStr: string = 'PPP p') => {
   if (!dateValue) return 'N/A';
@@ -58,12 +59,27 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
   const [showFullReport, setShowFullReport] = useState(false);
   const [showOverride, setShowOverride] = useState(false);
   const [overrideNotes, setOverrideNotes] = useState("");
+  const [sessionEncounters, setSessionEncounters] = useState<Encounter[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('session_encounters');
+    if (saved) {
+      setSessionEncounters(JSON.parse(saved));
+    }
+  }, []);
 
   const role = typeof window !== 'undefined' ? localStorage.getItem('demo_role') : 'chw';
   const isClinician = role === 'clinician';
 
   const patient = mockPatients.find(p => p.id === id);
-  const patientEncounters = mockEncounters.filter(e => e.patientId === id);
+  
+  const patientEncounters = useMemo(() => {
+    const base = mockEncounters.filter(e => e.patientId === id);
+    const session = sessionEncounters.filter(e => e.patientId === id);
+    return [...session, ...base].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, [id, sessionEncounters]);
 
   const filteredEncounters = useMemo(() => {
     if (!patientEncounters) return [];
@@ -120,8 +136,8 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
               <p className="font-bold underline mb-1">Clinical Summary:</p>
               <p>{e.summary}</p>
             </div>
-            {e.redFlags.length > 0 && (
-              <div className="bg-white">
+            {e.redFlags && e.redFlags.length > 0 && (
+              <div className="bg-white mt-4">
                 <p className="font-bold text-red-600">Red Flags Triggered:</p>
                 <ul className="list-disc pl-5 font-bold text-red-900">
                   {e.redFlags.map((rf: string, idx: number) => <li key={idx}>{rf}</li>)}
@@ -142,13 +158,13 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
             <div className="bg-white">
               <p className="font-bold underline mb-1 uppercase">Counselling points:</p>
               <ul className="list-disc pl-5">
-                {e.recommendation.counselingPoints?.map((m: string, i: number) => <li key={i}>{m}</li>)}
+                {e.recommendation.antiStigmaMessages?.map((m: string, i: number) => <li key={i}>{m}</li>)}
               </ul>
             </div>
             <div className="bg-white">
               <p className="font-bold underline mb-1 uppercase text-red-600">Safety warnings:</p>
               <ul className="list-disc pl-5 text-red-900 font-bold">
-                {e.recommendation.safetyWarnings?.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                {e.recommendation.safetyAdvice?.map((s: string, i: number) => <li key={i}>{s}</li>)}
               </ul>
             </div>
           </div>
@@ -317,13 +333,13 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
                     <div className="bg-white">
                       <p className="underline font-bold">Counseling Points:</p>
                       <ul className="list-disc pl-4 space-y-1 mt-1">
-                        {selectedEncounter.recommendation.counselingPoints?.map((m: string, i: number) => <li key={i}>{m}</li>)}
+                        {selectedEncounter.recommendation.antiStigmaMessages?.map((m: string, i: number) => <li key={i}>{m}</li>)}
                       </ul>
                     </div>
                     <div className="bg-white">
                       <p className="underline font-bold text-red-600">Safety Warnings:</p>
                       <ul className="list-disc pl-4 space-y-1 mt-1 text-red-900 font-bold">
-                        {selectedEncounter.recommendation.safetyWarnings?.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        {selectedEncounter.recommendation.safetyAdvice?.map((s: string, i: number) => <li key={i}>{s}</li>)}
                       </ul>
                     </div>
                   </div>
