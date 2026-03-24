@@ -39,6 +39,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const formatSafeDate = (dateValue: any, formatStr: string = 'PPP p') => {
   if (!dateValue) return 'N/A';
@@ -78,7 +79,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
   }, [patientEncounters, timeFilter]);
 
   const handleOverrideSubmit = () => {
-    toast({ title: "Clinical Override Saved", description: "Assessment updated with clinician high-tier notes." });
+    toast({ title: "Clinical Override Saved", description: "Assessment updated with specialist clinical oversight notes." });
     setShowOverride(false);
     setOverrideNotes("");
   };
@@ -102,29 +103,27 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
         </header>
 
         <section className="mb-10">
-          <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">1. Patient Demographics</h2>
+          <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">1. Patient Profile</h2>
           <div className="grid grid-cols-2 gap-y-2 text-sm">
             <p><strong>Full Name:</strong> {p.name}</p>
-            <p><strong>Contact:</strong> {p.contact}</p>
             <p><strong>Age / Sex:</strong> {p.age}Y • {p.gender}</p>
             <p><strong>Location:</strong> {p.location}</p>
           </div>
         </section>
 
         <section className="mb-10">
-          <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">2. Assessment Details</h2>
+          <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">2. Clinical Findings</h2>
           <div className="space-y-4 text-sm">
-            <p><strong>Date of Assessment:</strong> {formatSafeDate(e.date)}</p>
-            <p><strong>Primary Author:</strong> {e.authorName} ({e.authorRole})</p>
-            <p><strong>Risk Flag:</strong> {e.recommendation.urgencyLevel} RISK</p>
+            <p><strong>Urgency Level:</strong> {e.recommendation.urgencyLevel} RISK</p>
+            <p><strong>Action Type:</strong> {e.recommendation.action}</p>
             <div className="bg-slate-50 p-4 border rounded">
               <p className="font-bold underline mb-1">Clinical Summary:</p>
               <p>{e.summary}</p>
             </div>
             {e.redFlags.length > 0 && (
               <div>
-                <p><strong>Red Flags Reported:</strong></p>
-                <ul className="list-disc pl-5">
+                <p className="font-bold text-red-600">Red Flags Triggered:</p>
+                <ul className="list-disc pl-5 font-bold text-red-900">
                   {e.redFlags.map((rf: string, idx: number) => <li key={idx}>{rf}</li>)}
                 </ul>
               </div>
@@ -133,22 +132,30 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
         </section>
 
         <section className="mb-10">
-          <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">3. Recommended Actions</h2>
-          <div className="space-y-4 text-sm">
-            <p><strong>Suggested Action:</strong> {e.recommendation.action}</p>
-            <p><strong>Referral Destination:</strong> {e.recommendation.referralDestination}</p>
+          <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">3. Follow-up Plan</h2>
+          <p className="text-sm font-bold italic">"{e.recommendation.followUpPlan || 'Routine monthly review.'}"</p>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">4. Counseling & Safety</h2>
+          <div className="grid grid-cols-1 gap-4 text-sm">
             <div>
-              <p className="font-bold underline mb-1">Counselling & Advice:</p>
+              <p className="font-bold underline mb-1 uppercase">Counselling points:</p>
               <ul className="list-disc pl-5">
-                {e.recommendation.antiStigmaMessages?.map((m: string, i: number) => <li key={i}>{m}</li>)}
-                {e.recommendation.safetyAdvice?.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                {e.recommendation.counselingPoints?.map((m: string, i: number) => <li key={i}>{m}</li>)}
+              </ul>
+            </div>
+            <div>
+              <p className="font-bold underline mb-1 uppercase text-red-600">Safety warnings:</p>
+              <ul className="list-disc pl-5 text-red-900 font-bold">
+                {e.recommendation.safetyWarnings?.map((s: string, i: number) => <li key={i}>{s}</li>)}
               </ul>
             </div>
           </div>
         </section>
 
-        <section className="mb-10">
-          <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">4. Record Attribution</h2>
+        <section className="mb-10 pt-10">
+          <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">Record Attribution</h2>
           <div className="text-sm space-y-1 italic">
             <p><strong>Generated By:</strong> {e.authorName}</p>
             <p><strong>Role:</strong> {e.authorRole}</p>
@@ -160,7 +167,6 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
           <div className="flex justify-between items-end">
             <div className="text-xs text-slate-400">
               <p>© 2026 AI Epilepsy Assistant Project</p>
-              <p>Generated by: {e.authorName}</p>
             </div>
             <div className="text-center border-t border-slate-900 pt-2 px-10">
               <p className="text-xs font-bold uppercase">Authorized Clinician Signature</p>
@@ -182,7 +188,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
           <ChevronLeft className="h-4 w-4 mr-1" /> Records
         </Button>
         <Button onClick={() => handleDownload()} variant="outline" size="sm" className="gap-2 border-primary text-primary hover:bg-primary/5">
-          <Download className="h-4 w-4" /> Download Full History
+          <Download className="h-4 w-4" /> Download History
         </Button>
       </div>
 
@@ -246,7 +252,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
 
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1 h-9 text-[10px] font-bold uppercase tracking-widest" onClick={() => { setSelectedEncounter(encounter); setShowFullReport(true); }}>
-                      <FileSearch className="h-3 w-3 mr-2" /> View Full Report
+                      <FileSearch className="h-3 w-3 mr-2" /> View Detailed Report
                     </Button>
                     <Button variant="ghost" size="sm" className="shrink-0 h-9" onClick={() => handleDownload(encounter)}>
                       <Download className="h-4 w-4" />
@@ -268,8 +274,8 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
       <Dialog open={showFullReport} onOpenChange={setShowFullReport}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto p-0 border-none shadow-2xl">
           <DialogHeader className="sr-only">
-            <DialogTitle>Clinical Encounter Report Preview</DialogTitle>
-            <DialogDescription>Detailed view of the selected epilepsy clinical encounter record.</DialogDescription>
+            <DialogTitle>Clinical Report Preview</DialogTitle>
+            <DialogDescription>Detailed view of clinical parameters.</DialogDescription>
           </DialogHeader>
           {selectedEncounter && (
             <div className="bg-white p-8 text-slate-900 leading-normal" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
@@ -284,7 +290,6 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
                   <h2 className="text-sm font-bold uppercase border-b pb-1 mb-3">1. Patient Profile</h2>
                   <div className="grid grid-cols-2 gap-y-1 text-xs">
                     <p><strong>Name:</strong> {patient.name}</p>
-                    <p><strong>Contact:</strong> {patient.contact}</p>
                     <p><strong>Age/Sex:</strong> {patient.age}Y • {patient.gender}</p>
                     <p><strong>Author:</strong> {selectedEncounter.authorName}</p>
                   </div>
@@ -292,31 +297,43 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
 
                 <section>
                   <h2 className="text-sm font-bold uppercase border-b pb-1 mb-3">2. Clinical Findings</h2>
-                  <div className="space-y-2 text-xs">
-                    <p><strong>Risk Level:</strong> {selectedEncounter.recommendation.urgencyLevel} RISK</p>
-                    <p><strong>Summary:</strong> {selectedEncounter.summary}</p>
-                  </div>
-                </section>
-
-                <section>
-                  <h2 className="text-sm font-bold uppercase border-b pb-1 mb-3">3. Proposed Management</h2>
                   <div className="space-y-3 text-xs">
-                    <p><strong>Action:</strong> {selectedEncounter.recommendation.action}</p>
-                    <div>
-                      <p className="underline font-bold">Clinical Advice:</p>
-                      <ul className="list-disc pl-4 space-y-1 mt-1">
-                        {selectedEncounter.recommendation.antiStigmaMessages?.map((m: string, i: number) => <li key={i}>{m}</li>)}
-                        {selectedEncounter.recommendation.safetyAdvice?.map((s: string, i: number) => <li key={i}>{s}</li>)}
-                      </ul>
+                    <p><strong>Urgency Level:</strong> {selectedEncounter.recommendation.urgencyLevel} RISK</p>
+                    <p><strong>Action Type:</strong> {selectedEncounter.recommendation.action}</p>
+                    <div className="bg-slate-50 p-2 rounded italic">
+                      <p><strong>Summary:</strong> {selectedEncounter.summary}</p>
                     </div>
                   </div>
                 </section>
 
                 <section>
-                  <h2 className="text-sm font-bold uppercase border-b pb-1 mb-3">4. Attribution</h2>
+                  <h2 className="text-sm font-bold uppercase border-b pb-1 mb-3">3. Follow-up Plan</h2>
+                  <p className="text-xs italic">"{selectedEncounter.recommendation.followUpPlan || 'Routine assessment scheduled.'}"</p>
+                </section>
+
+                <section>
+                  <h2 className="text-sm font-bold uppercase border-b pb-1 mb-3">4. Counseling & Safety</h2>
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <p className="underline font-bold">Counseling Points:</p>
+                      <ul className="list-disc pl-4 space-y-1 mt-1">
+                        {selectedEncounter.recommendation.counselingPoints?.map((m: string, i: number) => <li key={i}>{m}</li>)}
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="underline font-bold text-red-600">Safety Warnings:</p>
+                      <ul className="list-disc pl-4 space-y-1 mt-1 text-red-900 font-bold">
+                        {selectedEncounter.recommendation.safetyWarnings?.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="pt-6">
+                  <h2 className="text-xs font-bold uppercase border-b pb-1 mb-2">Attribution</h2>
                   <div className="text-[10px] italic text-slate-500">
-                    <p>Assessment performed by: {selectedEncounter.authorName} ({selectedEncounter.authorRole})</p>
-                    <p>Facility: Regional Epilepsy Registry</p>
+                    <p>Performed by: {selectedEncounter.authorName} ({selectedEncounter.authorRole})</p>
+                    <p>Facility: Regional Health Circle</p>
                   </div>
                 </section>
               </div>
@@ -336,11 +353,11 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
         <DialogContent className="max-w-sm rounded-3xl">
           <DialogHeader>
             <DialogTitle className="font-headline italic text-primary">Clinician Update</DialogTitle>
-            <DialogDescription>Updating CHW assessment with specialist clinical oversight notes.</DialogDescription>
+            <DialogDescription>Updating assessment with clinical oversight notes.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-widest">Assessment Author (CHW)</Label>
+              <Label className="text-xs font-bold uppercase tracking-widest">CHW Author</Label>
               <div className="p-3 bg-muted/30 rounded-xl text-xs font-bold">{selectedEncounter?.authorName}</div>
             </div>
             <div className="space-y-2">
@@ -348,7 +365,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
               <Textarea 
                 value={overrideNotes} 
                 onChange={e => setOverrideNotes(e.target.value)} 
-                placeholder="Add clinical findings, diagnostic plan, or titration updates..." 
+                placeholder="Add clinical findings or diagnostic plans..." 
                 className="rounded-xl min-h-[120px] border-muted"
               />
             </div>

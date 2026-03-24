@@ -1,4 +1,4 @@
-export type UrgencyLevel = 'EMERGENCY' | 'URGENT' | 'ROUTINE' | 'STABLE';
+export type UrgencyLevel = 'EMERGENCY' | 'URGENT' | 'ROUTINE';
 
 export interface ClinicalInput {
   patientProfile: {
@@ -9,14 +9,14 @@ export interface ClinicalInput {
   };
   seizureHistory: {
     type: string;
-    semiology: string[]; // motor, awareness level, vocalization
+    semiology: string[];
     duration: string;
     frequency: string;
     onsetAge?: string;
     triggers: string[];
     developmentalHistory?: string;
     comorbidities: string[];
-    isRepeated?: boolean; // New: identified in history
+    isRepeated?: boolean;
   };
   underlyingCauses: {
     fever: boolean;
@@ -24,7 +24,7 @@ export interface ClinicalInput {
     perinatalInsult: boolean;
     metabolicSuspicion: boolean;
     suddenOnsetNeurological: boolean;
-    neckStiffness?: boolean; // New: identified here
+    neckStiffness?: boolean;
   };
   redFlags: {
     repeated: boolean;
@@ -33,7 +33,7 @@ export interface ClinicalInput {
     newOnsetUnder5: boolean;
     medicationFail: boolean;
     isPregnant?: boolean;
-    prolongedSeizure: boolean; // > 5 mins
+    prolongedSeizure: boolean;
   };
   currentManagement?: {
     medication: string;
@@ -45,18 +45,16 @@ export interface ClinicalInput {
 
 export interface Recommendation {
   urgencyLevel: UrgencyLevel;
-  action: string;
+  action: 'Counsel' | 'Refer' | 'Treat';
+  actionDescription: string;
   referralDestination: string;
-  followUpInterval: string;
+  followUpPlan: string;
   counselingPoints: string[];
-  antiStigmaMessages: string[];
-  safetyAdvice: string[];
-  medicationGuidance?: string;
+  safetyWarnings: string[];
   riskScore: number;
   clinicalReasoning: string;
-  clinicianReviewRequired: boolean;
   targetFacilityType?: 'specialist' | 'district' | 'local';
-  detectedRedFlags: string[]; // Added: for UI display
+  detectedRedFlags: string[];
 }
 
 export interface HealthFacility {

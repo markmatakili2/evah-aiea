@@ -13,7 +13,6 @@ import {
   ChevronLeft, 
   Sparkles,
   UserCircle,
-  ShieldAlert,
   TriangleAlert,
   Loader2,
   Edit3,
@@ -22,13 +21,12 @@ import {
   Activity,
   Stethoscope,
   Info,
-  ShieldCheck,
   ClipboardCheck,
   CheckCircle2,
   Download,
-  Share2,
   X,
-  AlertTriangle
+  AlertTriangle,
+  ShieldAlert
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -109,7 +107,7 @@ function NewEncounterContent() {
       patientProfile: { age: calculatedAge, sex: patientData.sex, isPregnant: patientData.isPregnant, weightKg: Number(patientData.weight) },
       seizureHistory: historyData,
       underlyingCauses: causesData,
-      redFlags: { // Mapping internal detections to engine red flags structure
+      redFlags: {
         repeated: historyData.isRepeated,
         feverNeck: causesData.fever && causesData.neckStiffness,
         injury: false,
@@ -172,7 +170,7 @@ function NewEncounterContent() {
       {step !== 'final' && (
         <div className="flex flex-col gap-2 sticky top-0 bg-background pt-2 z-10">
           <div className="flex justify-between items-center px-1">
-            <h1 className="text-xl font-headline font-bold text-primary italic">Clinical Engine Support</h1>
+            <h1 className="text-xl font-headline font-bold text-primary italic">Clinical Engine</h1>
             <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">AI Protocol Analysis</Badge>
           </div>
           <Progress value={stepProgress[step]} className="h-1.5" />
@@ -237,8 +235,8 @@ function NewEncounterContent() {
       {step === 'history' && (
         <Card className="border-none shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><Activity className="h-5 w-5" /> Structured History</CardTitle>
-            <CardDescription>Semiology & classification per WHO guidelines.</CardDescription>
+            <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><Activity className="h-5 w-5" /> Seizure History</CardTitle>
+            <CardDescription>Structured semiology per WHO guidelines.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -253,7 +251,7 @@ function NewEncounterContent() {
             </div>
             
             <div className="space-y-2">
-              <Label>Semiology (Observed Signs)</Label>
+              <Label>Semiology (Signs)</Label>
               <div className="grid grid-cols-2 gap-2">
                 {['Motor Jerking', 'Stiffness', 'Loss of Awareness', 'Tongue Biting'].map(s => (
                   <Button key={s} type="button" variant={historyData.semiology.includes(s) ? 'default' : 'outline'} size="sm" className="h-8 text-[10px] uppercase font-bold" onClick={() => toggleItem('semiology', s, setHistoryData)}>{s}</Button>
@@ -283,7 +281,7 @@ function NewEncounterContent() {
         <Card className="border-none shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><Stethoscope className="h-5 w-5" /> Underlying Causes</CardTitle>
-            <CardDescription>Explore secondary causes for risk analysis.</CardDescription>
+            <CardDescription>Secondary causes for risk analysis.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {[
@@ -310,7 +308,7 @@ function NewEncounterContent() {
         <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
           <h3 className="text-xl font-bold font-headline text-primary italic">Analyzing Clinical Inputs...</h3>
-          <p className="text-sm text-muted-foreground">Comparing data with mhGAP emergency protocols.</p>
+          <p className="text-sm text-muted-foreground">Mapping data to WHO mhGAP emergency protocols.</p>
         </div>
       )}
 
@@ -319,23 +317,18 @@ function NewEncounterContent() {
           <Card className="border-none shadow-lg overflow-hidden">
             <CardHeader className={recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-600 text-white" : "bg-primary text-primary-foreground"}>
               <div className="flex justify-between items-center">
-                <CardTitle className="text-xl font-headline italic">Suggestive Management</CardTitle>
+                <CardTitle className="text-xl font-headline italic">Clinical Suggestion</CardTitle>
                 <Badge variant="secondary" className="uppercase font-bold tracking-widest text-[10px]">
                   {recommendation.urgencyLevel}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="p-0 divide-y">
-              <div className="p-4 bg-muted/20 grid grid-cols-2 gap-4">
-                <div><Label className="text-[10px] uppercase text-muted-foreground">Patient</Label><p className="text-sm font-bold">{patientData.name}</p></div>
-                <div><Label className="text-[10px] uppercase text-muted-foreground">Age / Sex</Label><p className="text-sm font-bold">{calculatedAge}Y • {patientData.sex}</p></div>
-              </div>
-
               {recommendation.detectedRedFlags.length > 0 && (
                 <div className="p-4 bg-red-50 border-l-4 border-red-600">
                   <div className="flex items-center gap-2 mb-2 text-red-600">
                     <AlertTriangle className="h-4 w-4" />
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest">Emergency Triggers Detected</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest">Emergency Triggers</h4>
                   </div>
                   <ul className="space-y-1">
                     {recommendation.detectedRedFlags.map((flag, i) => (
@@ -345,23 +338,48 @@ function NewEncounterContent() {
                 </div>
               )}
 
-              <div className="p-4 space-y-4">
+              <div className="p-4 space-y-5">
                 <section>
-                  <h4 className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Proposed Action</h4>
-                  <p className="text-sm font-bold text-primary leading-tight">{recommendation.action}</p>
+                  <Label className="text-[10px] uppercase text-muted-foreground tracking-widest font-bold">1. Urgency Level</Label>
+                  <p className={cn("text-lg font-bold mt-1", recommendation.urgencyLevel === 'EMERGENCY' ? "text-red-600" : "text-primary")}>{recommendation.urgencyLevel}</p>
+                </section>
+
+                <section>
+                  <Label className="text-[10px] uppercase text-muted-foreground tracking-widest font-bold">2. Action ({recommendation.action})</Label>
+                  <p className="text-sm font-bold text-slate-800 leading-tight mt-1">{recommendation.actionDescription}</p>
+                </section>
+
+                <section>
+                  <Label className="text-[10px] uppercase text-muted-foreground tracking-widest font-bold">3. Personalized Follow-up Plan</Label>
+                  <div className="bg-muted/30 p-3 rounded-lg mt-1 border border-dashed">
+                    <p className="text-sm font-medium text-slate-700 italic">"{recommendation.followUpPlan}"</p>
+                  </div>
                 </section>
                 
                 <section className="bg-primary/5 p-3 rounded-lg border border-dashed border-primary/20">
-                  <h4 className="text-[10px] font-bold uppercase text-primary flex items-center gap-1 mb-2"><Info className="h-3 w-3" /> Anti-Stigma Counseling</h4>
-                  <ul className="space-y-1.5">
-                    {recommendation.antiStigmaMessages.map((m, i) => (
-                      <li key={i} className="text-xs font-medium text-slate-700 flex items-start gap-2"><div className="h-1 w-1 bg-primary rounded-full mt-1.5" /> {m}</li>
-                    ))}
-                  </ul>
+                  <Label className="text-[10px] uppercase text-primary tracking-widest font-bold flex items-center gap-1 mb-2"><Info className="h-3 w-3" /> 4. Counseling & Safety Warnings</Label>
+                  <div className="space-y-3">
+                    <div>
+                      <h5 className="text-[9px] font-bold text-muted-foreground uppercase mb-1">Counseling Points</h5>
+                      <ul className="space-y-1">
+                        {recommendation.counselingPoints.map((m, i) => (
+                          <li key={i} className="text-xs font-medium text-slate-700 flex items-start gap-2"><div className="h-1 w-1 bg-primary rounded-full mt-1.5 shrink-0" /> {m}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="text-[9px] font-bold text-red-600 uppercase mb-1">Safety Warnings</h5>
+                      <ul className="space-y-1">
+                        {recommendation.safetyWarnings.map((m, i) => (
+                          <li key={i} className="text-xs font-bold text-red-900 flex items-start gap-2"><div className="h-1 w-1 bg-red-600 rounded-full mt-1.5 shrink-0" /> {m}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
                 </section>
               </div>
 
-              {recommendation.urgencyLevel !== 'STABLE' && (
+              {recommendation.urgencyLevel !== 'ROUTINE' && (
                 <div className="p-4 bg-muted/5">
                   <div className="flex items-center gap-2 mb-3 text-primary"><MapPin className="h-4 w-4" /><h3 className="text-[10px] font-bold uppercase tracking-tight italic">Recommended Referral Pathway</h3></div>
                   <FacilityMap urgency={recommendation.urgencyLevel} patientLocation={patientData.location} />
@@ -393,40 +411,59 @@ function NewEncounterContent() {
 
             <div className="space-y-8">
               <section>
-                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">1. Patient Demographics</h2>
+                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">1. Patient Profile</h2>
                 <div className="grid grid-cols-2 gap-y-2 text-sm">
                   <p><strong>Full Name:</strong> {patientData.name}</p>
                   <p><strong>Age / Sex:</strong> {calculatedAge}Y • {patientData.sex}</p>
-                  <p><strong>Address/Location:</strong> {patientData.location}</p>
+                  <p><strong>Address:</strong> {patientData.location}</p>
                 </div>
               </section>
 
-              {recommendation.detectedRedFlags.length > 0 && (
-                <section>
-                  <h2 className="text-base font-bold uppercase border-b border-red-200 pb-1 mb-4 text-red-600">2. Emergency Trigger Analysis</h2>
-                  <div className="bg-red-50 p-4 border border-red-100 rounded">
-                    <ul className="list-disc pl-5 space-y-1 text-sm font-bold text-red-900">
-                      {recommendation.detectedRedFlags.map((flag, i) => <li key={i}>{flag}</li>)}
-                    </ul>
-                  </div>
-                </section>
-              )}
-
               <section>
-                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">{recommendation.detectedRedFlags.length > 0 ? '3' : '2'}. Clinical Suggestion</h2>
-                <div className="space-y-3">
-                  <p className="text-sm"><strong>Flag:</strong> {recommendation.urgencyLevel} RISK</p>
-                  <p className="text-sm"><strong>Suggested Action:</strong> {recommendation.action}</p>
-                  {isApproved && overrideData.reason && (
-                    <div className="mt-4 p-4 border border-slate-200 bg-slate-50 italic text-sm">
-                      <p className="font-bold not-italic underline mb-1 uppercase text-xs">Clinician Discordance Note:</p>
-                      "{overrideData.notes}"
+                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">2. Clinical Findings</h2>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 text-sm">
+                    <p><strong>Urgency Level:</strong> {recommendation.urgencyLevel}</p>
+                    <p><strong>Action Type:</strong> {recommendation.action}</p>
+                  </div>
+                  <div className="p-3 bg-slate-50 border rounded text-sm italic">
+                    <p><strong>Action Description:</strong> {recommendation.actionDescription}</p>
+                  </div>
+                  {recommendation.detectedRedFlags.length > 0 && (
+                    <div className="bg-red-50 p-3 border border-red-100 rounded">
+                      <p className="text-xs font-bold text-red-600 uppercase mb-1 underline">Emergency Triggers Detected:</p>
+                      <ul className="list-disc pl-5 text-sm font-bold text-red-900">
+                        {recommendation.detectedRedFlags.map((flag, i) => <li key={i}>{flag}</li>)}
+                      </ul>
                     </div>
                   )}
                 </div>
               </section>
 
               <section>
+                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">3. Follow-up Plan</h2>
+                <p className="text-sm font-bold italic">"{recommendation.followUpPlan}"</p>
+              </section>
+
+              <section>
+                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">4. Counseling & Safety</h2>
+                <div className="grid grid-cols-1 gap-4 text-xs">
+                  <div>
+                    <p className="font-bold underline mb-1 uppercase">Counselling Points:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {recommendation.counselingPoints.map((p, i) => <li key={i}>{p}</li>)}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-bold underline mb-1 uppercase text-red-600">Safety Warnings:</p>
+                    <ul className="list-disc pl-5 space-y-1 text-red-900 font-bold">
+                      {recommendation.safetyWarnings.map((w, i) => <li key={i}>{w}</li>)}
+                    </ul>
+                  </div>
+                </div>
+              </section>
+
+              <section className="pt-10">
                 <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">Record Attribution</h2>
                 <div className="text-sm space-y-1 italic">
                   <p><strong>Author:</strong> {mockUserProfile.name}</p>
@@ -449,7 +486,7 @@ function NewEncounterContent() {
         <DialogContent className="max-w-sm rounded-3xl">
           <DialogHeader>
             <DialogTitle className="font-headline italic text-primary">Clinical Decision Override</DialogTitle>
-            <DialogDescription>Documenting clinical discordance for quality and safety audit loops.</DialogDescription>
+            <DialogDescription>Documenting clinical discordance for quality audit.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -457,8 +494,8 @@ function NewEncounterContent() {
               <Select onValueChange={v => setOverrideData({...overrideData, reason: v})}>
                 <SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="context">AI missed clinical context/history</SelectItem>
-                  <SelectItem value="protocol">Local MoH protocol variation</SelectItem>
+                  <SelectItem value="context">AI missed clinical context</SelectItem>
+                  <SelectItem value="protocol">Local protocol variation</SelectItem>
                   <SelectItem value="judgment">Expert clinical judgment</SelectItem>
                 </SelectContent>
               </Select>
@@ -475,8 +512,12 @@ function NewEncounterContent() {
       {/* Safety Alert Dialog */}
       <Dialog open={showSafetyDialog} onOpenChange={setShowSafetyDialog}>
         <DialogContent className="bg-red-600 text-white border-none shadow-2xl">
-          <DialogHeader><div className="mx-auto bg-white/20 p-3 rounded-full mb-2"><TriangleAlert className="h-10 w-10 text-white animate-pulse" /></div><DialogTitle className="text-2xl font-bold text-center">EMERGENCY PROTOCOL</DialogTitle></DialogHeader>
-          <p className="text-center text-lg leading-relaxed"><strong>STATUS EPILEPTICUS RISK</strong>. Immediate specialist intervention and facility referral required.</p>
+          <DialogHeader>
+            <div className="mx-auto bg-white/20 p-3 rounded-full mb-2"><ShieldAlert className="h-10 w-10 text-white animate-pulse" /></div>
+            <DialogTitle className="text-2xl font-bold text-center">EMERGENCY PROTOCOL</DialogTitle>
+            <DialogDescription className="sr-only">Safety alert for status epilepticus risk.</DialogDescription>
+          </DialogHeader>
+          <p className="text-center text-lg leading-relaxed"><strong>STATUS EPILEPTICUS RISK</strong>. Immediate specialist intervention and facility referral required per national protocol.</p>
           <DialogFooter><Button onClick={() => setShowSafetyDialog(false)} className="w-full h-14 bg-white text-red-600 font-bold hover:bg-white/90">I ACKNOWLEDGE EMERGENCY</Button></DialogFooter>
         </DialogContent>
       </Dialog>
