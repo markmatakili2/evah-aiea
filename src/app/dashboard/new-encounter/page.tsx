@@ -464,6 +464,20 @@ function NewEncounterContent() {
                 </div>
               </section>
 
+              {overrideData.reason && (
+                <section className="bg-red-50/50 p-4 border border-red-100 rounded-lg">
+                  <h2 className="text-base font-bold uppercase border-b border-red-200 pb-1 mb-4 text-red-800">5. Clinical Discordance (Override)</h2>
+                  <div className="space-y-2 text-sm italic text-red-900">
+                    <p><strong>Reason:</strong> {
+                      overrideData.reason === 'context' ? 'AI missed clinical context' :
+                      overrideData.reason === 'protocol' ? 'Local protocol variation' :
+                      'Expert clinical judgment'
+                    }</p>
+                    <p><strong>Justification:</strong> {overrideData.notes}</p>
+                  </div>
+                </section>
+              )}
+
               <section className="pt-10">
                 <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">Record Attribution</h2>
                 <div className="text-sm space-y-1 italic">
