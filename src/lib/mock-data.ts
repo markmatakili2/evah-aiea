@@ -1,6 +1,7 @@
 import { AlertCircle, Calendar, ClipboardCheck } from 'lucide-react';
 import type { Notification, Patient, UserProfile, Encounter } from './types';
 import type { HealthFacility } from './clinical-engine/types';
+import { addDays } from 'date-fns';
 
 /**
  * @fileOverview WHO mhGAP-aligned mock data for the AI Epilepsy Assistant prototype.
@@ -33,10 +34,58 @@ export const mockUserProfile: UserProfile = {
 };
 
 export const mockPatients: Patient[] = [
-  { id: 'p1', name: 'Zahara Hassan', age: 24, gender: 'Female', location: 'Kijiji Village', status: 'Urgent', contact: '+254 711 000 111', updatedAt: new Date().toISOString(), chwId: 'chw1', chwName: 'Alex Mutua' },
-  { id: 'p2', name: 'John Kamau', age: 45, gender: 'Male', location: 'Mlimani Sector', status: 'Stable', contact: '+254 722 000 222', updatedAt: new Date().toISOString(), chwId: 'chw2', chwName: 'Grace Achieng' },
-  { id: 'p3', name: 'Amina Juma', age: 12, gender: 'Female', location: 'Pwani Area', status: 'Follow-up', contact: '+254 733 000 333', updatedAt: new Date().toISOString(), chwId: 'chw1', chwName: 'Alex Mutua' },
-  { id: 'p4', name: 'David Omondi', age: 31, gender: 'Male', location: 'Ziwani Block', status: 'Stable', contact: '+254 744 000 444', updatedAt: new Date(Date.now() - 86400000).toISOString(), chwId: 'chw2', chwName: 'Grace Achieng' },
+  { 
+    id: 'p1', 
+    name: 'Zahara Hassan', 
+    age: 24, 
+    gender: 'Female', 
+    location: 'Kijiji Village', 
+    status: 'Urgent', 
+    contact: '+254 711 000 111', 
+    updatedAt: new Date().toISOString(), 
+    nextFollowUpDate: new Date().toISOString(),
+    chwId: 'chw1', 
+    chwName: 'Alex Mutua' 
+  },
+  { 
+    id: 'p2', 
+    name: 'John Kamau', 
+    age: 45, 
+    gender: 'Male', 
+    location: 'Mlimani Sector', 
+    status: 'Stable', 
+    contact: '+254 722 000 222', 
+    updatedAt: new Date().toISOString(), 
+    nextFollowUpDate: addDays(new Date(), 14).toISOString(),
+    chwId: 'chw2', 
+    chwName: 'Grace Achieng' 
+  },
+  { 
+    id: 'p3', 
+    name: 'Amina Juma', 
+    age: 12, 
+    gender: 'Female', 
+    location: 'Pwani Area', 
+    status: 'Follow-up', 
+    contact: '+254 733 000 333', 
+    updatedAt: new Date().toISOString(), 
+    nextFollowUpDate: addDays(new Date(), 3).toISOString(),
+    chwId: 'chw1', 
+    chwName: 'Alex Mutua' 
+  },
+  { 
+    id: 'p4', 
+    name: 'David Omondi', 
+    age: 31, 
+    gender: 'Male', 
+    location: 'Ziwani Block', 
+    status: 'Stable', 
+    contact: '+254 744 000 444', 
+    updatedAt: new Date(Date.now() - 86400000).toISOString(), 
+    nextFollowUpDate: addDays(new Date(), 21).toISOString(),
+    chwId: 'chw2', 
+    chwName: 'Grace Achieng' 
+  },
 ];
 
 export const mockEncounters: Encounter[] = [

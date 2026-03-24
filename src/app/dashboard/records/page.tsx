@@ -14,7 +14,8 @@ import {
   Phone,
   Mail,
   ChevronRight,
-  Info
+  Info,
+  CalendarClock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { mockPatients, mockClinicians, mockCHWs, mockHealthFacilities } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
+import { differenceInDays, parseISO, isValid } from "date-fns";
 
 export default function RecordsPage() {
   const { toast } = useToast();
@@ -372,6 +374,17 @@ export default function RecordsPage() {
 }
 
 function PatientCard({ patient, isRestricted }: { patient: any, isRestricted: boolean }) {
+  const getFollowUpDays = (patient: any) => {
+    if (patient.status === 'Urgent') return 0;
+    if (!patient.nextFollowUpDate) return null;
+    const nextDate = parseISO(patient.nextFollowUpDate);
+    if (!isValid(nextDate)) return null;
+    const diff = differenceInDays(nextDate, new Date());
+    return Math.max(0, diff);
+  };
+
+  const followUpDays = getFollowUpDays(patient);
+
   return (
     <Card className="border-none shadow-sm bg-card/50 hover:shadow-md transition-shadow">
       <CardContent className="p-4 flex items-center gap-4">
@@ -388,7 +401,7 @@ function PatientCard({ patient, isRestricted }: { patient: any, isRestricted: bo
               <p className="text-[10px] font-bold text-primary/60 uppercase">Responsible CHW: {patient.chwName}</p>
             )}
           </div>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex flex-wrap items-center gap-2 mt-2">
             <Badge 
               variant="outline" 
               className={cn(
@@ -399,6 +412,13 @@ function PatientCard({ patient, isRestricted }: { patient: any, isRestricted: bo
               )}
             >
               {patient.status}
+            </Badge>
+            <Badge variant="outline" className={cn(
+              "text-[9px] h-5 px-2 gap-1 font-bold",
+              followUpDays === 0 ? "border-red-200 text-red-600 bg-red-50" : "text-muted-foreground"
+            )}>
+              <CalendarClock className="h-3 w-3" />
+              {followUpDays === 0 ? "Follow-up Due" : `${followUpDays} Days Left`}
             </Badge>
           </div>
         </div>

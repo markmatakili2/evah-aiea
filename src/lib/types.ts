@@ -11,6 +11,7 @@ export type Patient = {
   contact: string;
   status: 'Stable' | 'Urgent' | 'Follow-up';
   updatedAt?: string;
+  nextFollowUpDate?: string;
   chwId?: string;
   chwName?: string;
 };
