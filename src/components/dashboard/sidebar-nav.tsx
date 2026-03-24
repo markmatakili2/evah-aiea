@@ -33,7 +33,7 @@ export function SidebarNav() {
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Home" },
-    { href: "/dashboard/assess", icon: ClipboardList, label: "Assess" },
+    { href: "/dashboard/assess", icon: ClipboardList, label: role === 'clinician' ? "Review" : "Assess" },
     { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records" },
     { href: "/dashboard/analytics", icon: Activity, label: "Data" },
     { href: "/dashboard/history", icon: History, label: "History" },

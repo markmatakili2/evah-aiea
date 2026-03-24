@@ -14,7 +14,8 @@ import {
   Filter,
   User,
   Edit3,
-  FileSearch
+  FileSearch,
+  ShieldCheck
 } from 'lucide-react';
 import { 
   Select, 
@@ -95,7 +96,25 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
   }, [patientEncounters, timeFilter]);
 
   const handleOverrideSubmit = () => {
-    toast({ title: "Clinical Override Saved", description: "Assessment updated with specialist clinical oversight notes." });
+    // Add clinician update to session
+    if (selectedEncounter) {
+      const updatedEncounter: Encounter = {
+        ...selectedEncounter,
+        id: `rev-${Date.now()}`,
+        date: new Date().toISOString(),
+        summary: `Specialist Update: ${overrideNotes}`,
+        authorName: 'Dr. Specialist',
+        authorRole: 'CLINICIAN',
+        isClinicianUpdated: true,
+        discordanceNote: `Clinician certification: ${overrideNotes}`
+      };
+      
+      const newSession = [...sessionEncounters, updatedEncounter];
+      setSessionEncounters(newSession);
+      localStorage.setItem('session_encounters', JSON.stringify(newSession));
+    }
+
+    toast({ title: "Clinical Update Saved", description: "Assessment updated with specialist clinical oversight notes." });
     setShowOverride(false);
     setOverrideNotes("");
   };
@@ -238,7 +257,10 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
             const isRecent = differenceInHours(new Date(), new Date(encounter.date)) < 24;
             
             return (
-              <Card key={encounter.id} className="border-none shadow-md overflow-hidden bg-card/50">
+              <Card key={encounter.id} className={cn(
+                "border-none shadow-md overflow-hidden bg-card/50",
+                encounter.isClinicianUpdated && "ring-1 ring-blue-500/20"
+              )}>
                 <CardHeader className="p-4 bg-muted/20 border-b">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
@@ -246,13 +268,18 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
                         <Clock className="h-4 w-4" />
                         <span className="text-sm">{formatSafeDate(encounter.date)}</span>
                       </div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1">
-                        <User className="h-3 w-3" /> Author: {encounter.authorName} ({encounter.authorRole})
-                      </p>
+                      <div className="flex flex-col gap-1">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1">
+                          <User className="h-3 w-3" /> Author: {encounter.authorName} ({encounter.authorRole})
+                        </p>
+                        {encounter.isClinicianUpdated && (
+                          <Badge className="bg-blue-600 w-fit h-4 text-[8px] uppercase">Clinician Certified</Badge>
+                        )}
+                      </div>
                     </div>
-                    {isClinician && isRecent && (
+                    {isClinician && !encounter.isClinicianUpdated && (
                       <Button size="sm" variant="ghost" onClick={() => { setSelectedEncounter(encounter); setShowOverride(true); }} className="h-8 text-[10px] font-bold text-primary uppercase">
-                        <Edit3 className="h-3 w-3 mr-1" /> Override
+                        <Edit3 className="h-3 w-3 mr-1" /> Review
                       </Button>
                     )}
                   </div>
@@ -364,12 +391,12 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
         </DialogContent>
       </Dialog>
 
-      {/* Clinician Override Dialog */}
+      {/* Clinician Review Dialog */}
       <Dialog open={showOverride} onOpenChange={setShowOverride}>
         <DialogContent className="max-w-sm rounded-3xl">
           <DialogHeader>
             <DialogTitle className="font-headline italic text-primary">Clinician Update</DialogTitle>
-            <DialogDescription>Updating assessment with clinical oversight notes.</DialogDescription>
+            <DialogDescription>Updating assessment with manual clinical oversight notes.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -381,7 +408,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
               <Textarea 
                 value={overrideNotes} 
                 onChange={e => setOverrideNotes(e.target.value)} 
-                placeholder="Add clinical findings or diagnostic plans..." 
+                placeholder="Add manual clinical findings or diagnostic plans..." 
                 className="rounded-xl min-h-[120px] border-muted"
               />
             </div>

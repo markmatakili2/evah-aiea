@@ -23,7 +23,10 @@ import {
   Download,
   ShieldAlert,
   Clock,
-  UserCircle
+  UserCircle,
+  FileSearch,
+  Stethoscope,
+  ChevronRight
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +73,7 @@ export default function AssessPage() {
   const { print } = usePrint();
   const router = useRouter();
 
+  const [role, setRole] = useState<string>('chw');
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -88,6 +92,8 @@ export default function AssessPage() {
   const [conversationStage, setConversationStage] = useState(0); 
 
   useEffect(() => {
+    const savedRole = localStorage.getItem('demo_role') || 'chw';
+    setRole(savedRole);
     const isDemo = localStorage.getItem('is_demo') === 'true';
     if (isDemo) {
       setPatients(mockPatients);
@@ -108,6 +114,12 @@ export default function AssessPage() {
   const handleSelectPatient = (id: string) => {
     setSelectedPatientId(id);
     setShowHistory(false);
+    
+    if (role === 'clinician') {
+      // For clinician, we just show the review interface, no chat start
+      return;
+    }
+
     setConversationStage(0);
     setMessages([
       {
@@ -126,7 +138,9 @@ export default function AssessPage() {
       id: `e-${Date.now()}`,
       patientId: selectedPatientId,
       date: new Date().toISOString(),
-      summary: `Conversational assessment: ${messages.filter(m => m.role === 'user').map(m => m.content).join(' | ')}`,
+      summary: role === 'clinician' 
+        ? `Clinician Review: ${overrideData.notes}` 
+        : `Conversational assessment: ${messages.filter(m => m.role === 'user').map(m => m.content).join(' | ')}`,
       redFlags: recommendation.detectedRedFlags,
       recommendation: {
         action: recommendation.actionDescription,
@@ -139,7 +153,7 @@ export default function AssessPage() {
       discordanceNote: isOverride ? `${overrideData.reason}: ${overrideData.notes}` : undefined,
       authorName: mockUserProfile.name,
       authorRole: mockUserProfile.role.toUpperCase(),
-      isClinicianUpdated: mockUserProfile.role === 'clinician'
+      isClinicianUpdated: role === 'clinician'
     };
 
     const existingLogs = JSON.parse(localStorage.getItem('session_encounters') || '[]');
@@ -230,12 +244,24 @@ export default function AssessPage() {
   };
 
   const handleOverrideComplete = () => {
-    if (activeRecommendation) {
-      saveEncounterToHistory(activeRecommendation, true);
-    }
+    // When clinician overrides, we don't necessarily need the AI recommendation structure
+    const baseRecommendation: Recommendation = activeRecommendation || {
+      urgencyLevel: 'URGENT',
+      action: 'Refer',
+      actionDescription: 'Updated by specialist review.',
+      referralDestination: 'Regional Hospital',
+      followUpPlan: 'Per specialist protocol.',
+      counselingPoints: [],
+      safetyWarnings: [],
+      riskScore: 0,
+      clinicalReasoning: 'Manual specialist review.',
+      detectedRedFlags: []
+    };
+
+    saveEncounterToHistory(baseRecommendation, true);
     setShowOverrideDialog(false);
     setShowFinalReport(true);
-    toast({ title: "Clinical Override Logged", description: "Assessment updated with specialist oversight in registry." });
+    toast({ title: "Specialist Review Logged", description: "Assessment updated with specialist oversight in registry." });
   };
 
   const handleDownload = () => {
@@ -245,7 +271,103 @@ export default function AssessPage() {
     }
   };
 
-  if (showFinalReport && activeRecommendation) {
+  // --- RENDER LOGIC FOR CLINICIAN REVIEW ---
+  if (role === 'clinician' && selectedPatientId && !showFinalReport) {
+    const latestEncounter = JSON.parse(localStorage.getItem('session_encounters') || '[]')
+      .filter((e: Encounter) => e.patientId === selectedPatientId)
+      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+    return (
+      <div className="max-w-md mx-auto space-y-6 pb-20">
+        <header className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => setSelectedPatientId(null)}><ChevronLeft /></Button>
+          <div>
+            <h1 className="text-xl font-headline font-bold text-primary italic">Case Review</h1>
+            <p className="text-xs text-muted-foreground uppercase font-bold">{selectedPatient?.name} • {selectedPatient?.status}</p>
+          </div>
+        </header>
+
+        <Card className="border-none shadow-sm bg-card/50">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center gap-2 text-primary">
+              <History className="h-4 w-4" />
+              <h3 className="text-sm font-bold uppercase tracking-widest">Latest CHW Log</h3>
+            </div>
+            {latestEncounter ? (
+              <div className="space-y-3">
+                <div className="p-3 bg-white rounded-lg border text-sm italic text-slate-600">
+                  "{latestEncounter.summary}"
+                </div>
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase text-muted-foreground">
+                  <span>Author: {latestEncounter.authorName}</span>
+                  <span>Date: {format(new Date(latestEncounter.date), 'PP')}</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">No recent encounters found for session review.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-md overflow-hidden">
+          <CardContent className="p-6 space-y-6">
+            <div className="flex items-center gap-2 text-primary mb-2">
+              <Stethoscope className="h-5 w-5" />
+              <h3 className="text-base font-headline font-bold italic">Specialist Oversight</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-tighter">Clinical Recommendation</Label>
+                <Select onValueChange={v => setOverrideData({...overrideData, reason: v})}>
+                  <SelectTrigger className="h-12 rounded-xl">
+                    <SelectValue placeholder="Update Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="certification">Certify CHW Plan</SelectItem>
+                    <SelectItem value="medication">Update Medication Protocol</SelectItem>
+                    <SelectItem value="referral">Escalate Referral</SelectItem>
+                    <SelectItem value="monitoring">Routine Monitoring</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-tighter">Diagnostic & Follow-up Notes</Label>
+                <Textarea 
+                  placeholder="Enter manual specialist assessment findings..." 
+                  className="min-h-[150px] rounded-2xl" 
+                  value={overrideData.notes}
+                  onChange={e => setOverrideData({...overrideData, notes: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <Button 
+              className="w-full h-14 font-bold rounded-2xl bg-primary text-white shadow-lg" 
+              disabled={!overrideData.reason || !overrideData.notes}
+              onClick={handleOverrideComplete}
+            >
+              Submit Specialist Update
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (showFinalReport) {
+    const finalRec = activeRecommendation || {
+      urgencyLevel: 'URGENT',
+      action: 'Refer',
+      actionDescription: overrideData.notes || 'Updated by specialist review.',
+      referralDestination: 'Regional Health Center',
+      followUpPlan: 'As per specialist directive.',
+      counselingPoints: [],
+      safetyWarnings: [],
+      detectedRedFlags: []
+    };
+
     return (
       <div className="max-w-md mx-auto space-y-6 pb-20 pt-4 animate-in zoom-in-95 duration-500">
         <div className="flex items-center justify-between mb-2">
@@ -274,17 +396,17 @@ export default function AssessPage() {
               <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">2. Clinical Findings</h2>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 text-sm">
-                  <p><strong>Urgency Level:</strong> {activeRecommendation.urgencyLevel}</p>
-                  <p><strong>Action Type:</strong> {activeRecommendation.action}</p>
+                  <p><strong>Urgency Level:</strong> {finalRec.urgencyLevel}</p>
+                  <p><strong>Action Type:</strong> {finalRec.action}</p>
                 </div>
                 <div className="p-3 bg-white border rounded text-sm italic">
-                  <p><strong>Action Description:</strong> {activeRecommendation.actionDescription}</p>
+                  <p><strong>Action Description:</strong> {finalRec.actionDescription}</p>
                 </div>
-                {activeRecommendation.detectedRedFlags.length > 0 && (
+                {finalRec.detectedRedFlags.length > 0 && (
                   <div className="bg-white p-3 border border-red-100 rounded">
                     <p className="text-xs font-bold text-red-600 uppercase mb-1 underline">Emergency Triggers Detected:</p>
                     <ul className="list-disc pl-5 text-sm font-bold text-red-900">
-                      {activeRecommendation.detectedRedFlags.map((flag, i) => <li key={i}>{flag}</li>)}
+                      {finalRec.detectedRedFlags.map((flag, i) => <li key={i}>{flag}</li>)}
                     </ul>
                   </div>
                 )}
@@ -293,37 +415,35 @@ export default function AssessPage() {
 
             <section className="bg-white">
               <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">3. Follow-up Plan</h2>
-              <p className="text-sm font-bold italic">"{activeRecommendation.followUpPlan}"</p>
+              <p className="text-sm font-bold italic">"{finalRec.followUpPlan}"</p>
             </section>
 
-            <section className="bg-white">
-              <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">4. Counseling & Safety</h2>
-              <div className="grid grid-cols-1 gap-4 text-xs">
-                <div>
-                  <p className="font-bold underline mb-1 uppercase">Counselling Points:</p>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {activeRecommendation.counselingPoints.map((p, i) => <li key={i}>{p}</li>)}
-                  </ul>
+            {role === 'chw' && (
+              <section className="bg-white">
+                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">4. Counseling & Safety</h2>
+                <div className="grid grid-cols-1 gap-4 text-xs">
+                  <div>
+                    <p className="font-bold underline mb-1 uppercase">Counselling Points:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {finalRec.counselingPoints.map((p, i) => <li key={i}>{p}</li>)}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-bold underline mb-1 uppercase text-red-600">Safety Warnings:</p>
+                    <ul className="list-disc pl-5 space-y-1 text-red-900 font-bold">
+                      {finalRec.safetyWarnings.map((w, i) => <li key={i}>{w}</li>)}
+                    </ul>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold underline mb-1 uppercase text-red-600">Safety Warnings:</p>
-                  <ul className="list-disc pl-5 space-y-1 text-red-900 font-bold">
-                    {activeRecommendation.safetyWarnings.map((w, i) => <li key={i}>{w}</li>)}
-                  </ul>
-                </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             {overrideData.reason && (
               <section className="bg-white p-4 border border-red-100 rounded-lg">
-                <h2 className="text-base font-bold uppercase border-b border-red-200 pb-1 mb-4 text-red-800">5. Clinical Discordance (Override)</h2>
+                <h2 className="text-base font-bold uppercase border-b border-red-200 pb-1 mb-4 text-red-800">5. Specialist Review / Override</h2>
                 <div className="space-y-2 text-sm italic text-red-900">
-                  <p><strong>Reason:</strong> {
-                    overrideData.reason === 'context' ? 'AI missed clinical context' :
-                    overrideData.reason === 'protocol' ? 'Local protocol variation' :
-                    'Expert clinical judgment'
-                  }</p>
-                  <p><strong>Justification:</strong> {overrideData.notes}</p>
+                  <p><strong>Review Category:</strong> {overrideData.reason.toUpperCase()}</p>
+                  <p><strong>Clinical Justification:</strong> {overrideData.notes}</p>
                 </div>
               </section>
             )}
@@ -341,7 +461,7 @@ export default function AssessPage() {
 
         <div className="grid grid-cols-2 gap-3 pt-4">
           <Button className="h-12 font-bold bg-primary text-white" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download PDF</Button>
-          <Button variant="ghost" className="col-span-2 h-12 text-muted-foreground font-bold" onClick={() => setShowFinalReport(false)}><X className="mr-2 h-4 w-4" /> Return to Chat</Button>
+          <Button variant="ghost" className="col-span-2 h-12 text-muted-foreground font-bold" onClick={() => router.push('/dashboard')}><X className="mr-2 h-4 w-4" /> Return to Dashboard</Button>
         </div>
       </div>
     );
@@ -349,28 +469,40 @@ export default function AssessPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-130px)] bg-background relative overflow-hidden">
-      {/* Registry Overlay */}
+      {/* Registry / Review Queue Overlay */}
       <div className={cn("absolute inset-0 z-50 bg-background transition-transform duration-300 ease-in-out", showHistory ? "translate-x-0" : "-translate-x-full")}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b flex items-center justify-between bg-primary text-primary-foreground">
-            <h2 className="font-headline font-bold flex items-center gap-2"><History className="h-5 w-5" /> Patient Registry</h2>
+            <h2 className="font-headline font-bold flex items-center gap-2">
+              {role === 'clinician' ? <FileSearch className="h-5 w-5" /> : <History className="h-5 w-5" />} 
+              {role === 'clinician' ? "Review Queue" : "Patient Registry"}
+            </h2>
             <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)}><X className="h-5 w-5" /></Button>
           </div>
-          <div className="p-4">
-            <Button asChild className="w-full justify-start gap-2 h-12" variant="outline">
-              <Link href="/dashboard/new-encounter"><Plus className="h-5 w-5 text-primary" /> New Guided Encounter</Link>
-            </Button>
-          </div>
+          {role === 'chw' && (
+            <div className="p-4">
+              <Button asChild className="w-full justify-start gap-2 h-12" variant="outline">
+                <Link href="/dashboard/new-encounter"><Plus className="h-5 w-5 text-primary" /> New Guided Encounter</Link>
+              </Button>
+            </div>
+          )}
           <ScrollArea className="flex-1 px-4">
-            <div className="space-y-2 pb-4">
+            <div className="space-y-2 py-4">
               {patients.length > 0 ? (
-                patients.map(patient => (
+                patients
+                  .filter(p => role === 'chw' || p.status !== 'Stable') // Clinicians see non-stable ones primarily
+                  .map(patient => (
                   <button key={patient.id} onClick={() => handleSelectPatient(patient.id)} className="w-full text-left p-4 rounded-xl border hover:bg-muted transition-colors group">
                     <div className="flex justify-between items-start">
                       <span className="font-bold text-primary group-hover:text-primary/80">{patient.name}</span>
                       <Badge variant="outline" className={cn("text-[10px] uppercase", patient.status === 'Urgent' ? "border-red-200 text-red-600 bg-red-50" : "")}>{patient.status}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{patient.location} • {patient.gender}</p>
+                    {role === 'clinician' && (
+                      <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-primary uppercase">
+                        <ChevronRight className="h-3 w-3" /> Review Latest Log
+                      </div>
+                    )}
                   </button>
                 ))
               ) : (
@@ -385,10 +517,18 @@ export default function AssessPage() {
 
       {!selectedPatientId ? (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-4">
-          <div className="bg-primary/5 p-6 rounded-full"><MessageSquare className="h-12 w-12 text-primary/40" /></div>
-          <h2 className="text-xl font-headline font-bold text-primary">Clinical Suggester</h2>
-          <p className="text-sm text-muted-foreground max-w-xs">Decision authority remains with you. Select a patient to begin mhGAP suggestive analysis.</p>
-          <Button onClick={() => setShowHistory(true)} variant="outline" className="gap-2"><History className="h-4 w-4" /> Open Registry</Button>
+          <div className="bg-primary/5 p-6 rounded-full">
+            {role === 'clinician' ? <FileSearch className="h-12 w-12 text-primary/40" /> : <MessageSquare className="h-12 w-12 text-primary/40" />}
+          </div>
+          <h2 className="text-xl font-headline font-bold text-primary">{role === 'clinician' ? "Specialist Review" : "Clinical Suggester"}</h2>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            {role === 'clinician' 
+              ? "Select a patient from the queue to review and certify clinical records."
+              : "Decision authority remains with you. Select a patient to begin mhGAP suggestive analysis."}
+          </p>
+          <Button onClick={() => setShowHistory(true)} variant="outline" className="gap-2">
+            <History className="h-4 w-4" /> {role === 'clinician' ? "Open Review Queue" : "Open Registry"}
+          </Button>
         </div>
       ) : (
         <>

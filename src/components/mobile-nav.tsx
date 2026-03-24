@@ -14,7 +14,7 @@ export function MobileNav({ userRole }: MobileNavProps) {
 
   const baseItems = [
     { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'clinician', 'supervisor'] },
-    { href: "/dashboard/assess", icon: Clipboard, label: "Assess", roles: ['chw', 'clinician'] },
+    { href: "/dashboard/assess", icon: Clipboard, label: userRole === 'clinician' ? "Review" : "Assess", roles: ['chw', 'clinician'] },
     { href: "/dashboard/analytics", icon: Activity, label: "Data", roles: ['supervisor'] },
     { href: "/dashboard/records", icon: List, label: userRole === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
     { href: "/dashboard/notifications", icon: Bell, label: "Alerts", roles: ['chw', 'clinician', 'supervisor'] },
