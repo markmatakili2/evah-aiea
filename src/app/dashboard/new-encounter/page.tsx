@@ -404,14 +404,14 @@ function NewEncounterContent() {
           </div>
 
           <div id="clinical-report-content" className="bg-white p-8 border shadow-sm min-h-[600px] text-slate-900 leading-normal" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-            <div className="text-center border-b pb-6 mb-8">
+            <div className="text-center border-b pb-6 mb-8 bg-white">
               <h1 className="text-2xl font-bold uppercase tracking-tight">Clinical Encounter Report</h1>
               <p className="text-sm font-bold text-muted-foreground mt-1 uppercase">AI Epilepsy Assistant • Confidential Record</p>
               <p className="text-xs mt-2">Date: {format(new Date(), 'PPPP p')}</p>
             </div>
 
-            <div className="space-y-8">
-              <section>
+            <div className="space-y-8 bg-white">
+              <section className="bg-white">
                 <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">1. Patient Profile</h2>
                 <div className="grid grid-cols-2 gap-y-2 text-sm">
                   <p><strong>Full Name:</strong> {patientData.name}</p>
@@ -420,18 +420,18 @@ function NewEncounterContent() {
                 </div>
               </section>
 
-              <section>
+              <section className="bg-white">
                 <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">2. Clinical Findings</h2>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 text-sm">
                     <p><strong>Urgency Level:</strong> {recommendation.urgencyLevel}</p>
                     <p><strong>Action Type:</strong> {recommendation.action}</p>
                   </div>
-                  <div className="p-3 bg-slate-50 border rounded text-sm italic">
+                  <div className="p-3 bg-white border rounded text-sm italic">
                     <p><strong>Action Description:</strong> {recommendation.actionDescription}</p>
                   </div>
                   {recommendation.detectedRedFlags.length > 0 && (
-                    <div className="bg-red-50 p-3 border border-red-100 rounded">
+                    <div className="bg-white p-3 border border-red-100 rounded">
                       <p className="text-xs font-bold text-red-600 uppercase mb-1 underline">Emergency Triggers Detected:</p>
                       <ul className="list-disc pl-5 text-sm font-bold text-red-900">
                         {recommendation.detectedRedFlags.map((flag, i) => <li key={i}>{flag}</li>)}
@@ -441,12 +441,12 @@ function NewEncounterContent() {
                 </div>
               </section>
 
-              <section>
+              <section className="bg-white">
                 <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">3. Follow-up Plan</h2>
                 <p className="text-sm font-bold italic">"{recommendation.followUpPlan}"</p>
               </section>
 
-              <section>
+              <section className="bg-white">
                 <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">4. Counseling & Safety</h2>
                 <div className="grid grid-cols-1 gap-4 text-xs">
                   <div>
@@ -465,7 +465,7 @@ function NewEncounterContent() {
               </section>
 
               {overrideData.reason && (
-                <section className="bg-red-50/50 p-4 border border-red-100 rounded-lg">
+                <section className="bg-white p-4 border border-red-100 rounded-lg">
                   <h2 className="text-base font-bold uppercase border-b border-red-200 pb-1 mb-4 text-red-800">5. Clinical Discordance (Override)</h2>
                   <div className="space-y-2 text-sm italic text-red-900">
                     <p><strong>Reason:</strong> {
@@ -478,7 +478,7 @@ function NewEncounterContent() {
                 </section>
               )}
 
-              <section className="pt-10">
+              <section className="pt-10 bg-white">
                 <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">Record Attribution</h2>
                 <div className="text-sm space-y-1 italic">
                   <p><strong>Author:</strong> {mockUserProfile.name}</p>
