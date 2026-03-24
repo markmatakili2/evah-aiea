@@ -46,6 +46,7 @@ import { FacilityMap } from '@/components/dashboard/facility-map';
 import { usePrint } from '@/hooks/usePrint';
 import { format } from 'date-fns';
 import { mockUserProfile } from '@/lib/mock-data';
+import { cn } from '@/lib/utils';
 
 type Step = 'consent' | 'patient' | 'history' | 'causes' | 'assessment' | 'report' | 'final';
 
