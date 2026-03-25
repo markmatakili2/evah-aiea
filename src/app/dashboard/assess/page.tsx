@@ -17,7 +17,6 @@ import {
   Edit3,
   Loader2,
   MoreVertical,
-  TriangleAlert,
   MapPin,
   FileText,
   Download,
@@ -26,7 +25,8 @@ import {
   UserCircle,
   FileSearch,
   Stethoscope,
-  ChevronRight
+  ChevronRight,
+  ClipboardCheck
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +52,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { FacilityMap } from "@/components/dashboard/facility-map";
-import { mockPatients, mockUserProfile } from "@/lib/mock-data";
+import { mockPatients, mockUserProfile, mockEncounters } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { usePrint } from "@/hooks/usePrint";
 import { format } from "date-fns";
@@ -88,18 +88,12 @@ export default function AssessPage() {
   const [overrideData, setOverrideData] = useState({ reason: '', notes: '' });
   const [activeRecommendation, setActiveRecommendation] = useState<Recommendation | null>(null);
   
-  // Track conversational state
   const [conversationStage, setConversationStage] = useState(0); 
 
   useEffect(() => {
     const savedRole = localStorage.getItem('demo_role') || 'chw';
     setRole(savedRole);
-    const isDemo = localStorage.getItem('is_demo') === 'true';
-    if (isDemo) {
-      setPatients(mockPatients);
-    } else {
-      setPatients([]);
-    }
+    setPatients(mockPatients);
   }, []);
 
   const selectedPatient = patients?.find(p => p.id === selectedPatientId);
@@ -115,10 +109,7 @@ export default function AssessPage() {
     setSelectedPatientId(id);
     setShowHistory(false);
     
-    if (role === 'clinician') {
-      // For clinician, we just show the review interface, no chat start
-      return;
-    }
+    if (role === 'clinician') return;
 
     setConversationStage(0);
     setMessages([
@@ -244,7 +235,6 @@ export default function AssessPage() {
   };
 
   const handleOverrideComplete = () => {
-    // When clinician overrides, we don't necessarily need the AI recommendation structure
     const baseRecommendation: Recommendation = activeRecommendation || {
       urgencyLevel: 'URGENT',
       action: 'Refer',
@@ -273,7 +263,8 @@ export default function AssessPage() {
 
   // --- RENDER LOGIC FOR CLINICIAN REVIEW ---
   if (role === 'clinician' && selectedPatientId && !showFinalReport) {
-    const latestEncounter = JSON.parse(localStorage.getItem('session_encounters') || '[]')
+    const sessionEncounters = JSON.parse(localStorage.getItem('session_encounters') || '[]');
+    const latestEncounter = [...sessionEncounters, ...mockEncounters]
       .filter((e: Encounter) => e.patientId === selectedPatientId)
       .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
@@ -282,38 +273,67 @@ export default function AssessPage() {
         <header className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => setSelectedPatientId(null)}><ChevronLeft /></Button>
           <div>
-            <h1 className="text-xl font-headline font-bold text-primary italic">Case Review</h1>
+            <h1 className="text-xl font-headline font-bold text-primary italic">Specialist Review</h1>
             <p className="text-xs text-muted-foreground uppercase font-bold">{selectedPatient?.name} • {selectedPatient?.status}</p>
           </div>
         </header>
 
-        <Card className="border-none shadow-sm bg-card/50">
-          <CardContent className="p-4 space-y-4">
-            <div className="flex items-center gap-2 text-primary">
-              <History className="h-4 w-4" />
-              <h3 className="text-sm font-bold uppercase tracking-widest">Latest CHW Log</h3>
+        {latestEncounter ? (
+          <div className="bg-white p-6 border shadow-sm text-slate-900 leading-normal rounded-xl" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+            <div className="text-center border-b pb-4 mb-6">
+              <h2 className="text-lg font-bold uppercase">Clinical Report for Review</h2>
+              <p className="text-[10px] text-muted-foreground mt-1 uppercase">Author: {latestEncounter.authorName} ({latestEncounter.authorRole})</p>
+              <p className="text-[10px]">Date: {format(new Date(latestEncounter.date), 'PPPP p')}</p>
             </div>
-            {latestEncounter ? (
-              <div className="space-y-3">
-                <div className="p-3 bg-white rounded-lg border text-sm italic text-slate-600">
-                  "{latestEncounter.summary}"
-                </div>
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase text-muted-foreground">
-                  <span>Author: {latestEncounter.authorName}</span>
-                  <span>Date: {format(new Date(latestEncounter.date), 'PP')}</span>
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground italic">No recent encounters found for session review.</p>
-            )}
-          </CardContent>
-        </Card>
 
-        <Card className="border-none shadow-md overflow-hidden">
+            <div className="space-y-6">
+              <section>
+                <h3 className="text-xs font-bold uppercase border-b pb-1 mb-2">1. Patient Profile</h3>
+                <div className="grid grid-cols-2 gap-y-1 text-[11px]">
+                  <p><strong>Name:</strong> {selectedPatient?.name}</p>
+                  <p><strong>Age/Sex:</strong> {selectedPatient?.age}Y • {selectedPatient?.gender}</p>
+                </div>
+              </section>
+
+              <section>
+                <h3 className="text-xs font-bold uppercase border-b pb-1 mb-2">2. CHW Clinical Findings</h3>
+                <div className="space-y-2 text-[11px]">
+                  <p><strong>Urgency Level:</strong> {latestEncounter.recommendation.urgencyLevel}</p>
+                  <p><strong>Action Type:</strong> {latestEncounter.recommendation.action}</p>
+                  <div className="p-2 border rounded italic">
+                    <p><strong>Summary:</strong> {latestEncounter.summary}</p>
+                  </div>
+                  {latestEncounter.redFlags.length > 0 && (
+                    <div className="mt-2 text-red-600">
+                      <p className="font-bold underline uppercase text-[9px]">Emergency Triggers:</p>
+                      <ul className="list-disc pl-4 font-bold">
+                        {latestEncounter.redFlags.map((flag, i) => <li key={i}>{flag}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section>
+                <h3 className="text-xs font-bold uppercase border-b pb-1 mb-2">3. Recommended Action</h3>
+                <p className="text-[11px] font-bold">"{latestEncounter.recommendation.action}" to {latestEncounter.recommendation.referralDestination}</p>
+              </section>
+            </div>
+          </div>
+        ) : (
+          <Card className="border-none shadow-sm bg-card/50">
+            <CardContent className="p-8 text-center">
+              <ClipboardCheck className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No clinical encounters found for this patient record.</p>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="border-none shadow-md overflow-hidden bg-white border-t-4 border-primary">
           <CardContent className="p-6 space-y-6">
             <div className="flex items-center gap-2 text-primary mb-2">
               <Stethoscope className="h-5 w-5" />
-              <h3 className="text-base font-headline font-bold italic">Specialist Oversight</h3>
+              <h3 className="text-base font-headline font-bold italic">Manual Specialist Oversight</h3>
             </div>
             
             <div className="space-y-4">
@@ -335,8 +355,8 @@ export default function AssessPage() {
               <div className="space-y-2">
                 <Label className="text-xs font-bold uppercase tracking-tighter">Diagnostic & Follow-up Notes</Label>
                 <Textarea 
-                  placeholder="Enter manual specialist assessment findings..." 
-                  className="min-h-[150px] rounded-2xl" 
+                  placeholder="Enter manual specialist assessment findings and certification notes..." 
+                  className="min-h-[120px] rounded-2xl" 
                   value={overrideData.notes}
                   onChange={e => setOverrideData({...overrideData, notes: e.target.value})}
                 />
@@ -469,13 +489,12 @@ export default function AssessPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-130px)] bg-background relative overflow-hidden">
-      {/* Registry / Review Queue Overlay */}
       <div className={cn("absolute inset-0 z-50 bg-background transition-transform duration-300 ease-in-out", showHistory ? "translate-x-0" : "-translate-x-full")}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b flex items-center justify-between bg-primary text-primary-foreground">
             <h2 className="font-headline font-bold flex items-center gap-2">
               {role === 'clinician' ? <FileSearch className="h-5 w-5" /> : <History className="h-5 w-5" />} 
-              {role === 'clinician' ? "Review Queue" : "Patient Registry"}
+              {role === 'clinician' ? "Specialist Review Queue" : "Patient Registry"}
             </h2>
             <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)}><X className="h-5 w-5" /></Button>
           </div>
@@ -490,7 +509,7 @@ export default function AssessPage() {
             <div className="space-y-2 py-4">
               {patients.length > 0 ? (
                 patients
-                  .filter(p => role === 'chw' || p.status !== 'Stable') // Clinicians see non-stable ones primarily
+                  .filter(p => role === 'chw' || p.status !== 'Stable') 
                   .map(patient => (
                   <button key={patient.id} onClick={() => handleSelectPatient(patient.id)} className="w-full text-left p-4 rounded-xl border hover:bg-muted transition-colors group">
                     <div className="flex justify-between items-start">
@@ -500,7 +519,7 @@ export default function AssessPage() {
                     <p className="text-xs text-muted-foreground mt-1">{patient.location} • {patient.gender}</p>
                     {role === 'clinician' && (
                       <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-primary uppercase">
-                        <ChevronRight className="h-3 w-3" /> Review Latest Log
+                        <ChevronRight className="h-3 w-3" /> Review Latest Report
                       </div>
                     )}
                   </button>
@@ -520,10 +539,10 @@ export default function AssessPage() {
           <div className="bg-primary/5 p-6 rounded-full">
             {role === 'clinician' ? <FileSearch className="h-12 w-12 text-primary/40" /> : <MessageSquare className="h-12 w-12 text-primary/40" />}
           </div>
-          <h2 className="text-xl font-headline font-bold text-primary">{role === 'clinician' ? "Specialist Review" : "Clinical Suggester"}</h2>
+          <h2 className="text-xl font-headline font-bold text-primary">{role === 'clinician' ? "Case Review Queue" : "Clinical Suggester"}</h2>
           <p className="text-sm text-muted-foreground max-w-xs">
             {role === 'clinician' 
-              ? "Select a patient from the queue to review and certify clinical records."
+              ? "Select an urgent case from the queue to review CHW reports and certify clinical paths."
               : "Decision authority remains with you. Select a patient to begin mhGAP suggestive analysis."}
           </p>
           <Button onClick={() => setShowHistory(true)} variant="outline" className="gap-2">
@@ -629,7 +648,6 @@ export default function AssessPage() {
         </>
       )}
 
-      {/* Override Dialog */}
       <Dialog open={showOverrideDialog} onOpenChange={setShowOverrideDialog}>
         <DialogContent className="max-w-sm rounded-3xl">
           <DialogHeader>
@@ -657,7 +675,6 @@ export default function AssessPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Emergency Alert Dialog */}
       <Dialog open={showSafetyDialog} onOpenChange={setShowSafetyDialog}>
         <DialogContent className="bg-red-600 text-white border-none shadow-2xl">
           <DialogHeader>

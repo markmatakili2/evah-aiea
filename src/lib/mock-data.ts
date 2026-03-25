@@ -1,7 +1,7 @@
 import { AlertCircle, Calendar, ClipboardCheck } from 'lucide-react';
 import type { Notification, Patient, UserProfile, Encounter } from './types';
 import type { HealthFacility } from './clinical-engine/types';
-import { addDays } from 'date-fns';
+import { addDays, subDays } from 'date-fns';
 
 /**
  * @fileOverview WHO mhGAP-aligned mock data for the AI Epilepsy Assistant prototype.
@@ -86,6 +86,45 @@ export const mockPatients: Patient[] = [
     chwId: 'chw2', 
     chwName: 'Grace Achieng' 
   },
+  { 
+    id: 'p5', 
+    name: 'Samuel Kiprop', 
+    age: 8, 
+    gender: 'Male', 
+    location: 'Kapchorwa', 
+    status: 'Urgent', 
+    contact: '+254 755 000 555', 
+    updatedAt: new Date().toISOString(), 
+    nextFollowUpDate: new Date().toISOString(),
+    chwId: 'chw3', 
+    chwName: 'Grace Achieng' 
+  },
+  { 
+    id: 'p6', 
+    name: 'Fatima Ali', 
+    age: 29, 
+    gender: 'Female', 
+    location: 'North Garissa', 
+    status: 'Follow-up', 
+    contact: '+254 766 000 666', 
+    updatedAt: new Date().toISOString(), 
+    nextFollowUpDate: addDays(new Date(), 5).toISOString(),
+    chwId: 'chw1', 
+    chwName: 'Alex Mutua' 
+  },
+  { 
+    id: 'p7', 
+    name: 'Peter Njoroge', 
+    age: 52, 
+    gender: 'Male', 
+    location: 'Central Muranga', 
+    status: 'Urgent', 
+    contact: '+254 777 000 777', 
+    updatedAt: new Date().toISOString(), 
+    nextFollowUpDate: new Date().toISOString(),
+    chwId: 'chw2', 
+    chwName: 'Grace Achieng' 
+  },
 ];
 
 export const mockEncounters: Encounter[] = [
@@ -94,13 +133,13 @@ export const mockEncounters: Encounter[] = [
     patientId: 'p1',
     date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     summary: 'Emergency presentation: Prolonged convulsive seizure lasting 7 minutes. Status Epilepticus protocol initiated. Patient was stabilized and referral to tertiary hospital recommended.',
-    redFlags: ['Prolonged Seizure (> 5 min)', 'Repeated Seizures without recovery'],
+    redFlags: ['Status Epilepticus Risk (Duration >= 5m)', 'Repeated Seizures (Cluster Risk)'],
     recommendation: { 
-      action: 'IMMEDIATE EMERGENCY REFERRAL', 
+      action: 'Refer', 
       urgencyLevel: 'EMERGENCY',
-      referralDestination: 'KUTRRH',
-      antiStigmaMessages: ["Epilepsy is a medical condition of the brain."],
-      safetyAdvice: ["Avoid cooking over open fires alone."]
+      referralDestination: 'KUTRRH Specialist Unit',
+      antiStigmaMessages: ["Epilepsy is a medical condition of the brain.", "Epilepsy is NOT contagious."],
+      safetyAdvice: ["Avoid cooking over open fires alone.", "First Aid: Turn on side, cushion head, NO items in mouth."]
     },
     type: 'Emergency',
     authorName: 'Alex Mutua',
@@ -108,18 +147,35 @@ export const mockEncounters: Encounter[] = [
   },
   {
     id: 'e2',
-    patientId: 'p1',
-    date: new Date(Date.now() - 86400000 * 15).toISOString(),
-    summary: 'Routine review. Patient reporting good adherence to medication. Seizure frequency decreased to 1 per month.',
-    redFlags: [],
+    patientId: 'p5',
+    date: subDays(new Date(), 1).toISOString(),
+    summary: 'New onset seizures in pediatric patient (8 years old). Reported 3 episodes in last 24 hours. No fever reported.',
+    redFlags: ['Repeated Seizures (Cluster Risk)'],
     recommendation: { 
-      action: 'Continue current management and adherence counseling.', 
-      urgencyLevel: 'STABLE',
-      referralDestination: 'Local Health Post',
-      antiStigmaMessages: ["Promote dignity: People with epilepsy can lead productive lives."],
-      safetyAdvice: ["Ensure adequate sleep."]
+      action: 'Refer', 
+      urgencyLevel: 'URGENT',
+      referralDestination: 'District Hospital',
+      antiStigmaMessages: ["Education is possible for children with epilepsy."],
+      safetyAdvice: ["Supervise while swimming or bathing."]
     },
     type: 'Routine',
+    authorName: 'Grace Achieng',
+    authorRole: 'CHW'
+  },
+  {
+    id: 'e3',
+    patientId: 'p7',
+    date: new Date().toISOString(),
+    summary: 'Sudden onset neurological weakness following generalized seizure. High risk of acute stroke or structural insult.',
+    redFlags: ['Suspected Stroke/Acute Neurological Insult'],
+    recommendation: { 
+      action: 'Refer', 
+      urgencyLevel: 'EMERGENCY',
+      referralDestination: 'Regional Referral Hospital',
+      antiStigmaMessages: ["Immediate medical attention is vital."],
+      safetyAdvice: ["Do not leave patient alone until stable."]
+    },
+    type: 'Emergency',
     authorName: 'Alex Mutua',
     authorRole: 'CHW'
   }
